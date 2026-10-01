@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { useState } from "react";
 import { getOffer } from "@/lib/leads.functions";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/offer/$token")({
 function OfferPage() {
   const lead = Route.useLoaderData();
   const [busy, setBusy] = useState(false);
-  async function download() { setBusy(true); try { const { downloadOffer } = await import("@/components/offer-pdf"); await downloadOffer(lead); } finally { setBusy(false); } }
+  async function download() { setBusy(true); try { const { downloadOffer } = await loadOfferPdf(); await downloadOffer(lead); } finally { setBusy(false); } }
   return <main className="min-h-screen bg-background px-5 py-10"><div className="mx-auto max-w-xl text-center">
     <img src={logo} alt="Momentum One" className="mx-auto h-20 w-auto" />
     <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-paper sm:p-9"><IconSeal size={50} className="mx-auto text-gold" /><p className="mt-5 text-xs font-bold uppercase tracking-widest text-primary">Personalised student offer</p><h1 className="mt-2 text-3xl font-bold">Ready for {lead.full_name}</h1><p className="mt-3 text-muted-foreground">{lead.selected_course}<br />{lead.study_route} · {lead.nearest_campus}</p><Button onClick={download} disabled={busy} className="mt-7 h-14 w-full rounded-xl text-base font-bold">{busy ? <Spinner /> : <IconDownload size={20} />}{busy ? "Preparing your offer" : "Download your five-page offer"}</Button><p className="mt-4 text-xs text-muted-foreground">Reference {lead.ref_code}</p></div>
