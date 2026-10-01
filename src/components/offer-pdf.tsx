@@ -6,11 +6,13 @@ import type { Locale } from "@/lib/i18n";
 const INK = "#063A55", TEAL = "#1F6A8C", GOLD = "#FFB547", ICE = "#F3F8FB", LINE = "#D6E4EA", BODY = "#365462";
 const s = StyleSheet.create({
   page: { backgroundColor: "#FFFFFF", color: INK, fontFamily: "Helvetica", padding: 42, fontSize: 9.5 },
+  topRule: { position: "absolute", left: 0, right: 0, top: 0, height: 8, backgroundColor: INK },
+  goldRule: { position: "absolute", left: 0, right: 0, top: 8, height: 2, backgroundColor: GOLD },
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderBottomColor: LINE, paddingBottom: 10 },
   logo: { width: 72, height: 60, objectFit: "contain" }, meta: { fontSize: 7, color: TEAL, textAlign: "right", lineHeight: 1.6 },
   eyebrow: { fontSize: 8, color: TEAL, letterSpacing: 2, marginTop: 28 }, h1: { fontFamily: "Helvetica-Bold", fontSize: 27, lineHeight: 1.12, marginTop: 8 },
   h2: { fontFamily: "Helvetica-Bold", fontSize: 18, marginTop: 16, marginBottom: 9 }, lead: { color: BODY, fontSize: 11, lineHeight: 1.55, marginTop: 10 },
-  band: { backgroundColor: INK, color: "#FFFFFF", padding: 20, marginTop: 20 }, bandTitle: { fontFamily: "Helvetica-Bold", fontSize: 18 },
+  band: { backgroundColor: INK, color: "#FFFFFF", padding: 20, marginTop: 20, borderLeftWidth: 5, borderLeftColor: GOLD }, bandTitle: { fontFamily: "Helvetica-Bold", fontSize: 18 },
   grid: { flexDirection: "row", gap: 8, marginTop: 18 }, stat: { flex: 1, borderWidth: 1, borderColor: LINE, padding: 12, minHeight: 64 },
   label: { fontSize: 6.5, color: TEAL, letterSpacing: 1.2 }, value: { fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 4, lineHeight: 1.3 },
   card: { borderWidth: 1, borderColor: LINE, padding: 12, marginTop: 8 }, selected: { borderColor: GOLD, borderWidth: 2, backgroundColor: ICE },
@@ -19,10 +21,27 @@ const s = StyleSheet.create({
   chip: { backgroundColor: ICE, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, fontSize: 7, marginRight: 5, marginTop: 5 },
   footer: { position: "absolute", left: 42, right: 42, bottom: 24, borderTopWidth: 1, borderTopColor: LINE, paddingTop: 7, flexDirection: "row", justifyContent: "space-between", color: BODY, fontSize: 6.5 },
   callout: { borderLeftWidth: 4, borderLeftColor: GOLD, backgroundColor: ICE, padding: 12, marginTop: 14, lineHeight: 1.5 },
+  coverFrame: { borderWidth: 1.5, borderColor: GOLD, padding: 22, marginTop: 22 },
+  folio: { position: "absolute", right: 42, bottom: 42, width: 28, height: 28, borderRadius: 14, backgroundColor: INK, color: "#FFFFFF", textAlign: "center", paddingTop: 9, fontSize: 7 },
+  certificate: { backgroundColor: "#FFFFFF", color: INK, fontFamily: "Helvetica", padding: 28 },
+  certificateOuter: { height: "100%", borderWidth: 3, borderColor: INK, padding: 5 },
+  certificateInner: { height: "100%", borderWidth: 1, borderColor: GOLD, padding: 34, alignItems: "center", textAlign: "center" },
+  certificateLogo: { width: 86, height: 70, objectFit: "contain" },
+  certificateEyebrow: { marginTop: 20, color: TEAL, fontSize: 8, letterSpacing: 2.2 },
+  certificateTitle: { marginTop: 12, fontFamily: "Times-Bold", fontSize: 31, color: INK },
+  certificateName: { marginTop: 28, fontFamily: "Times-Italic", fontSize: 28, color: TEAL },
+  certificateCourse: { marginTop: 14, maxWidth: 420, fontFamily: "Helvetica-Bold", fontSize: 15, lineHeight: 1.35 },
+  certificateMeta: { marginTop: 24, width: "100%", flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderBottomWidth: 1, borderColor: LINE, paddingVertical: 13 },
+  certificateMetaCell: { width: "31%", textAlign: "center" },
+  seal: { marginTop: 24, width: 66, height: 66, borderRadius: 33, borderWidth: 2, borderColor: GOLD, backgroundColor: ICE, alignItems: "center", justifyContent: "center" },
+  sealText: { fontFamily: "Helvetica-Bold", color: TEAL, fontSize: 8, textAlign: "center" },
+  signature: { marginTop: 18, fontFamily: "Times-Italic", fontSize: 22, color: INK },
+  signatureRule: { width: 150, marginTop: 3, borderTopWidth: 1, borderColor: INK, paddingTop: 5, fontSize: 7, color: BODY },
+  legal: { marginTop: "auto", maxWidth: 430, fontSize: 6.5, lineHeight: 1.4, color: BODY },
 });
 
 function Header({ lead, page }: { lead: LeadResult; page: number }) {
-  return <View style={s.top} fixed><Image src={`${window.location.origin}/logo.png`} style={s.logo} /><Text style={s.meta}>{lead.ref_code}{"\n"}PERSONALISED STUDENT OFFER · {String(page).padStart(2, "0")}/05</Text></View>;
+  return <><View style={s.topRule} fixed /><View style={s.goldRule} fixed /><View style={s.top} fixed><Image src={`${window.location.origin}/logo.png`} style={s.logo} /><Text style={s.meta}>{lead.ref_code}{"\n"}PERSONALISED STUDENT OFFER · {String(page).padStart(2, "0")}/05</Text></View></>;
 }
 function Footer({ campus }: { campus: string }) { return <View style={s.footer} fixed><Text>MOMENTUM ONE · BUILDING MOMENTUM FOR YOUR FUTURE</Text><Text>{campus.toUpperCase()} CAMPUS</Text></View>; }
 const PFF = [
@@ -45,12 +64,12 @@ export function OfferDocument({ lead, locale = "en" }: { lead: LeadResult; origi
   const facts = [[c.student, lead.full_name], [c.course, chosen?.title ?? "Course to be confirmed"], [c.route, lead.study_route ?? "Foundation Year"], [c.intake, lead.intake ?? "Dates TBA"]];
   return <Document title={`Momentum One Offer ${lead.ref_code}`} author="Momentum One">
     <Page size="A4" style={s.page}><Header lead={lead} page={1} />
-      <Text style={s.eyebrow}>{c.pathway}</Text><Text style={s.h1}>{c.launch} {campus}</Text>
+      <View style={s.coverFrame}><Text style={s.eyebrow}>{c.pathway}</Text><Text style={s.h1}>{c.launch} {campus}</Text>
       <Text style={s.lead}>{c.prepared} {lead.full_name}. {c.selected} {chosen?.title ?? "your chosen degree"} with {lead.study_route ?? "Foundation Year"}, {c.subject}</Text>
-      <View style={s.grid}>{facts.map(([label, value]) => <View key={label} style={s.stat}><Text style={s.label}>{label}</Text><Text style={s.value}>{value}</Text></View>)}</View>
+      <View style={s.grid}>{facts.map(([label, value]) => <View key={label} style={s.stat}><Text style={s.label}>{label}</Text><Text style={s.value}>{value}</Text></View>)}</View></View>
       <View style={s.band}><Text style={s.bandTitle}>{c.fit}</Text><Text style={{ marginTop: 8, lineHeight: 1.55 }}>{c.fitText}</Text></View>
       <Text style={s.h2}>{c.conversation}</Text><Text style={s.lead}>{c.guide} {issued} · {lead.ref_code}.</Text>
-      <View style={s.callout}><Text style={s.course}>{c.important}</Text><Text style={s.small}>{c.disclaimer}</Text></View><Footer campus={campus} />
+      <View style={s.callout}><Text style={s.course}>{c.important}</Text><Text style={s.small}>{c.disclaimer}</Text></View><Text style={s.folio}>01</Text><Footer campus={campus} />
     </Page>
     <Page size="A4" style={s.page}><Header lead={lead} page={2} /><Text style={s.eyebrow}>01 · {c.courses}</Text><Text style={s.h1}>{c.options} {campus}</Text><Text style={s.lead}>{c.selectedHint}</Text>
       {courses.map((course) => <View key={course.id} style={[s.card, course.id === chosen?.id ? s.selected : {}]}><Text style={s.label}>{course.university.toUpperCase()}</Text><Text style={s.course}>{course.title}</Text><Text style={s.small}>{course.route} · {course.patterns.join(" · ")}</Text></View>)}<Footer campus={campus} />
@@ -73,10 +92,35 @@ export function OfferDocument({ lead, locale = "en" }: { lead: LeadResult; origi
   </Document>;
 }
 
+const CERTIFICATE_COPY = {
+  en: { eyebrow: "MOMENTUM ONE PERSONALISED PATHWAY", title: "Pathway Certificate", presented: "Prepared for", confirms: "Your selected route towards further study", campus: "CAMPUS", route: "ENTRY ROUTE", intake: "INTAKE", director: "Robert · Director", legal: "This certificate records a personalised study pathway prepared by Momentum One. It is not a university admission offer, academic award or proof of enrolment. Admission remains subject to institutional review, assessment and eligibility checks." },
+  ro: { eyebrow: "TRASEU PERSONALIZAT MOMENTUM ONE", title: "Certificat de parcurs", presented: "Pregătit pentru", confirms: "Traseul selectat către studii universitare", campus: "CAMPUS", route: "RUTĂ DE ADMITERE", intake: "ÎNSCRIERE", director: "Robert · Director", legal: "Acest certificat consemnează un traseu de studiu personalizat pregătit de Momentum One. Nu este o ofertă universitară de admitere, o calificare academică sau o dovadă a înscrierii. Admiterea rămâne supusă evaluării instituției și verificării eligibilității." },
+  es: { eyebrow: "RUTA PERSONALIZADA MOMENTUM ONE", title: "Certificado de itinerario", presented: "Preparado para", confirms: "Tu ruta seleccionada hacia estudios universitarios", campus: "CAMPUS", route: "VÍA DE ACCESO", intake: "CONVOCATORIA", director: "Robert · Director", legal: "Este certificado registra una ruta de estudios personalizada preparada por Momentum One. No es una oferta de admisión universitaria, un título académico ni una prueba de matrícula. La admisión está sujeta a la revisión de la institución y a los controles de elegibilidad." },
+} as const;
+
+export function PathwayCertificate({ lead, locale = "en" }: { lead: LeadResult; locale?: Locale }) {
+  const c = CERTIFICATE_COPY[locale];
+  const campus = campusName(lead.nearest_campus);
+  const issued = new Date(lead.created_at).toLocaleDateString(locale === "ro" ? "ro-RO" : locale === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+  return <Document title={`Momentum One Pathway Certificate ${lead.ref_code}`} author="Momentum One"><Page size="A4" orientation="landscape" style={s.certificate}><View style={s.certificateOuter}><View style={s.certificateInner}>
+    <Image src={`${window.location.origin}/logo.png`} style={s.certificateLogo} />
+    <Text style={s.certificateEyebrow}>{c.eyebrow}</Text><Text style={s.certificateTitle}>{c.title}</Text><Text style={[s.small, { marginTop: 16 }]}>{c.presented}</Text><Text style={s.certificateName}>{lead.full_name}</Text><Text style={[s.small, { marginTop: 12 }]}>{c.confirms}</Text><Text style={s.certificateCourse}>{lead.selected_course ?? "Course to be confirmed"}</Text>
+    <View style={s.certificateMeta}>{[[c.campus, campus], [c.route, lead.study_route ?? "Foundation Year"], [c.intake, lead.intake ?? "To be confirmed"]].map(([label, value]) => <View key={label} style={s.certificateMetaCell}><Text style={s.label}>{label}</Text><Text style={s.value}>{value}</Text></View>)}</View>
+    <View style={s.seal}><Text style={s.sealText}>MOMENTUM{"\n"}ONE</Text></View><Text style={s.signature}>Robert</Text><Text style={s.signatureRule}>{c.director} · {issued} · {lead.ref_code}</Text><Text style={s.legal}>{c.legal}</Text>
+  </View></View></Page></Document>;
+}
+
 export async function downloadOffer(lead: LeadResult, locale: Locale = "en") {
   const blob = await pdf(<OfferDocument lead={lead} locale={locale} />).toBlob();
   const url = URL.createObjectURL(blob), a = document.createElement("a");
   const campus = campusName(lead.nearest_campus).replace(/\s+/g, "-");
   const course = (lead.selected_course ?? "Course").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
   a.href = url; a.download = `Momentum-One-${lead.ref_code}-${campus}-${course}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+export async function downloadCertificate(lead: LeadResult, locale: Locale = "en") {
+  const blob = await pdf(<PathwayCertificate lead={lead} locale={locale} />).toBlob();
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  const campus = campusName(lead.nearest_campus).replace(/\s+/g, "-");
+  a.href = url; a.download = `Momentum-One-${lead.ref_code}-${campus}-Pathway-Certificate.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
