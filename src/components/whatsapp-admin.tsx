@@ -48,10 +48,23 @@ export function WhatsAppQueue({ onOpenLead }: { onOpenLead: (leadId: string) => 
       return data ?? [];
     },
   });
+  const outside = useQuery({
+    queryKey: ["wa", "outside"],
+    refetchInterval: 60000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("whatsapp_conversations")
+        .select("id, wa_phone, last_inbound_at").eq("bot_enabled", false).not("last_inbound_at", "is", null)
+        .order("last_inbound_at", { ascending: false }).limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const rows = q.data ?? [];
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between"><h2 className="font-bold">WhatsApp: waiting for agent</h2><span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold">{rows.length}</span></div>
+      {(outside.data?.length ?? 0) > 0 && <details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Not from website: {outside.data!.length} chats (bot does not reply, answer from the WhatsApp Business app)</summary>
+        <ul className="mt-1 space-y-0.5">{outside.data!.map((c) => <li key={c.id}>+{c.wa_phone}{c.last_inbound_at ? ` · ${new Date(c.last_inbound_at).toLocaleString("en-GB")}` : ""}</li>)}</ul></details>}
       {rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No students waiting. The assistant is handling chats.</p> : (
         <ul className="mt-3 divide-y divide-border">
           {rows.map((c) => {
