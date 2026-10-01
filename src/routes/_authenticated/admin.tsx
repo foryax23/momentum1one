@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Download, LogOut, Search, X } from "lucide-react";
+import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search } from "@/components/icons";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
@@ -11,9 +11,9 @@ import logo from "@/assets/logo.png";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Leads dashboard — Momentum One" },
+      { title: "Leads dashboard | Momentum One" },
       { name: "description", content: "Momentum One admin leads dashboard." },
-      { property: "og:title", content: "Leads dashboard — Momentum One" },
+      { property: "og:title", content: "Leads dashboard | Momentum One" },
       { property: "og:description", content: "Momentum One admin leads dashboard." },
       { name: "robots", content: "noindex" },
     ],
@@ -68,7 +68,7 @@ function Admin() {
     const counts: Record<string, number> = {};
     all.forEach((l) => (counts[l.city] = (counts[l.city] ?? 0) + 1));
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => `${c} (${n})`).join(", ");
-    return { total: all.length, week, top: top || "—" };
+    return { total: all.length, week, top: top || "-" };
   }, [leads.data]);
 
   async function update(id: string, patch: Partial<Lead>) {
@@ -104,15 +104,15 @@ function Admin() {
     );
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
+    <main className="min-h-screen bg-ruled"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <img src={logo} alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full bg-foreground p-0.5" />
+          <img src={logo} alt="" width={56} height={48} className="h-12 w-auto shrink-0" />
           <h1 className="truncate text-xl font-bold sm:text-2xl">Leads</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={exportCsv} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm hover:bg-secondary"><Download className="h-4 w-4" /><span className="hidden sm:inline">Export CSV</span></button>
-          <button onClick={signOut} aria-label="Sign out" className="rounded-xl border border-border px-3 py-2 hover:bg-secondary"><LogOut className="h-4 w-4" /></button>
+          <button onClick={exportCsv} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm hover:bg-secondary"><Download size={18} /><span className="hidden sm:inline">Export CSV</span></button>
+          <button onClick={signOut} aria-label="Sign out" className="rounded-xl border border-border px-3 py-2 hover:bg-secondary"><LogOut size={18} /></button>
         </div>
       </header>
 
@@ -124,7 +124,7 @@ function Admin() {
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, phone, ref…" className="w-full rounded-xl border border-input bg-secondary/40 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary" />
         </div>
         <select value={city} onChange={(e) => setCity(e.target.value)} className="rounded-xl border border-input bg-secondary px-3 py-2.5 text-sm">
@@ -146,7 +146,7 @@ function Admin() {
                 <td className="p-3"><div className="font-semibold">{l.full_name}</div><div className="text-xs text-muted-foreground">{l.ref_code}</div></td>
                 <td className="p-3"><div>{l.email}</div><div className="text-xs text-muted-foreground">{l.phone}</div></td>
                 <td className="p-3">{l.city}</td>
-                <td className="p-3"><div>{l.interest ?? "—"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
+                <td className="p-3"><div>{l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
                 <td className="p-3"><Badge s={l.status} /></td>
                 <td className="p-3 text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}</td>
               </tr>
@@ -156,13 +156,14 @@ function Admin() {
         </table>
       </div>
 
+      </div>
       {open && <Detail lead={open} onClose={() => setOpen(null)} onSave={(p) => { update(open.id, p); setOpen({ ...open, ...p }); }} />}
     </main>
   );
 }
 
 function Card({ l, v, small }: { l: string; v: string; small?: boolean }) {
-  return <div className="glass rounded-2xl p-5"><div className="text-xs text-muted-foreground">{l}</div><div className={cn("mt-1 font-display font-bold", small ? "text-sm" : "text-3xl")}>{v}</div></div>;
+  return <div className="rounded-sm border border-ink/15 bg-card p-5 shadow-paper"><div className="text-xs text-muted-foreground">{l}</div><div className={cn("mt-1 font-display font-bold", small ? "text-sm" : "text-3xl")}>{v}</div></div>;
 }
 
 function Badge({ s }: { s: string }) {
@@ -177,12 +178,12 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-t-3xl border border-border bg-popover p-6 sm:rounded-3xl">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0"><h2 className="truncate text-xl font-bold">{lead.full_name}</h2><p className="text-xs text-muted-foreground">{lead.ref_code}</p></div>
-          <button onClick={onClose} aria-label="Close"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
         <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
           <Row k="Email" v={<a href={`mailto:${lead.email}`} className="text-primary">{lead.email}</a>} />
           <Row k="Phone" v={<a href={`tel:${lead.phone}`} className="text-primary">{lead.phone}</a>} />
-          <Row k="City" v={lead.city} /><Row k="Interest" v={lead.interest ?? "—"} /><Row k="Intake" v={lead.intake ?? "—"} />
+          <Row k="City" v={lead.city} /><Row k="Interest" v={lead.interest ?? "-"} /><Row k="Intake" v={lead.intake ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -191,7 +192,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
           ))}
         </div>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={4} placeholder="Notes…" className="mt-4 w-full rounded-xl border border-input bg-secondary/40 p-3 text-sm outline-none focus:border-primary" />
-        <button onClick={() => onSave({ notes })} className="mt-3 w-full rounded-xl bg-launch py-3 font-display font-semibold text-primary-foreground">Save notes</button>
+        <button onClick={() => onSave({ notes })} className="mt-3 w-full rounded-xl bg-ink py-3 font-display font-semibold text-primary-foreground">Save notes</button>
       </div>
     </div>
   );

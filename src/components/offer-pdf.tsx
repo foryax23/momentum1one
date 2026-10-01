@@ -1,95 +1,172 @@
-import { Document, Page, View, Text, Image, StyleSheet, pdf } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet, Svg, Path, Circle, Rect, G, pdf } from "@react-pdf/renderer";
 import type { LeadResult } from "@/lib/funnel";
 
-const NAVY = "#0c2340";
+const INK = "#0c2340";
 const TEAL = "#2a7f9e";
 const GOLD = "#b8923a";
-const CREAM = "#fbf7ee";
+const CREAM = "#fbf8f0";
+
+const W = 841;
+const H = 594;
 
 const s = StyleSheet.create({
-  page: { backgroundColor: CREAM, padding: 22, fontFamily: "Helvetica", color: NAVY },
-  outer: { flex: 1, borderWidth: 2, borderColor: GOLD, padding: 6 },
-  inner: { flex: 1, borderWidth: 0.8, borderColor: TEAL, paddingVertical: 26, paddingHorizontal: 48, position: "relative" },
-  corner: { position: "absolute", width: 46, height: 46, borderColor: GOLD },
-  watermark: { position: "absolute", top: 90, left: 270, width: 260, height: 260, opacity: 0.05 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  logo: { width: 92, height: 92 },
-  ref: { fontSize: 8, letterSpacing: 2, color: TEAL, textAlign: "right" },
-  eyebrow: { fontSize: 9, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: 2 },
-  title: { fontFamily: "Times-Bold", fontSize: 30, textAlign: "center", marginTop: 6 },
-  presented: { fontFamily: "Times-Italic", fontSize: 12, textAlign: "center", marginTop: 12, color: TEAL },
-  name: { fontFamily: "Times-BoldItalic", fontSize: 36, textAlign: "center", marginTop: 4 },
-  rule: { height: 1, backgroundColor: GOLD, width: 300, alignSelf: "center", marginTop: 4 },
-  body: { fontSize: 10.5, textAlign: "center", lineHeight: 1.55, marginTop: 12, paddingHorizontal: 40 },
-  grid: { flexDirection: "row", justifyContent: "center", marginTop: 14 },
-  cell: { width: 150, alignItems: "center", paddingHorizontal: 6 },
-  cellLabel: { fontSize: 7, letterSpacing: 2, color: TEAL },
-  cellValue: { fontFamily: "Helvetica-Bold", fontSize: 11, marginTop: 3, textAlign: "center" },
+  page: { backgroundColor: CREAM, fontFamily: "Helvetica", color: INK },
+  layer: { position: "absolute", top: 0, left: 0 },
+  content: { position: "absolute", top: 46, left: 70, right: 70, bottom: 46 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  logo: { width: 78, height: 67, objectFit: "contain" },
+  refLabel: { fontSize: 7, letterSpacing: 2, color: TEAL, textAlign: "right" },
+  refValue: { fontFamily: "Helvetica-Bold", fontSize: 12, textAlign: "right", marginTop: 2 },
+  eyebrow: { fontSize: 8.5, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: 2 },
+  title: { fontFamily: "Times-Bold", fontSize: 32, textAlign: "center", marginTop: 6, letterSpacing: 0.5 },
+  presented: { fontFamily: "Times-Italic", fontSize: 12, textAlign: "center", marginTop: 10, color: TEAL },
+  name: { fontFamily: "Times-BoldItalic", fontSize: 40, textAlign: "center", marginTop: 2 },
+  body: { fontSize: 10, textAlign: "center", lineHeight: 1.6, marginTop: 10, paddingHorizontal: 70, color: "#3a4a60" },
+  facts: { flexDirection: "row", justifyContent: "center", marginTop: 14, borderTopWidth: 0.6, borderBottomWidth: 0.6, borderColor: GOLD, paddingVertical: 8, marginHorizontal: 40 },
+  fact: { flex: 1, alignItems: "center", borderRightWidth: 0.4, borderColor: "#d8cba8" },
+  factLabel: { fontSize: 6.5, letterSpacing: 2, color: TEAL },
+  factValue: { fontFamily: "Helvetica-Bold", fontSize: 10.5, marginTop: 3, textAlign: "center" },
+  steps: { flexDirection: "row", justifyContent: "center", marginTop: 12 },
+  step: { flexDirection: "row", alignItems: "center", marginHorizontal: 8 },
+  stepNum: { width: 14, height: 14, borderRadius: 7, backgroundColor: INK, color: CREAM, fontSize: 7, textAlign: "center", paddingTop: 3, fontFamily: "Helvetica-Bold" },
+  stepText: { fontSize: 8, marginLeft: 5 },
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" },
-  sigBlock: { width: 190, alignItems: "center" },
-  sig: { width: 150, height: 75, marginBottom: -8 },
-  sigLine: { height: 0.8, backgroundColor: NAVY, width: 180 },
-  sigName: { fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 4 },
-  sigRole: { fontSize: 8, color: TEAL, letterSpacing: 1 },
-  seal: { width: 84, height: 84, borderRadius: 42, borderWidth: 2, borderColor: GOLD, alignItems: "center", justifyContent: "center", backgroundColor: "#f3e6c4" },
-  sealInner: { width: 70, height: 70, borderRadius: 35, borderWidth: 0.8, borderColor: GOLD, alignItems: "center", justifyContent: "center" },
-  sealText: { fontSize: 6.5, letterSpacing: 1.5, color: GOLD, fontFamily: "Helvetica-Bold", textAlign: "center" },
+  block: { width: 200 },
+  sig: { width: 150, height: 75, marginBottom: -10, alignSelf: "center" },
+  line: { height: 0.8, backgroundColor: INK },
+  sigName: { fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 4, textAlign: "center" },
+  sigRole: { fontSize: 7.5, color: TEAL, letterSpacing: 1.5, textAlign: "center", marginTop: 1 },
 });
 
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const map = {
-    tl: { top: 8, left: 8, borderTopWidth: 2, borderLeftWidth: 2 },
-    tr: { top: 8, right: 8, borderTopWidth: 2, borderRightWidth: 2 },
-    bl: { bottom: 8, left: 8, borderBottomWidth: 2, borderLeftWidth: 2 },
-    br: { bottom: 8, right: 8, borderBottomWidth: 2, borderRightWidth: 2 },
-  } as const;
-  return <View style={[s.corner, map[pos]]} />;
+/** Engraved double frame with ornamental corners, drawn as vector. */
+function Frame() {
+  const corner = (x: number, y: number, sx: number, sy: number) => (
+    <G transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
+      <Path d="M0 0 L46 0 M0 0 L0 46" stroke={GOLD} strokeWidth={2} />
+      <Path d="M8 8 C 30 8, 8 30, 30 30 C 8 30, 30 8, 8 8 Z" stroke={GOLD} strokeWidth={0.8} fill="none" />
+      <Circle cx={30} cy={30} r={2.4} fill={GOLD} />
+      <Path d="M14 0 C14 10, 10 14, 0 14" stroke={TEAL} strokeWidth={0.6} fill="none" />
+    </G>
+  );
+  return (
+    <View style={[s.layer, { width: W, height: H }]} fixed>
+    <Svg width={W} height={H}>
+      <Rect x={18} y={18} width={W - 36} height={H - 36} stroke={GOLD} strokeWidth={2.2} fill="none" />
+      <Rect x={25} y={25} width={W - 50} height={H - 50} stroke={GOLD} strokeWidth={0.6} fill="none" />
+      <Rect x={32} y={32} width={W - 64} height={H - 64} stroke={TEAL} strokeWidth={0.5} fill="none" strokeDasharray="1 3" />
+      {corner(32, 32, 1, 1)}
+      {corner(W - 32, 32, -1, 1)}
+      {corner(32, H - 32, 1, -1)}
+      {corner(W - 32, H - 32, -1, -1)}
+      {/* guilloche band along top and bottom */}
+      {Array.from({ length: 40 }).map((_, i) => (
+        <G key={i}>
+          <Circle cx={160 + i * 13.2} cy={40} r={6} stroke={GOLD} strokeWidth={0.3} fill="none" opacity={0.6} />
+          <Circle cx={160 + i * 13.2} cy={H - 40} r={6} stroke={GOLD} strokeWidth={0.3} fill="none" opacity={0.6} />
+        </G>
+      ))}
+    </Svg>
+    </View>
+  );
+}
+
+function SealSvg() {
+  const rays = Array.from({ length: 36 });
+  return (
+    <Svg width={96} height={96} viewBox="0 0 100 100">
+      {rays.map((_, i) => {
+        const a = (i / rays.length) * Math.PI * 2;
+        const x1 = 50 + Math.cos(a) * 40, y1 = 50 + Math.sin(a) * 40;
+        const x2 = 50 + Math.cos(a) * 48, y2 = 50 + Math.sin(a) * 48;
+        return <Path key={i} d={`M${x1} ${y1} L${x2} ${y2}`} stroke={GOLD} strokeWidth={2.4} />;
+      })}
+      <Circle cx={50} cy={50} r={40} fill="#efe0b6" stroke={GOLD} strokeWidth={1.4} />
+      <Circle cx={50} cy={50} r={33} fill="none" stroke={GOLD} strokeWidth={0.6} strokeDasharray="2 2" />
+      <Circle cx={50} cy={50} r={26} fill="none" stroke={GOLD} strokeWidth={0.8} />
+      <Path d="M50 30 L53 40 L64 40 L55 46 L58 57 L50 50 L42 57 L45 46 L36 40 L47 40 Z" fill={GOLD} />
+      <Path d="M38 64 L62 64" stroke={GOLD} strokeWidth={0.8} />
+    </Svg>
+  );
+}
+
+/** Deterministic QR-style verification block derived from the reference. */
+function RefBlock({ code }: { code: string }) {
+  let h = 2166136261;
+  for (const c of code) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const cells: [number, number][] = [];
+  for (let y = 0; y < 11; y++) for (let x = 0; x < 11; x++) {
+    h = Math.imul(h ^ (x * 31 + y), 16777619);
+    const finder = (x < 3 && y < 3) || (x > 7 && y < 3) || (x < 3 && y > 7);
+    if (!finder && (h >>> 28) % 2 === 0) cells.push([x, y]);
+  }
+  const finder = (x: number, y: number) => (
+    <G key={`${x}-${y}`}><Rect x={x} y={y} width={3} height={3} fill={INK} /><Rect x={x + 0.6} y={y + 0.6} width={1.8} height={1.8} fill={CREAM} /><Rect x={x + 1.1} y={y + 1.1} width={0.8} height={0.8} fill={INK} /></G>
+  );
+  return (
+    <Svg width={52} height={52} viewBox="0 0 11 11">
+      {cells.map(([x, y]) => <Rect key={`${x}.${y}`} x={x} y={y} width={1} height={1} fill={INK} />)}
+      {finder(0, 0)}{finder(8, 0)}{finder(0, 8)}
+    </Svg>
+  );
 }
 
 export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: string }) {
   const issued = new Date(lead.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   return (
-    <Document title={`Momentum One Offer — ${lead.full_name}`} author="Momentum One">
+    <Document title={`Momentum One Offer, ${lead.full_name}`} author="Momentum One">
       <Page size="A4" orientation="landscape" style={s.page}>
-        <View style={s.outer}>
-          <View style={s.inner}>
-            <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-            <Image src={`${origin}/logo.png`} style={s.watermark} />
-            <View style={s.header}>
-              <Image src={`${origin}/logo.png`} style={s.logo} />
-              <View>
-                <Text style={s.ref}>REFERENCE</Text>
-                <Text style={[s.ref, { fontFamily: "Helvetica-Bold", fontSize: 11, color: NAVY }]}>{lead.ref_code}</Text>
-                <Text style={[s.ref, { marginTop: 4 }]}>ISSUED {issued.toUpperCase()}</Text>
+        <Frame />
+        <Image src={`${origin}/logo-mark.png`} style={{ position: "absolute", top: 150, left: W / 2 - 150, width: 300, height: 250, opacity: 0.04 }} />
+        <View style={s.content}>
+          <View style={s.header}>
+            <Image src={`${origin}/logo.png`} style={s.logo} />
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={s.refLabel}>REFERENCE</Text>
+              <Text style={s.refValue}>{lead.ref_code}</Text>
+              <Text style={[s.refLabel, { marginTop: 5 }]}>ISSUED {issued.toUpperCase()}</Text>
+            </View>
+          </View>
+
+          <Text style={s.eyebrow}>MOMENTUM ONE · UK UNIVERSITY PATHWAYS</Text>
+          <Text style={s.title}>Certificate of Pre-Approved Pathway</Text>
+          <Text style={s.presented}>This certificate is proudly presented to</Text>
+          <Text style={s.name}>{lead.full_name}</Text>
+          <Text style={s.body}>
+            In recognition of taking the first step toward a UK university degree. You have been selected for a personal
+            admissions pathway with our partner universities, with one-to-one guidance through your application, your
+            documents and your Prepare for Foundation (PFF) Day.
+          </Text>
+
+          <View style={s.facts}>
+            {[["AREA OF STUDY", lead.interest ?? "To be advised"], ["TARGET INTAKE", lead.intake ?? "January 2027"], ["NEAREST CITY", lead.city], ["STATUS", "Pre-approved"]].map(([l, v], i) => (
+              <View key={l} style={[s.fact, i === 3 ? { borderRightWidth: 0 } : {}]}>
+                <Text style={s.factLabel}>{l}</Text>
+                <Text style={s.factValue}>{v}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={s.steps}>
+            {["Advisor call", "Documents", "PFF Day", "Enrol"].map((t, i) => (
+              <View key={t} style={s.step}><Text style={s.stepNum}>{i + 1}</Text><Text style={s.stepText}>{t}</Text></View>
+            ))}
+          </View>
+
+          <View style={s.footer}>
+            <View style={[s.block, { flexDirection: "row", alignItems: "flex-end" }]}>
+              <RefBlock code={lead.ref_code} />
+              <View style={{ marginLeft: 8, width: 130 }}>
+                <Text style={{ fontSize: 6.5, letterSpacing: 1.5, color: TEAL }}>VERIFICATION</Text>
+                <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", marginTop: 2 }}>{lead.ref_code}</Text>
+                <Text style={{ fontSize: 6.5, color: "#5b6b80", marginTop: 3, lineHeight: 1.4 }}>Valid for the selected intake, subject to the PFF assessment.</Text>
               </View>
             </View>
-            <Text style={s.eyebrow}>MOMENTUM ONE · UK UNIVERSITY PATHWAYS</Text>
-            <Text style={s.title}>Certificate of Pre-Approved Pathway</Text>
-            <Text style={s.presented}>This certificate is proudly presented to</Text>
-            <Text style={s.name}>{lead.full_name}</Text>
-            <View style={s.rule} />
-            <Text style={s.body}>
-              In recognition of taking the first step toward a UK university degree. You have been selected for a
-              personal admissions pathway with our partner universities, including dedicated one-to-one guidance through
-              your application, document preparation and your Prepare for Foundation (PFF) Day.
-            </Text>
-            <View style={s.grid}>
-              <View style={s.cell}><Text style={s.cellLabel}>AREA OF STUDY</Text><Text style={s.cellValue}>{lead.interest ?? "To be advised"}</Text></View>
-              <View style={s.cell}><Text style={s.cellLabel}>TARGET INTAKE</Text><Text style={s.cellValue}>{lead.intake ?? "January 2027"}</Text></View>
-              <View style={s.cell}><Text style={s.cellLabel}>NEAREST CITY</Text><Text style={s.cellValue}>{lead.city}</Text></View>
-              <View style={s.cell}><Text style={s.cellLabel}>NEXT STEP</Text><Text style={s.cellValue}>Advisor call</Text></View>
-            </View>
-            <View style={s.footer}>
-              <View style={s.sigBlock}>
-                <Text style={{ fontSize: 8, color: TEAL }}>Valid for the selected intake, subject to the PFF assessment.</Text>
-              </View>
-              <View style={s.seal}><View style={s.sealInner}><Text style={s.sealText}>{"MOMENTUM\nONE\n★ 2027 ★"}</Text></View></View>
-              <View style={s.sigBlock}>
-                <Image src={`${origin}/signature.png`} style={s.sig} />
-                <View style={s.sigLine} />
-                <Text style={s.sigName}>Robert</Text>
-                <Text style={s.sigRole}>DIRECTOR, MOMENTUM ONE</Text>
-              </View>
+            <SealSvg />
+            <View style={s.block}>
+              <Image src={`${origin}/signature.png`} style={s.sig} />
+              <View style={s.line} />
+              <Text style={s.sigName}>Robert</Text>
+              <Text style={s.sigRole}>DIRECTOR, MOMENTUM ONE</Text>
             </View>
           </View>
         </View>

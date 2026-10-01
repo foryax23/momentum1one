@@ -8,12 +8,12 @@
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 14px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,7 +28,12 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-stone: var(--stone);
+  --color-teal: var(--teal);
   --color-gold: var(--gold);
+  --color-margin: var(--margin);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -50,44 +55,48 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Deep-space navy + launch teal + certificate gold */
+/* Paper & Ink + Teal, gold reserved for certificate moments */
 :root {
-  --radius: 1rem;
-  --background: oklch(0.14 0.035 245);
-  --foreground: oklch(0.97 0.01 220);
-  --card: oklch(0.19 0.04 240 / 70%);
-  --card-foreground: oklch(0.97 0.01 220);
-  --popover: oklch(0.18 0.04 240);
-  --popover-foreground: oklch(0.97 0.01 220);
-  --primary: oklch(0.72 0.12 215);
-  --primary-foreground: oklch(0.14 0.035 245);
-  --secondary: oklch(0.24 0.045 238);
-  --secondary-foreground: oklch(0.97 0.01 220);
-  --muted: oklch(0.22 0.04 240);
-  --muted-foreground: oklch(0.72 0.03 230);
-  --accent: oklch(0.42 0.08 225);
-  --accent-foreground: oklch(0.97 0.01 220);
-  --gold: oklch(0.8 0.12 85);
-  --destructive: oklch(0.65 0.2 25);
+  --radius: 0.375rem;
+  --paper: oklch(0.966 0.008 85);   /* #f5f3ee */
+  --stone: oklch(0.92 0.011 80);    /* #e8e4dd */
+  --ink: oklch(0.255 0.06 255);     /* #0c2340 */
+  --teal: oklch(0.55 0.09 225);     /* #2a7f9e */
+  --gold: oklch(0.67 0.11 80);      /* #b8923a */
+  --margin: oklch(0.75 0.09 20);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.985 0.004 85);
+  --card-foreground: var(--ink);
+  --popover: oklch(0.985 0.004 85);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--stone);
+  --secondary-foreground: var(--ink);
+  --muted: var(--stone);
+  --muted-foreground: oklch(0.48 0.03 250);
+  --accent: var(--teal);
+  --accent-foreground: var(--paper);
+  --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.72 0.12 215);
-  --chart-1: oklch(0.72 0.12 215);
-  --chart-2: oklch(0.8 0.12 85);
-  --chart-3: oklch(0.6 0.1 240);
-  --chart-4: oklch(0.7 0.14 160);
-  --chart-5: oklch(0.65 0.18 30);
-  --sidebar: oklch(0.17 0.04 242);
-  --sidebar-foreground: oklch(0.97 0.01 220);
-  --sidebar-primary: oklch(0.72 0.12 215);
-  --sidebar-primary-foreground: oklch(0.14 0.035 245);
-  --sidebar-accent: oklch(0.24 0.045 238);
-  --sidebar-accent-foreground: oklch(0.97 0.01 220);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.12 215);
-  --glow-primary: 0 0 60px -10px color-mix(in oklab, var(--primary) 70%, transparent);
-  --gradient-launch: linear-gradient(135deg, oklch(0.78 0.12 210), oklch(0.6 0.12 235));
+  --border: oklch(0.255 0.06 255 / 12%);
+  --input: oklch(0.255 0.06 255 / 18%);
+  --ring: var(--teal);
+  --chart-1: var(--teal);
+  --chart-2: var(--gold);
+  --chart-3: var(--ink);
+  --chart-4: oklch(0.6 0.12 155);
+  --chart-5: oklch(0.6 0.15 30);
+  --sidebar: var(--stone);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--paper);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--teal);
+  --shadow-paper: 0 1px 0 oklch(1 0 0 / 60%) inset, 0 30px 60px -30px oklch(0.255 0.06 255 / 35%), 0 8px 20px -10px oklch(0.255 0.06 255 / 20%);
 }
 
 @layer base {
@@ -95,6 +104,7 @@
     border-color: var(--color-border);
   }
   html {
+    scroll-snap-type: y proximity;
     scroll-behavior: smooth;
   }
   body {
@@ -107,44 +117,52 @@
     font-family: var(--font-display);
     letter-spacing: -0.03em;
   }
+  ::selection {
+    background: color-mix(in oklab, var(--teal) 25%, transparent);
+  }
 }
 
-@utility text-launch {
-  background: var(--gradient-launch);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Ruled notebook paper with a margin line */
+@utility bg-ruled {
+  background-image:
+    linear-gradient(to right, transparent 4.9rem, color-mix(in oklab, var(--margin) 45%, transparent) 4.9rem, color-mix(in oklab, var(--margin) 45%, transparent) calc(4.9rem + 1px), transparent calc(4.9rem + 1px)),
+    linear-gradient(color-mix(in oklab, var(--gold) 22%, transparent) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 2.5rem;
+  @media (max-width: 640px) {
+    background-image: linear-gradient(color-mix(in oklab, var(--gold) 20%, transparent) 1px, transparent 1px);
+    background-size: 100% 2.5rem;
+  }
 }
 
-@utility bg-launch {
-  background: var(--gradient-launch);
+/* Graph paper used on the "process" slide */
+@utility bg-grid {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--teal) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to right, color-mix(in oklab, var(--teal) 9%, transparent) 1px, transparent 1px);
+  background-size: 2rem 2rem;
 }
 
-@utility glow {
-  box-shadow: var(--glow-primary);
+/* Open book page: soft gutter shadow down the centre */
+@utility bg-pages {
+  background-image:
+    linear-gradient(to right, transparent 46%, color-mix(in oklab, var(--ink) 7%, transparent) 50%, transparent 54%),
+    radial-gradient(ellipse at top, color-mix(in oklab, var(--stone) 80%, transparent), transparent 70%);
 }
 
-@utility glass {
-  background: color-mix(in oklab, var(--card) 100%, transparent);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid var(--border);
+@utility shadow-paper {
+  box-shadow: var(--shadow-paper);
 }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
+@utility snap-slide {
+  scroll-snap-align: start;
 }
-@keyframes drift {
-  from { transform: translateY(0); }
-  to { transform: translateY(-50%); }
-}
-@keyframes trail {
-  0% { transform: translateY(0) scaleY(1); opacity: 0.9; }
-  100% { transform: translateY(40px) scaleY(1.6); opacity: 0; }
+
+@keyframes ink-draw {
+  to { stroke-dashoffset: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
