@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
-import heroMp4 from "@/assets/hero/momentum-campus-loop.mp4.asset.json";
-import heroWebm from "@/assets/hero/momentum-campus-loop.webm.asset.json";
-import heroPoster from "@/assets/hero/momentum-campus-poster.png.asset.json";
+import heroMp4 from "@/assets/hero/momentum-campus-loop-v2.mp4.asset.json";
+import heroWebm from "@/assets/hero/momentum-campus-loop-v2.webm.asset.json";
+import heroPoster from "@/assets/hero/momentum-campus-poster-v2.png.asset.json";
 
 export function HeroVideo() {
   const video = useRef<HTMLVideoElement>(null);
