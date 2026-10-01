@@ -11,7 +11,8 @@ import { CourseComparison, WhatYouReceive } from "@/components/home-sections";
 import { HeroVideo } from "@/components/hero-video";
 import { PromoVideoFeature } from "@/components/promo-video";
 import { cn } from "@/lib/utils";
-import heroImage from "@/assets/courses/business.jpg";
+import { openCookieSettings } from "@/components/cookie-consent";
+import { IconAgents, IconUniversity } from "@/components/icons";
 
 const TITLE = "Launch your UK degree | Momentum One";
 const DESC = "Foundation Year and Year 1 degrees in Manchester, Sunderland, Derby, Newcastle and Luton. Check your options in under a minute.";
@@ -45,31 +46,25 @@ const FAQS: [string, string][] = [
 
 function Index() {
   return <main id="top" className="overflow-x-hidden bg-background">
+    <AnnouncementBar />
     <Header />
-    <section className="relative min-h-[720px] overflow-hidden">
+    <section className="relative min-h-[720px] overflow-hidden bg-primary">
       <HeroVideo />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 py-10 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-16">
+      <div className="relative mx-auto grid max-w-6xl items-start gap-8 px-5 py-9 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14 lg:py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease }} className="grid gap-5">
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary/55 px-3 py-1 text-xs font-semibold uppercase tracking-[.14em] text-primary-foreground backdrop-blur"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />January 2027 applications open</p>
-          <h1 className="max-w-2xl text-[2.75rem] font-bold italic leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">A UK degree, <em className="text-gold">close to home.</em></h1>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">Your next move starts here</p>
+          <RotatingHeadline />
           <p className="max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80">Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.</p>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {["7 degree choices", "5 UK campuses", "Foundation and Year 1 routes", "Advisor support after applying"].map((item) => <li key={item} className="flex items-center gap-2 text-sm font-semibold text-primary-foreground"><span className="grid h-6 w-6 place-items-center rounded-full bg-primary-foreground/10 text-gold"><IconTick size={14} /></span>{item}</li>)}
-          </ul>
-          <div className="flex items-center gap-4 rounded-2xl border border-primary-foreground/20 bg-primary/60 p-3 backdrop-blur">
-            <img src={heroImage} alt="Student in a seminar" width={960} height={1200} className="h-16 w-16 rounded-xl object-cover" />
-            <p className="text-sm text-primary-foreground/75">Degrees awarded by <strong className="text-primary-foreground">University of Wolverhampton</strong>, <strong className="text-primary-foreground">Arts University Bournemouth</strong> and <strong className="text-primary-foreground">Health Sciences University</strong>.</p>
+          <div className="grid grid-cols-2 gap-px overflow-hidden border border-primary-foreground/15 bg-primary-foreground/15">
+            <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">10+ team</strong>supporting applicants</p></div>
+            <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">100+ students</strong>helped</p></div>
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .2, duration: .9, ease }}><Funnel /></motion.div>
       </div>
     </section>
 
-    <section className="border-y border-border bg-card py-5">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 text-sm font-bold uppercase tracking-[.14em] text-muted-foreground sm:px-8">
-        <span>University of Wolverhampton</span><span className="hidden h-1 w-1 rounded-full bg-border sm:block" /><span>Arts University Bournemouth</span><span className="hidden h-1 w-1 rounded-full bg-border sm:block" /><span>Health Sciences University</span>
-      </div>
-    </section>
+    <UniversityRail />
 
     <Section id="courses">
       <SectionHeading eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
@@ -136,16 +131,33 @@ function Index() {
     </Section>
 
     <section className="relative mt-20 overflow-hidden bg-primary sm:mt-24">
-      <img src={heroImage} alt="" aria-hidden width={960} height={1200} loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(var(--gold)_1px,transparent_1px),linear-gradient(90deg,var(--gold)_1px,transparent_1px)] [background-size:64px_64px]" />
       <div className="relative mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-16 sm:flex-row sm:items-center sm:px-8">
         <div><h2 className="text-3xl font-bold italic text-primary-foreground sm:text-4xl">Your degree starts with one minute.</h2><p className="mt-2 text-primary-foreground/80">Answer a few questions and download your personalised offer today.</p></div>
         <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "h-14 rounded-xl px-7 text-base font-bold active:scale-[.98]")}>Check my options <IconArrowRight /></a>
       </div>
     </section>
 
-    <footer className="mx-auto grid max-w-6xl gap-5 px-5 pb-28 pt-10 sm:grid-cols-[auto_1fr] sm:items-center sm:px-8 md:pb-10"><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables and admission decisions are subject to confirmation by the relevant institution. © {new Date().getFullYear()} Momentum One.</p></footer>
+    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · Company 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">Privacy notice</a><a href="/cookies">Cookie notice</a><a href="/terms">Website terms</a><a href="/disclaimer">Application disclaimer</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">Cookie settings</button><a href="/auth">Account sign in</a></nav></div><p className="mx-auto mt-8 max-w-6xl border-t border-border pt-4 text-xs text-muted-foreground">© {new Date().getFullYear()} Momentum One.</p></footer>
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>Check my options <IconArrowRight /></a></div>
   </main>;
+}
+
+function AnnouncementBar() {
+  const text = "January 2027 applications open · Personalised course options in one minute · Advisor support available · ";
+  return <div className="overflow-hidden bg-gold py-2 text-primary" aria-label="January 2027 applications open"><div className="animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]"><span>{text}</span><span aria-hidden>{text}</span></div></div>;
+}
+
+function RotatingHeadline() {
+  const phrases = ["close to home.", "built around life.", "with a clear next step."];
+  const [index, setIndex] = useState(0);
+  useEffect(() => { const timer = window.setInterval(() => setIndex((value) => (value + 1) % phrases.length), 3200); return () => window.clearInterval(timer); }, []);
+  return <h1 className="max-w-2xl text-[2.75rem] font-bold leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">A UK degree,<span className="relative mt-1 block min-h-[1.08em] overflow-hidden text-gold"><motion.span key={phrases[index]} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -28 }} transition={{ duration: .5, ease }} className="block">{phrases[index]}</motion.span></span></h1>;
+}
+
+function UniversityRail() {
+  const names = ["University of Wolverhampton", "Arts University Bournemouth", "Health Sciences University"];
+  return <section className="overflow-hidden border-y border-border bg-card py-6" aria-label="Current awarding universities"><p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[.2em] text-muted-foreground">Courses awarded by</p><div className="animate-ticker flex w-max items-center whitespace-nowrap">{[...names, ...names].map((name, index) => <span key={`${name}-${index}`} className="flex items-center px-8 text-sm font-extrabold uppercase text-primary sm:px-14"><IconUniversity size={23} className="mr-3 text-teal" />{name}</span>)}</div></section>;
 }
 
 function Header() {
