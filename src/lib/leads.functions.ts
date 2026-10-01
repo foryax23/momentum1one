@@ -10,7 +10,7 @@ const leadSchema = z.object({
     .string()
     .trim()
     .max(20)
-    .regex(/^(\+44\s?7\d{3}|07\d{3})\s?\d{3}\s?\d{3}$/, "Invalid UK mobile"),
+    .regex(/^(\+\d{1,4}\s?\d{6,14}|07\d{3}\s?\d{3}\s?\d{3})$/, "Invalid mobile"),
   city: z.enum(UK_CITIES),
   interest: z.string().trim().max(60).nullable(),
   intake: z.string().trim().max(60).nullable(),

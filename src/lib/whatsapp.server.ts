@@ -10,6 +10,7 @@ const STATUS_RANK: Record<string, number> = { accepted: 0, sent: 1, delivered: 2
 
 export function waDigits(phone: string) {
   const d = phone.replace(/\D/g, "");
+  if (phone.trim().startsWith("+")) return d;
   if (d.startsWith("07")) return `44${d.slice(1)}`;
   if (d.startsWith("447")) return d;
   if (d.startsWith("7") && d.length === 10) return `44${d}`;
