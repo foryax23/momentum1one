@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#0c1a2e" },
+      { name: "theme-color", content: "#f5f3ee" },
       { title: "Momentum One" },
       { name: "author", content: "Momentum One" },
       { property: "og:type", content: "website" },
@@ -123,7 +123,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
     </QueryClientProvider>
   );
 }
