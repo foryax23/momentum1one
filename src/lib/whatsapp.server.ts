@@ -183,7 +183,7 @@ function stepInstruction(step: AdmissionsStep, profile: Profile, reminders: Remi
   const docs = neededDocs(profile);
   const done = STEP_ORDER.includes(step as typeof STEP_ORDER[number]) ? docs.indexOf(step as typeof STEP_ORDER[number]) : 0;
   switch (step) {
-    case "welcome": return "Greet the student warmly by first name, confirm their course and campus, explain in one sentence that you will help get their application ready (a few quick questions, then a few documents, about 10 minutes, and they can pause any time), and ask if now is a good time. Do not ask for documents yet.";
+    case "welcome": return "This is the mandatory first permission step. Greet the student warmly by first name and confirm their course and campus. Ask whether they would like to continue the application here in WhatsApp, or have an advisor call them instead. Do not mention, request or describe personal details or documents yet. Do not begin the application until they clearly choose to continue here. Use intent 'confirm' only when they clearly choose WhatsApp, and intent 'call_first' when they prefer a phone call or advisor.";
     case "details": {
       const missing = missingFields(profile);
       return `Collect personal details conversationally, ONE question per message. Still missing: ${missing.map((f) => PROFILE_LABEL[f]).join("; ")}. Ask for the first missing item only (you may combine address and postcode). Thank them briefly for what they just shared.`;
@@ -201,7 +201,7 @@ function isOptOut(text: string) {
 }
 
 function wantsAdvisor(text: string) {
-  return /\b(advisor|adviser|agent|human|real person|call me|speak to|consilier|persoană|agente|asesor)\b/i.test(text);
+  return /\b(advisor|adviser|agent|human|real person|call me|phone call|over the phone|by phone|speak to|consilier|persoană|sună-mă|telefon|agente|asesor)\b/i.test(text);
 }
 
 /** Fast server-side red flags; the AI adds a second, contextual check. */
@@ -345,7 +345,7 @@ Details collected so far: ${JSON.stringify(profile)}
 ${mediaNote ? `System note about the file they just sent: ${mediaNote}` : ""}
 
 CURRENT TASK: ${stepInstruction(step, profile, reminders)}
-If the student asks a question, answer it first from the facts below, then gently continue the current task.
+If the student asks a question, answer it first from the facts below, then gently continue the current task. The welcome permission step overrides every other instruction: until the student clearly chooses WhatsApp, do not ask for any personal detail or document.
 ${nextIfSkipped ? `If they say they do not have this document now, want to do it later, or it does not apply, accept kindly and move on: ${nextIfSkipped === "final_reminder" || nextIfSkipped === "ready_review" ? "tell them that was the last document" : `ask for their ${DOC_LABEL[nextIfSkipped as typeof STEP_ORDER[number]]}`}.` : ""}
 ${step === "details_confirm" ? `If they confirm, thank them and move on to the document step: explain why documents are needed and that they are kept private, and ask if they prefer to send them here or have an advisor call first. If they correct something, record it and recap again.` : ""}
 ${step === "docs_consent" ? `If they agree to send here (intent "confirm"), thank them and ask kindly for their ${DOC_LABEL[neededDocs(profile)[0] ?? "cv"]}.` : ""}
@@ -356,7 +356,7 @@ How to apply: choose a course, advisor call, document check, online pre-task (4 
 The personalised offer is not a confirmed university admission offer. Student finance may be available for eligible students; an advisor confirms eligibility.
 
 Return ONLY a JSON object, no other text:
-{"language":"BCP-47 code","intent":"answer|question|confirm|correction|skip|later|smalltalk","profile":{only fields the student clearly gave in their latest message, using keys ${PROFILE_FIELDS.join(", ")}, string values},"reply":"the WhatsApp message"}`;
+{"language":"BCP-47 code","intent":"answer|question|confirm|call_first|correction|skip|later|smalltalk","profile":{only fields the student clearly gave in their latest message, using keys ${PROFILE_FIELDS.join(", ")}, string values},"reply":"the WhatsApp message"}`;
 
   const lovable = process.env['LOVABLE_API_KEY'];
   if (!lovable) throw new Error("LOVABLE_API_KEY is not configured");
@@ -394,7 +394,7 @@ async function applyResult(conversationId: string, result: AiResult, hadMedia: b
   const reminders = { ...(conv.reminders as Reminders ?? {}) };
   const step = normaliseStep(conv.admissions_step);
   let next = step;
-  if (step === "welcome") next = stepAfter("welcome", profile, reminders);
+  if (step === "welcome" && result.intent === "confirm") next = stepAfter("welcome", profile, reminders);
   else if (step === "details") next = stepAfter("details", profile, reminders);
   else if (step === "details_confirm" && result.intent === "confirm") next = stepAfter("details_confirm", profile, reminders);
   else if (STEP_ORDER.includes(step as typeof STEP_ORDER[number]) && !hadMedia && (result.intent === "skip" || result.intent === "later")) {
@@ -446,6 +446,12 @@ async function answerInbound(messageRowId: string) {
     } else if (hadMedia) mediaNote = "The file was received and saved for the advisor.";
     const result = await runAssistant(claimed.conversation_id, mediaNote);
     if (!result) { await markReply("skipped"); return; }
+    if (result.intent === "call_first") {
+      await supabaseAdmin.from("whatsapp_conversations").update({ status: "queued", queued_at: now, summary: "Student prefers to continue by phone with an advisor", updated_at: now }).eq("id", claimed.conversation_id);
+      await sendText(claimed.conversation_id, conv.wa_phone, result.reply);
+      await markReply("sent");
+      return;
+    }
     await applyResult(claimed.conversation_id, result, hadMedia);
     await sendText(claimed.conversation_id, conv.wa_phone, result.reply);
     await markReply("sent");

@@ -18,3 +18,4 @@
 - [x] Bot replies only to website students (welcome sent or reference code quoted)
 - [x] Friendlier admissions chat: details first, then only needed documents, skip and later supported
 - [ ] Test one real conversation after publishing
+- [x] Require an explicit WhatsApp or advisor-call choice before collecting any admission details
