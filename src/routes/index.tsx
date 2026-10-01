@@ -83,10 +83,7 @@ function Index() {
     <UniversityRail />
 
     <Section id="courses">
-      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
-        <SectionHeading eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
-        <SectionVideo kind="courses" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
-      </div>
+      <ImmersiveSectionIntro kind="courses" eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
       <div className="mt-6"><CourseDeck /></div>
       <CourseComparison />
     </Section>
@@ -104,18 +101,12 @@ function Index() {
     </section>
 
     <Section id="campuses">
-      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
-        <SectionHeading eyebrow="Campuses" title="Study close to home" intro="We match you to your nearest campus automatically when you sign up." />
-        <SectionVideo kind="campuses" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
-      </div>
+      <ImmersiveSectionIntro kind="campuses" eyebrow="Campuses" title="Study close to home" intro="We match you to your nearest campus automatically when you sign up." align="right" />
       <CampusCards />
     </Section>
 
     <Section id="journey">
-      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
-        <SectionHeading eyebrow="How it works" title="From sign-up to your first class" />
-        <SectionVideo kind="journey" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
-      </div>
+      <ImmersiveSectionIntro kind="journey" eyebrow="How it works" title="From sign-up to your first class" intro="Five clear stages, with a Momentum One advisor alongside you when you need support." />
       <ScrollTimeline steps={JOURNEY} />
     </Section>
 
@@ -198,4 +189,18 @@ function Header() {
 }
 function Section({ id, children }: { id: string; children: React.ReactNode }) { return <section id={id} className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-20 sm:px-8 sm:pt-24">{children}</section>; }
 function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) { return <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, ease }}><p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{title}</h2>{intro && <p className="mt-3 max-w-2xl text-muted-foreground">{intro}</p>}</motion.div>; }
+function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: { kind: "courses" | "campuses" | "journey"; eyebrow: string; title: string; intro?: string; align?: "left" | "right" }) {
+  const right = align === "right";
+  return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
+    <SectionVideo kind={kind} immersive className={cn("absolute inset-0", right && "[&>img]:scale-x-[-1] [&>video]:scale-x-[-1]")} />
+    <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary via-primary/85 to-primary/20" : "bg-gradient-to-r from-primary via-primary/85 to-primary/20")} />
+    <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-primary/35" />
+    <div className={cn("relative flex min-h-80 max-w-3xl flex-col justify-end px-5 pb-12 pt-24 text-primary-foreground sm:min-h-96 sm:px-10 sm:pb-16", right && "ml-auto text-right sm:items-end")}>
+      <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-bold italic sm:text-5xl">{title}</h2>
+      {intro && <p className="mt-4 max-w-xl leading-relaxed text-primary-foreground/75">{intro}</p>}
+    </div>
+    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent" />
+  </motion.div>;
+}
 function Stars() { return <div className="pointer-events-none absolute inset-0" aria-hidden>{[[8,28],[18,62],[32,22],[48,55],[65,25],[77,63],[89,32],[94,75]].map(([left, top], index) => <span key={left} className="absolute h-1 w-1 rounded-full bg-primary-foreground" style={{ left: `${left}%`, top: `${top}%`, animation: `star-twinkle ${2.5 + index * .18}s ease-in-out infinite` }} />)}</div>; }
