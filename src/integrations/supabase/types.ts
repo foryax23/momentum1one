@@ -40,6 +40,7 @@ export type Database = {
           status: string
           study_route: string | null
           whatsapp: boolean
+          whatsapp_status: string
         }
         Insert: {
           campaign?: string | null
@@ -66,6 +67,7 @@ export type Database = {
           status?: string
           study_route?: string | null
           whatsapp?: boolean
+          whatsapp_status?: string
         }
         Update: {
           campaign?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           status?: string
           study_route?: string | null
           whatsapp?: boolean
+          whatsapp_status?: string
         }
         Relationships: []
       }
@@ -110,6 +113,127 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_inbound_at: string | null
+          lead_id: string | null
+          queued_at: string | null
+          status: string
+          summary: string | null
+          updated_at: string
+          wa_phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_inbound_at?: string | null
+          lead_id?: string | null
+          queued_at?: string | null
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          wa_phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_inbound_at?: string | null
+          lead_id?: string | null
+          queued_at?: string | null
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          wa_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          reply_status: string | null
+          status: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          body?: string
+          conversation_id: string
+          created_at?: string
+          direction: string
+          error?: string | null
+          id?: string
+          reply_status?: string | null
+          status?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          reply_status?: string | null
+          status?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_webhook_events: {
+        Row: {
+          attempts: number
+          delivery_id: string
+          event: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string
+        }
+        Insert: {
+          attempts?: number
+          delivery_id: string
+          event: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+        }
+        Update: {
+          attempts?: number
+          delivery_id?: string
+          event?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
         }
         Relationships: []
       }
