@@ -1,0 +1,1 @@
+ALTER TABLE public.admission_documents DROP CONSTRAINT admission_documents_reviewed_by_fkey;
