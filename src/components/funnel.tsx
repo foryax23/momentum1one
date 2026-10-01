@@ -34,6 +34,17 @@ export function Funnel() {
       if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, website: "" }));
     } catch { /* Ignore unavailable or malformed storage. */ }
   }, []);
+  useEffect(() => {
+    const onCity = (event: Event) => {
+      const city = (event as CustomEvent<string>).detail;
+      if (UK_CITIES.includes(city as (typeof UK_CITIES)[number])) {
+        set("city", city as (typeof UK_CITIES)[number]);
+        go(2);
+      }
+    };
+    window.addEventListener("mo:pick-city", onCity);
+    return () => window.removeEventListener("mo:pick-city", onCity);
+  }, []);
 
   useEffect(() => {
     if (!result) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
@@ -219,7 +230,10 @@ function WhatsAppRedirect({ name, reference }: { name: string; reference: string
   const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi Momentum One, I'm ${name}. My reference is ${reference}.`)}`;
   useEffect(() => {
     if (cancelled) return;
-    if (left <= 0) { window.location.href = url; return; }
+    if (left <= 0) {
+      if (window.self === window.top) window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
     const t = window.setTimeout(() => setLeft((n) => n - 1), 1000);
     return () => window.clearTimeout(t);
   }, [left, cancelled, url]);

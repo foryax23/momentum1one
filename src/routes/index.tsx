@@ -7,6 +7,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IconArrowRight, IconTick } from "@/components/icons";
 import { AudienceStrip, CampusCards, CourseDeck, ScrollTimeline, StatsBand } from "@/components/home-sections";
+import { CourseComparison, WhatYouReceive } from "@/components/home-sections";
+import { HeroVideo } from "@/components/hero-video";
 import { cn } from "@/lib/utils";
 import heroImage from "@/assets/courses/business.jpg";
 
@@ -43,18 +45,19 @@ const FAQS: [string, string][] = [
 function Index() {
   return <main id="top" className="overflow-x-hidden bg-background">
     <Header />
-    <section className="relative">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-9 sm:px-8 sm:py-14 lg:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-16">
+    <section className="relative min-h-[720px] overflow-hidden">
+      <HeroVideo />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 py-10 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease }} className="grid gap-5">
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[.14em] text-teal"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-teal" />January 2027 applications open</p>
-          <h1 className="max-w-2xl text-[2.75rem] font-bold italic leading-[1.02] text-primary sm:text-6xl lg:text-[4.3rem]">A UK degree, <em className="text-teal">close to home.</em></h1>
-          <p className="max-w-[38ch] text-lg leading-relaxed text-muted-foreground">Foundation Year routes for adults who work, care for family or never sat A-levels. Find your course and campus in under a minute.</p>
-          <ul className="grid gap-2 sm:grid-cols-3">
-            {["Funding may be available", "Five local campuses", "No A-levels needed"].map((item) => <li key={item} className="flex items-center gap-2 text-sm font-semibold text-primary"><span className="grid h-6 w-6 place-items-center rounded-full bg-secondary text-teal"><IconTick size={14} /></span>{item}</li>)}
+          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary/55 px-3 py-1 text-xs font-semibold uppercase tracking-[.14em] text-primary-foreground backdrop-blur"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />January 2027 applications open</p>
+          <h1 className="max-w-2xl text-[2.75rem] font-bold italic leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">A UK degree, <em className="text-gold">close to home.</em></h1>
+          <p className="max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80">Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.</p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {["7 degree choices", "5 UK campuses", "Foundation and Year 1 routes", "Advisor support after applying"].map((item) => <li key={item} className="flex items-center gap-2 text-sm font-semibold text-primary-foreground"><span className="grid h-6 w-6 place-items-center rounded-full bg-primary-foreground/10 text-gold"><IconTick size={14} /></span>{item}</li>)}
           </ul>
-          <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-3">
+          <div className="flex items-center gap-4 rounded-2xl border border-primary-foreground/20 bg-primary/60 p-3 backdrop-blur">
             <img src={heroImage} alt="Student in a seminar" width={960} height={1200} className="h-16 w-16 rounded-xl object-cover" />
-            <p className="text-sm text-muted-foreground">Degrees awarded by <strong className="text-foreground">University of Wolverhampton</strong>, <strong className="text-foreground">Arts University Bournemouth</strong> and <strong className="text-foreground">Health Sciences University</strong>.</p>
+            <p className="text-sm text-primary-foreground/75">Degrees awarded by <strong className="text-primary-foreground">University of Wolverhampton</strong>, <strong className="text-primary-foreground">Arts University Bournemouth</strong> and <strong className="text-primary-foreground">Health Sciences University</strong>.</p>
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .2, duration: .9, ease }}><Funnel /></motion.div>
@@ -70,6 +73,7 @@ function Index() {
     <Section id="courses">
       <SectionHeading eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
       <div className="mt-6"><CourseDeck /></div>
+      <CourseComparison />
     </Section>
 
     <Section id="for-you">
@@ -96,14 +100,27 @@ function Index() {
       <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-10 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">Funding and eligibility</p>
-          <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">Worried about cost?</h2>
-          <p className="mt-3 text-muted-foreground">Many students qualify for student finance to cover tuition and help with living costs. You do not pay anything to check your options, and an advisor confirms your eligibility before you commit.</p>
+          <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">Know what to prepare</h2>
+          <p className="mt-3 text-muted-foreground">Foundation Year can be a route for applicants without the usual A-level profile. Year 1 is available for selected courses and campuses. Admission and student finance depend on your circumstances, so an advisor confirms both before you commit.</p>
+          <div className="mt-5 flex flex-wrap gap-2">{["Foundation routes", "Selected Year 1 routes", "Day, evening and weekend patterns"].map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div>
         </div>
-        <ul className="grid gap-3">
-          {["Free, no-obligation advice", "Eligibility checked by an advisor", "Help with every form and document"].map((t) => <li key={t} className="flex items-center gap-3 rounded-xl bg-card p-4 font-semibold text-primary"><IconTick size={18} className="text-teal" />{t}</li>)}
-        </ul>
+        <div className="rounded-2xl bg-card p-5">
+          <h3 className="font-sans text-lg font-bold text-primary">Documents commonly requested</h3>
+          <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
+            {["Proof of identity", "Proof of address dated within three months of the course start", "Share code if your passport is not British", "Duolingo English certificate", "CV and qualification certificates, if available"].map((t) => <li key={t} className="flex items-start gap-3"><IconTick size={18} className="mt-0.5 shrink-0 text-teal" />{t}</li>)}
+          </ul>
+        </div>
       </motion.div>
     </Section>
+
+    <section className="mt-20 bg-primary py-16 sm:mt-24 sm:py-20">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[.16em] text-gold">After you apply</p>
+        <h2 className="mt-2 max-w-2xl text-3xl font-bold italic text-primary-foreground sm:text-4xl">More than a confirmation screen</h2>
+        <p className="mt-3 max-w-2xl text-primary-foreground/75">You receive practical information you can keep, plus a clear route to a Momentum One advisor.</p>
+        <div className="mt-8"><WhatYouReceive /></div>
+      </div>
+    </section>
 
     <Section id="faq">
       <div className="grid gap-8 md:grid-cols-[.8fr_1.2fr]">
