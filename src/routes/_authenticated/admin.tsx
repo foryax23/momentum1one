@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search, Spinner } from "@/components/icons";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +48,6 @@ function Admin() {
   const [status, setStatus] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
   const loadAdvisors = useServerFn(getAdvisors);
-  const advisors = useQuery({ queryKey: ["advisors"], enabled: role.data === true, queryFn: () => loadAdvisors() });
 
   const role = useQuery({
     queryKey: ["is-admin"],
@@ -59,6 +58,7 @@ function Admin() {
       return !!data;
     },
   });
+  const advisors = useQuery({ queryKey: ["advisors"], enabled: role.data === true, queryFn: () => loadAdvisors() });
 
   const leads = useQuery({
     queryKey: ["leads"],
