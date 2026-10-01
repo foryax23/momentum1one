@@ -48,7 +48,7 @@ function Admin() {
   const [status, setStatus] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
   const loadAdvisors = useServerFn(getAdvisors);
-  const advisors = useQuery({ queryKey: ["advisors"], enabled: false, queryFn: () => loadAdvisors() });
+  const advisors = useQuery({ queryKey: ["advisors"], enabled: role.data === true, queryFn: () => loadAdvisors() });
 
   const role = useQuery({
     queryKey: ["is-admin"],
@@ -59,8 +59,6 @@ function Admin() {
       return !!data;
     },
   });
-
-  useEffect(() => { if (role.data === true && !advisors.data && !advisors.isFetching) void advisors.refetch(); }, [role.data, advisors.data, advisors.isFetching]);
 
   const leads = useQuery({
     queryKey: ["leads"],
