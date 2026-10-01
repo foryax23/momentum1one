@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { CAMPUS_COURSES } from "@/lib/offer-catalog";
 import { CAMPUSES } from "@/lib/funnel";
 import { IconArrowRight } from "@/components/icons";
@@ -166,29 +166,63 @@ export function CampusCards() {
 
 export function CourseComparison() {
   const deck = useMemo(buildDeck, []);
+  const reduce = useReducedMotion();
   const [selected, setSelected] = useState(deck[0]?.key ?? "");
   const course = deck.find((item) => item.key === selected) ?? deck[0];
   if (!course) return null;
   const options = Object.entries(CAMPUS_COURSES).flatMap(([campus, courses]) => courses.filter((item) => item.title === course.title).map((item) => ({ campus, ...item })));
   return (
-    <div className="mt-8 grid gap-7 border-y border-border py-7 lg:grid-cols-[.8fr_1.2fr] lg:gap-12">
-      <div>
-        <p className="text-sm font-bold text-primary">Choose a subject</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {deck.map((item) => <Button key={item.key} type="button" variant={item.key === course.key ? "default" : "outline"} size="sm" onClick={() => setSelected(item.key)} className="h-auto rounded-full py-2 shadow-none">{item.name}</Button>)}
+    <div className="mt-10">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-teal">Choose a subject</p>
+          <h3 className="mt-1 text-2xl font-bold italic text-primary sm:text-3xl">Compare routes, campuses and schedules</h3>
         </div>
       </div>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[.14em] text-teal">Compare routes and schedules</p>
-        <h3 className="mt-2 text-2xl font-bold italic text-primary">{course.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Awarded by {course.university}</p>
-        <div className="mt-5 divide-y divide-border border-y border-border">
-          {options.map((item) => <div key={`${item.campus}-${item.id}`} className="grid gap-2 py-4 sm:grid-cols-[110px_130px_1fr_auto] sm:items-center">
-            <strong className="text-sm text-primary">{item.campus}</strong><span className="text-sm font-semibold text-teal">{item.route}</span><span className="text-sm text-muted-foreground">{item.patterns.join(" · ")}</span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => pickCourse(item.title)} className="w-fit px-0 text-primary">Choose <IconArrowRight size={15} /></Button>
-          </div>)}
-        </div>
+      <div role="tablist" aria-label="Subjects" className="-mx-5 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7">
+        {deck.map((item) => {
+          const active = item.key === course.key;
+          return <button key={item.key} role="tab" aria-selected={active} type="button" onClick={() => setSelected(item.key)}
+            className={cn("group relative w-40 shrink-0 snap-start overflow-hidden rounded-2xl border bg-card text-left transition sm:w-auto", active ? "border-primary shadow-md" : "border-border hover:border-primary/50")}>
+            <div className="relative h-20 overflow-hidden">
+              <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/70 to-transparent" />
+            </div>
+            <div className="p-3">
+              <p className="line-clamp-2 text-sm font-bold leading-tight text-primary">{item.name}</p>
+              <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{item.award}</p>
+            </div>
+            {active && <motion.span layoutId="subject-indicator" className="absolute inset-x-3 bottom-0 h-1 rounded-full bg-teal" transition={{ duration: reduce ? 0 : .35, ease }} />}
+          </button>;
+        })}
       </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={course.key} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -10 }} transition={{ duration: .4, ease }}
+          className="mt-5 grid overflow-hidden rounded-3xl border border-border bg-card lg:grid-cols-[.9fr_1.1fr]">
+          <div className="relative min-h-56 overflow-hidden">
+            <motion.img src={course.image} alt={course.title} initial={reduce ? false : { scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 1.2, ease }} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/40 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+              <h4 className="text-2xl font-bold italic text-primary-foreground">{course.title}</h4>
+              <p className="mt-1 text-sm text-primary-foreground/80">Awarded by {course.university}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {course.routes.map((r) => <span key={r} className="rounded-full bg-primary-foreground/15 px-2.5 py-1 text-xs font-semibold text-primary-foreground backdrop-blur">{r}</span>)}
+                <span className="rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-primary">{course.campuses.length} {course.campuses.length === 1 ? "campus" : "campuses"}</span>
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-3 p-4 sm:p-6">
+            {options.map((item, i) => <motion.div key={`${item.campus}-${item.id}`} initial={reduce ? false : { opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: reduce ? 0 : .08 * i, duration: .35, ease }}
+              className="flex flex-col gap-3 rounded-2xl border border-border p-4 transition hover:border-primary/50 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2"><strong className="text-primary">{item.campus}</strong><span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-teal">{item.route}</span></div>
+                <div className="mt-2 flex flex-wrap gap-1.5">{item.patterns.map((pt) => <span key={pt} className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">{pt}</span>)}</div>
+              </div>
+              <Button type="button" size="sm" onClick={() => pickCourse(item.title)} className="h-10 shrink-0 rounded-xl px-4 font-bold">Choose this <IconArrowRight size={15} /></Button>
+            </motion.div>)}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
