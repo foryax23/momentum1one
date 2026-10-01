@@ -6,9 +6,11 @@ import { CAMPUS_COURSES } from "./offer-catalog";
 import { createAiRunIdFetch } from "./ai-run-id.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/whatsapp";
+const GATEWAY_TIMEOUT_MS = 10_000;
 export const WELCOME_TEMPLATE = "momentum_offer_welcome";
 const STATUS_RANK: Record<string, number> = { accepted: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
 const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
+const MEDIA_LEASE_MS = 10 * 60_000;
 const ALLOWED_MEDIA = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const STEP_ORDER = ["identity", "proof_of_address", "immigration_status", "qualifications", "english_evidence", "cv"] as const;
 type AdmissionsStep = "welcome" | "details" | "details_confirm" | "docs_consent" | typeof STEP_ORDER[number] | "final_reminder" | "ready_review";
@@ -35,7 +37,9 @@ function gatewayHeaders(json = false) {
 }
 
 async function gatewayJson(path: string, init?: RequestInit) {
-  const res = await fetch(`${GATEWAY_URL}${path}`, { ...init, headers: { ...gatewayHeaders(Boolean(init?.body)), ...Object.fromEntries(new Headers(init?.headers)) } });
+  // Bounded so a slow gateway cannot hold a lead submission or a webhook run open; a timeout is retried like a 504.
+  const res = await fetch(`${GATEWAY_URL}${path}`, { ...init, headers: { ...gatewayHeaders(Boolean(init?.body)), ...Object.fromEntries(new Headers(init?.headers)) }, signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS) })
+    .catch((error: unknown) => { throw (error as { name?: string } | null)?.name === "TimeoutError" ? new ProviderError(504, "WhatsApp request timed out") : error; });
   const text = await res.text();
   if (!res.ok) throw new ProviderError(res.status, `WhatsApp request failed (${res.status}): ${text.slice(0, 500)}`);
   return JSON.parse(text) as Record<string, unknown>;
@@ -82,9 +86,24 @@ async function reconcileStatus(waMessageId: string) {
   }
 }
 
+/** True when a lead's phone is the WhatsApp number a message came from (also accepts a trunk 0 typed after +44). */
+function samePhone(leadPhone: string, waPhone: string) {
+  const digits = waDigits(leadPhone);
+  return digits === waPhone || digits.replace(/^440/, "44") === waPhone;
+}
+
+/** True when this number has asked us to stop. Checked before any business-initiated message; a failed lookup throws so nothing is sent. */
+export async function hasOptedOut(phone: string) {
+  const { data, error } = await supabaseAdmin.from("whatsapp_conversations").select("opted_out_at").eq("wa_phone", waDigits(phone)).maybeSingle();
+  if (error) throw error;
+  return Boolean(data?.opted_out_at);
+}
+
 /** Sends the approved welcome template once per lead. Never throws. */
-export async function sendWelcome(lead: { id: string; full_name: string; phone: string; selected_course: string | null; nearest_campus: string | null; ref_code: string }) {
+export async function sendWelcome(lead: { id: string; full_name: string; phone: string; selected_course: string | null; nearest_campus: string | null; ref_code: string; whatsapp: boolean }) {
   try {
+    // No WhatsApp consent or an earlier STOP: leave the lead untouched (whatsapp_status stays as it is, normally 'pending').
+    if (!lead.whatsapp || await hasOptedOut(lead.phone)) return;
     const template = await getWelcomeTemplateStatus();
     if (template.status !== "APPROVED") {
       await supabaseAdmin.from("leads").update({ whatsapp_status: "awaiting_template" }).eq("id", lead.id);
@@ -196,8 +215,10 @@ function stepInstruction(step: AdmissionsStep, profile: Profile, reminders: Remi
   }
 }
 
-function isOptOut(text: string) {
-  return /^(stop|unsubscribe|cancel|parar|opreste|oprește|dezabonare|stoppen)$/i.test(text.trim());
+/** `cancel: false` is for chats the bot is not answering: said to an advisor, "cancel" is usually an answer, not a request to stop. */
+function isOptOut(text: string, cancel = true) {
+  const word = /^(stop|unsubscribe|cancel|parar|opreste|oprește|dezabonare|stoppen)[\s.!]*$/i.exec(text.trim())?.[1]?.toLowerCase();
+  return Boolean(word) && (cancel || word !== "cancel");
 }
 
 function wantsAdvisor(text: string) {
@@ -267,14 +288,18 @@ async function setStep(conversationId: string, step: AdmissionsStep, extra: Reco
   } as never).eq("id", conversationId);
 }
 
-async function processMedia(messageId: string) {
+/**
+ * Downloads one inbound file into the private bucket. Returns the step the conversation moved to, if any.
+ * `unattended` is for files sent while the bot is not answering: they are filed as unclassified and never move the step.
+ */
+async function processMedia(messageId: string, unattended = false): Promise<AdmissionsStep | null> {
   const { data: row, error } = await supabaseAdmin.from("whatsapp_messages")
     .select("*, whatsapp_conversations(lead_id, admissions_step, profile, reminders)").eq("id", messageId).single();
-  if (error || !row || !row.media_id || row.media_status === "stored") return;
+  if (error || !row || !row.media_id || row.media_status === "stored") return null;
   const conv = row.whatsapp_conversations as { lead_id: string | null; admissions_step: string; profile: Profile; reminders: Reminders } | null;
   if (!conv?.lead_id) {
     await supabaseAdmin.from("whatsapp_messages").update({ media_status: "needs_advisor", media_error: "No application is linked to this number" }).eq("id", row.id);
-    return;
+    return null;
   }
   const attempt = row.media_attempts + 1;
   await supabaseAdmin.from("whatsapp_messages").update({ media_status: "downloading", media_attempts: attempt, media_error: null }).eq("id", row.id);
@@ -288,7 +313,7 @@ async function processMedia(messageId: string) {
     const bytes = await readLimited(download, metadata.file_size ?? null);
     const filename = safeFilename(row.media_filename, mime);
     const step = normaliseStep(conv.admissions_step);
-    const docType = documentTypeForStep(step);
+    const docType = unattended ? "unclassified" : documentTypeForStep(step);
     const storagePath = `${conv.lead_id}/${docType}/${Date.now()}-${row.id}-${filename}`;
     const { error: uploadError } = await supabaseAdmin.storage.from("admissions-documents").upload(storagePath, bytes, { contentType: mime, upsert: false });
     if (uploadError) throw uploadError;
@@ -303,13 +328,19 @@ async function processMedia(messageId: string) {
       throw insertError;
     }
     await supabaseAdmin.from("whatsapp_messages").update({ media_status: "stored", media_mime_type: mime, media_size: bytes.byteLength, media_sha256: sha256, media_error: null }).eq("id", row.id);
+    if (unattended) return null;
     if (docType !== "unclassified") {
       const reminders = conv.reminders ?? {};
       const skipped = (reminders.skipped ?? []).filter((d) => d !== docType);
-      await setStep(row.conversation_id, stepAfter(step, conv.profile ?? {}, { ...reminders, skipped }), { reminders: { ...reminders, skipped } });
-    } else if (step === "final_reminder") {
-      await setStep(row.conversation_id, "ready_review");
+      const next = stepAfter(step, conv.profile ?? {}, { ...reminders, skipped });
+      await setStep(row.conversation_id, next, { reminders: { ...reminders, skipped } });
+      return next;
     }
+    if (step === "final_reminder") {
+      await setStep(row.conversation_id, "ready_review");
+      return "ready_review";
+    }
+    return null;
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);
     const retryable = caught instanceof ProviderError && (caught.status === 429 || caught.status >= 500);
@@ -324,9 +355,10 @@ async function processMedia(messageId: string) {
 
 type AiResult = { language: string | null; intent: string; profile: Profile; reply: string };
 
-async function runAssistant(conversationId: string, mediaNote: string | null): Promise<AiResult | null> {
+async function runAssistant(conversationId: string, mediaNote: string | null, closing = false): Promise<AiResult | null> {
   const { data: conv } = await supabaseAdmin.from("whatsapp_conversations").select("*, leads(full_name, selected_course, study_route, nearest_campus, ref_code)").eq("id", conversationId).single();
-  if (!conv || conv.status !== "bot" || !conv.bot_enabled) return null;
+  // `closing`: the file just stored was the last one and already queued the chat for review, so one thank-you reply is still owed.
+  if (!conv || !conv.bot_enabled || (conv.status !== "bot" && !(closing && conv.status === "queued"))) return null;
   const { data: history } = await supabaseAdmin.from("whatsapp_messages").select("direction, body").eq("conversation_id", conversationId).order("created_at", { ascending: false }).limit(40);
   const lead = conv.leads as { full_name: string; selected_course: string | null; study_route: string | null; nearest_campus: string | null; ref_code: string } | null;
   const messages: ModelMessage[] = (history ?? []).reverse().filter((m) => m.body).map((m) => ({ role: m.direction === "in" ? "user" : "assistant", content: m.body }));
@@ -397,6 +429,7 @@ async function applyResult(conversationId: string, result: AiResult, hadMedia: b
   if (step === "welcome" && result.intent === "confirm") next = stepAfter("welcome", profile, reminders);
   else if (step === "details") next = stepAfter("details", profile, reminders);
   else if (step === "details_confirm" && result.intent === "confirm") next = stepAfter("details_confirm", profile, reminders);
+  else if (step === "docs_consent" && result.intent === "confirm") next = stepAfter("docs_consent", profile, reminders);
   else if (STEP_ORDER.includes(step as typeof STEP_ORDER[number]) && !hadMedia && (result.intent === "skip" || result.intent === "later")) {
     if (result.intent === "later") reminders.skipped = Array.from(new Set([...(reminders.skipped ?? []), step]));
     next = stepAfter(step, profile, reminders);
@@ -414,20 +447,23 @@ async function sendText(conversationId: string, to: string, body: string) {
 /** Claims and answers one pending inbound message. Safe to call repeatedly. */
 async function answerInbound(messageRowId: string) {
   const now = new Date().toISOString();
-  const { data: claimed } = await supabaseAdmin.from("whatsapp_messages").update({ reply_status: "sending", reply_started_at: now, reply_attempts: 1 })
+  // Every claim counts as an attempt, so the cap in the catch below (and in recoverPending) really stops at four sends.
+  const { data: prior } = await supabaseAdmin.from("whatsapp_messages").select("reply_attempts").eq("id", messageRowId).maybeSingle();
+  const { data: claimed } = await supabaseAdmin.from("whatsapp_messages").update({ reply_status: "sending", reply_started_at: now, reply_attempts: (prior?.reply_attempts ?? 0) + 1 })
     .eq("id", messageRowId).eq("reply_status", "pending").lte("reply_next_attempt_at", now).select("conversation_id, body, media_status, reply_attempts").maybeSingle();
   if (!claimed) return;
   const markReply = (reply_status: string) => supabaseAdmin.from("whatsapp_messages").update({ reply_status }).eq("id", messageRowId);
   try {
     const { data: conv } = await supabaseAdmin.from("whatsapp_conversations").select("wa_phone, status, bot_enabled, opted_out_at, admissions_step").eq("id", claimed.conversation_id).single();
     if (!conv || conv.status !== "bot" || !conv.bot_enabled) { await markReply("skipped"); return; }
-    if (conv.opted_out_at) { await markReply("opted_out"); return; }
+    // Checked before opted_out_at: processEvent has already recorded this STOP, and it still gets its one confirmation.
     if (isOptOut(claimed.body)) {
       await supabaseAdmin.from("whatsapp_conversations").update({ status: "closed", opted_out_at: now, updated_at: now }).eq("id", claimed.conversation_id);
       await sendText(claimed.conversation_id, conv.wa_phone, "No problem, you will not receive any more WhatsApp messages from Momentum One. Your application is still safely stored if you change your mind.");
       await markReply("sent");
       return;
     }
+    if (conv.opted_out_at) { await markReply("opted_out"); return; }
     if (wantsAdvisor(claimed.body)) {
       await supabaseAdmin.from("whatsapp_conversations").update({ status: "queued", queued_at: now, summary: "Student asked to speak with an advisor", updated_at: now }).eq("id", claimed.conversation_id);
       await sendText(claimed.conversation_id, conv.wa_phone, "Of course. One of our advisors will reply to you here shortly.");
@@ -435,19 +471,20 @@ async function answerInbound(messageRowId: string) {
       return;
     }
     let mediaNote: string | null = null;
+    let closing = false;
     const hadMedia = Boolean(claimed.media_status);
     const waitingForPermission = normaliseStep(conv.admissions_step) === "welcome";
     if (hadMedia && waitingForPermission) {
       mediaNote = "The student sent a file before choosing how to continue. Do not process or discuss the file. Ask whether they want to continue here in WhatsApp or prefer an advisor call.";
     } else if (hadMedia && claimed.media_status !== "stored") {
-      try { await processMedia(messageRowId); mediaNote = "The file was received and saved for the advisor. Thank them; do not say it was checked or approved."; }
+      try { closing = (await processMedia(messageRowId)) === "ready_review"; mediaNote = "The file was received and saved for the advisor. Thank them; do not say it was checked or approved."; }
       catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (e instanceof ProviderError && (e.status === 429 || e.status >= 500)) throw e;
         mediaNote = /10 MB|PDF, JPEG/.test(msg) ? `The file could not be saved: ${msg}. Kindly ask them to resend it as a PDF, JPG or PNG under 10 MB.` : "The file could not be saved. Kindly ask them to try sending it again.";
       }
     } else if (hadMedia) mediaNote = "The file was received and saved for the advisor.";
-    const result = await runAssistant(claimed.conversation_id, mediaNote);
+    const result = await runAssistant(claimed.conversation_id, mediaNote, closing);
     if (!result) { await markReply("skipped"); return; }
     if (result.intent === "call_first") {
       await supabaseAdmin.from("whatsapp_conversations").update({ status: "queued", queued_at: now, summary: "Student prefers to continue by phone with an advisor", updated_at: now }).eq("id", claimed.conversation_id);
@@ -471,15 +508,23 @@ async function answerInbound(messageRowId: string) {
   }
 }
 
-/** Activates the bot when the student quotes a real reference code. */
-async function activateByRefCode(conv: { id: string; bot_enabled: boolean; lead_id: string | null }, body: string) {
-  if (conv.bot_enabled) return conv.bot_enabled;
+/**
+ * Activates the bot when the student quotes their own reference code. Codes are sequential and easy to guess, so a
+ * code only counts when it is sent from the phone number on that application; anyone else stays an unknown sender.
+ * Sending it is also the student's way back in after a STOP. Returns whether the bot is enabled and the chat status to answer by.
+ */
+async function activateByRefCode(conv: { id: string; wa_phone: string; bot_enabled: boolean; status: string; opted_out_at: string | null }, body: string) {
+  const unchanged = { enabled: conv.bot_enabled, status: conv.status };
+  if (conv.bot_enabled && !conv.opted_out_at) return unchanged;
   const code = /MO-\d{4}-\d{5}/i.exec(body)?.[0]?.toUpperCase();
-  if (!code) return false;
-  const { data: lead } = await supabaseAdmin.from("leads").select("id").eq("ref_code", code).maybeSingle();
-  if (!lead) return false;
-  await supabaseAdmin.from("whatsapp_conversations").update({ bot_enabled: true, activated_via: "ref_code", lead_id: lead.id, status: "bot", updated_at: new Date().toISOString() }).eq("id", conv.id);
-  return true;
+  if (!code) return unchanged;
+  const { data: lead } = await supabaseAdmin.from("leads").select("id, phone").eq("ref_code", code).maybeSingle();
+  if (!lead || !samePhone(lead.phone, conv.wa_phone)) return unchanged;
+  // Queued and agent chats belong to a person: enable, but leave the status for staff to hand back. A closed chat reopens as bot.
+  const status = conv.status === "closed" ? "bot" : conv.status;
+  // A chat that was never activated may still point at an earlier application from this phone (a failed welcome, a message without a code): the quoted one takes over. An activated chat keeps its application.
+  await supabaseAdmin.from("whatsapp_conversations").update({ bot_enabled: true, opted_out_at: null, status, ...(conv.bot_enabled ? {} : { activated_via: "ref_code", lead_id: lead.id }), updated_at: new Date().toISOString() }).eq("id", conv.id);
+  return { enabled: true, status };
 }
 
 type WaValue = {
@@ -515,8 +560,11 @@ export async function processEvent(eventId: string): Promise<string[]> {
           media_status: "pending",
           media_next_attempt_at: new Date().toISOString(),
         } : {};
-        const enabled = await activateByRefCode(conv, body);
-        const botStatus = enabled && (conv.status === "bot" || (!conv.bot_enabled && conv.status !== "agent"));
+        // A STOP counts whoever holds the chat (bot, queue, advisor, closed, never activated); in bot state answerInbound also closes it and confirms, and only there does "cancel" count.
+        if (isOptOut(body, false) && !conv.opted_out_at) await supabaseAdmin.from("whatsapp_conversations").update({ opted_out_at: new Date().toISOString() }).eq("id", conv.id);
+        const { enabled, status } = await activateByRefCode(conv, body);
+        // The bot answers only in bot state; a closed chat that the student's code just activated or opted back in has been reopened as bot.
+        const botStatus = enabled && status === "bot";
         const { data: ins, error: e } = await supabaseAdmin.from("whatsapp_messages")
           .upsert({ conversation_id: conv.id, direction: "in", body, wa_message_id: m.id, status: "received", reply_status: botStatus ? "pending" : "skipped", reply_next_attempt_at: new Date().toISOString(), ...mediaFields }, { onConflict: "wa_message_id", ignoreDuplicates: true })
           .select("id, reply_status");
@@ -562,15 +610,39 @@ export async function recoverPending() {
   for (const e of events ?? []) { try { await processEvent(e.id); } catch { /* retried later */ } }
   const { data: stale } = await supabaseAdmin.from("whatsapp_messages").select("id, reply_attempts")
     .eq("reply_status", "sending").lt("reply_started_at", new Date(Date.now() - 5 * 60_000).toISOString()).limit(3);
-  for (const m of stale ?? []) await supabaseAdmin.from("whatsapp_messages").update({ reply_status: "pending", reply_next_attempt_at: new Date().toISOString() }).eq("id", m.id).eq("reply_status", "sending");
+  // A run that was cut off may already have sent its reply, so these retries stop at the same four attempts.
+  for (const m of stale ?? []) await supabaseAdmin.from("whatsapp_messages").update(m.reply_attempts < 4 ? { reply_status: "pending", reply_next_attempt_at: new Date().toISOString() } : { reply_status: "failed", reply_next_attempt_at: null }).eq("id", m.id).eq("reply_status", "sending");
   const now = new Date().toISOString();
   const { data: pending } = await supabaseAdmin.from("whatsapp_messages").select("id").eq("reply_status", "pending").lte("reply_next_attempt_at", now).order("created_at").limit(3);
   return (pending ?? []).map((p) => p.id);
 }
 
+/**
+ * Stores files the bot will never see: those sent while the chat is queued, with an advisor, closed or not activated,
+ * whose message was marked 'skipped'. Also retries their failed downloads once media_next_attempt_at is due.
+ */
+async function storeSkippedMedia() {
+  const now = new Date().toISOString();
+  // 'downloading' with a due media_next_attempt_at is a claim whose run was cut off (or never got to read the row): it is picked up again.
+  const { data: rows } = await supabaseAdmin.from("whatsapp_messages").select("id, media_attempts")
+    .eq("reply_status", "skipped").in("media_status", ["pending", "downloading"]).lte("media_next_attempt_at", now).order("created_at").limit(3);
+  for (const row of rows ?? []) {
+    // Claim the row first so two webhook calls never download the same file. The claim is a lease: it pushes media_next_attempt_at out, and processMedia replaces it with a result.
+    const { data: claimed } = await supabaseAdmin.from("whatsapp_messages").update({ media_status: "downloading", media_next_attempt_at: new Date(Date.now() + MEDIA_LEASE_MS).toISOString() })
+      .eq("id", row.id).in("media_status", ["pending", "downloading"]).lte("media_next_attempt_at", now).eq("reply_status", "skipped").select("id");
+    if (!claimed?.length) continue;
+    if (row.media_attempts >= 4) {
+      await supabaseAdmin.from("whatsapp_messages").update({ media_status: "failed", media_next_attempt_at: null, media_error: "The download did not finish after four attempts" }).eq("id", row.id);
+      continue;
+    }
+    try { await processMedia(row.id, true); } catch { /* processMedia recorded the error and any retry time */ }
+  }
+}
+
 export async function processPendingWork(preferredIds: string[] = []) {
   const recovered = await recoverPending();
   for (const id of Array.from(new Set([...preferredIds, ...recovered])).slice(0, 5)) await answerInbound(id);
+  try { await storeSkippedMedia(); } catch (e) { console.error("WhatsApp media recovery failed", e); }
 }
 
 export { answerInbound };

@@ -42,7 +42,7 @@ export function WhatsAppQueue({ onOpenLead }: { onOpenLead: (leadId: string) => 
     refetchInterval: 20000,
     queryFn: async () => {
       const { data, error } = await supabase.from("whatsapp_conversations")
-        .select("id, wa_phone, status, queued_at, summary, lead_id, flagged, flag_reason, leads(full_name, selected_course, nearest_campus)")
+        .select("id, wa_phone, status, queued_at, summary, lead_id, flagged, flag_reason, opted_out_at, leads(full_name, selected_course, nearest_campus)")
         .eq("status", "queued").order("flagged", { ascending: false }).order("queued_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
@@ -76,6 +76,7 @@ export function WhatsAppQueue({ onOpenLead }: { onOpenLead: (leadId: string) => 
                 <p className="text-xs text-muted-foreground">{lead?.selected_course ?? "No application"}{lead?.nearest_campus ? ` · ${lead.nearest_campus}` : ""} · waiting {mins < 60 ? `${mins} min` : `${Math.round(mins / 60)} h`}</p>
                 {c.flagged && <span className="mt-1 inline-block rounded-full bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground">Needs attention{c.flag_reason ? `: ${c.flag_reason}` : ""}</span>}
                 {c.summary && !c.flagged && <p className="mt-1 text-sm">{c.summary}</p>}
+                {c.opted_out_at && <p className="mt-1 text-xs font-semibold text-destructive">Opted out of WhatsApp. Contact by phone or email.</p>}
               </div>
               <div className="flex flex-wrap gap-2">
                 <a href={waLink(c.wa_phone)} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">Open in WhatsApp</a>
@@ -94,7 +95,7 @@ export function WhatsAppThread({ leadId, welcomeStatus }: { leadId: string; welc
   const q = useQuery({
     queryKey: ["wa", "thread", leadId],
     queryFn: async () => {
-      const { data: conv, error } = await supabase.from("whatsapp_conversations").select("id, wa_phone, status").eq("lead_id", leadId).maybeSingle();
+      const { data: conv, error } = await supabase.from("whatsapp_conversations").select("id, wa_phone, status, opted_out_at").eq("lead_id", leadId).maybeSingle();
       if (error) throw error;
       if (!conv) return null;
       const { data: msgs, error: e2 } = await supabase.from("whatsapp_messages").select("id, direction, body, status, error, created_at").eq("conversation_id", conv.id).order("created_at");
@@ -115,7 +116,7 @@ export function WhatsAppThread({ leadId, welcomeStatus }: { leadId: string; welc
     <div className="mt-4 rounded-xl border border-border p-3">
       <div className="flex items-center justify-between gap-2 text-sm">
         <strong>WhatsApp</strong>
-        <span className="text-xs text-muted-foreground">Welcome: {WELCOME[welcomeStatus] ?? welcomeStatus}{t ? ` · ${LABEL[t.conv.status]}` : ""}</span>
+        <span className="text-xs text-muted-foreground">Welcome: {WELCOME[welcomeStatus] ?? welcomeStatus}{t ? ` · ${LABEL[t.conv.status]}${t.conv.opted_out_at ? " · Opted out" : ""}` : ""}</span>
       </div>
       {welcomeStatus !== "sent" && welcomeStatus !== "sending" && <button onClick={doResend} disabled={busy} className="mt-2 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold disabled:opacity-60">{busy ? "Sending" : "Resend welcome"}</button>}
       {t && <>
@@ -128,7 +129,7 @@ export function WhatsAppThread({ leadId, welcomeStatus }: { leadId: string; welc
         <div className="mt-2 flex flex-wrap gap-2">
           <a href={waLink(t.conv.wa_phone)} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">Open in WhatsApp</a>
           {t.conv.status !== "closed" && <button onClick={() => setStatus(t.conv.id, "closed", qc)} className="rounded-lg border border-border px-3 py-1.5 text-xs">Mark as handled</button>}
-          {t.conv.status !== "bot" && <button onClick={() => setStatus(t.conv.id, "bot", qc)} className="rounded-lg border border-border px-3 py-1.5 text-xs">Hand back to bot</button>}
+          {t.conv.status !== "bot" && !t.conv.opted_out_at && <button onClick={() => setStatus(t.conv.id, "bot", qc)} className="rounded-lg border border-border px-3 py-1.5 text-xs">Hand back to bot</button>}
         </div>
       </>}
       <AdmissionsPack leadId={leadId} />
@@ -144,6 +145,8 @@ const CHECKLIST = [
   ["english_evidence", "English evidence"],
   ["cv", "CV"],
 ] as const;
+// Files stored outside a document step (sent early, after the reminder, or while an advisor held the chat).
+const OTHER = ["unclassified", "Other / unclassified"] as const;
 
 function AdmissionsPack({ leadId }: { leadId: string }) {
   const loadPack = useServerFn(getAdmissionPack);
@@ -192,10 +195,12 @@ function AdmissionsPack({ leadId }: { leadId: string }) {
       </dl> : null;
     })()}
     <ul className="mt-3 space-y-2">
-      {CHECKLIST.map(([type, label]) => {
+      {[...CHECKLIST, OTHER].map(([type, label]) => {
         const files = documents.filter((document) => document.document_type === type && document.status !== "replaced");
+        if (type === "unclassified" && !files.length) return null;
         return <li key={type} className="rounded-lg bg-secondary/50 p-2.5">
           <div className="flex items-center justify-between gap-3 text-xs"><strong>{label}</strong><span className={files.length ? "text-primary" : "text-muted-foreground"}>{files.length ? `${files.length} received` : "Missing"}</span></div>
+          {type === "unclassified" && <p className="mt-1 text-xs text-muted-foreground">Not matched to a checklist item. Open each file to see what it is.</p>}
           {files.map((document) => <div key={document.id} className="mt-2 grid gap-2 border-t border-border pt-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="min-w-0"><p className="truncate">{document.original_filename ?? label}</p><p className="text-muted-foreground">{Math.ceil(document.file_size / 1024)} KB · {document.status.replaceAll("_", " ")}</p>{document.replacement_reason && <p className="text-destructive">{document.replacement_reason}</p>}</div>
             <div className="flex flex-wrap gap-1.5">

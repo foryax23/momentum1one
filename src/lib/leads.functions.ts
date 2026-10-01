@@ -45,15 +45,27 @@ export const submitLead = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("leads")
       .insert({ ...lead, privacy_acknowledged_at: new Date().toISOString(), offer_token_hash, offer_expires_at, offer_email_status: "domain_pending" })
-      .select("id, phone, ref_code, full_name, city, interest, intake, nearest_campus, distance_miles, created_at, selected_course, study_route")
+      .select("id, phone, whatsapp, ref_code, full_name, city, interest, intake, nearest_campus, distance_miles, created_at, selected_course, study_route")
       .single();
     if (error) {
       console.error(error);
       throw new Error("Could not save your details. Please try again.");
     }
-    const { sendWelcome } = await import("./whatsapp.server");
-    await sendWelcome(row);
-    const { id: _id, phone: _phone, ...publicRow } = row;
+    // The lead is saved. WhatsApp is best effort from here: it only runs with the applicant's "WhatsApp is okay"
+    // (otherwise whatsapp_status stays 'pending'), and it must never fail or hold up the applicant's result.
+    if (row.whatsapp) {
+      try {
+        const { sendWelcome } = await import("./whatsapp.server");
+        const { getRequest } = await import("@tanstack/react-start/server");
+        const request = getRequest() as Request & { waitUntil?: (promise: Promise<unknown>) => void };
+        const welcome = sendWelcome(row).catch((welcomeError: unknown) => console.error("WhatsApp welcome failed", welcomeError));
+        if (request.waitUntil) request.waitUntil(welcome);
+        else await Promise.race([welcome, new Promise((resolve) => setTimeout(resolve, 4000))]);
+      } catch (welcomeError) {
+        console.error("WhatsApp welcome was not started", welcomeError);
+      }
+    }
+    const { id: _id, phone: _phone, whatsapp: _whatsapp, ...publicRow } = row;
     return { ...publicRow, offer_url: `/offer/${token}` };
   });
 

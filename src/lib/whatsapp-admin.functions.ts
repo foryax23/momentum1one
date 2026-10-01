@@ -11,9 +11,14 @@ export const resendWelcome = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: lead, error } = await supabaseAdmin.from("leads")
       .update({ whatsapp_status: "pending" }).eq("id", data.leadId).neq("whatsapp_status", "sending")
-      .select("id, full_name, phone, selected_course, nearest_campus, ref_code").single();
+      .select("id, full_name, phone, selected_course, nearest_campus, ref_code, whatsapp").single();
     if (error || !lead) throw new Error("Could not resend right now.");
-    const { sendWelcome } = await import("./whatsapp.server");
+    // sendWelcome refuses both cases silently; say why here so the admin is not left guessing.
+    if (!lead.whatsapp) throw new Error("This applicant did not agree to WhatsApp contact. Use phone or email instead.");
+    const { sendWelcome, hasOptedOut } = await import("./whatsapp.server");
+    const optedOut = await hasOptedOut(lead.phone).catch(() => null);
+    if (optedOut === null) throw new Error("Could not resend right now.");
+    if (optedOut) throw new Error("This number has opted out of WhatsApp messages. Use phone or email instead.");
     await sendWelcome(lead);
     const { data: after } = await supabaseAdmin.from("leads").select("whatsapp_status").eq("id", lead.id).single();
     return { status: after?.whatsapp_status ?? "unknown" };
