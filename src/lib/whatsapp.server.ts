@@ -11,7 +11,7 @@ const STATUS_RANK: Record<string, number> = { accepted: 0, sent: 1, delivered: 2
 const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MEDIA = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const STEP_ORDER = ["identity", "proof_of_address", "immigration_status", "qualifications", "english_evidence", "cv"] as const;
-type AdmissionsStep = "welcome" | "details" | "details_confirm" | typeof STEP_ORDER[number] | "final_reminder" | "ready_review";
+type AdmissionsStep = "welcome" | "details" | "details_confirm" | "docs_consent" | typeof STEP_ORDER[number] | "final_reminder" | "ready_review";
 type DocumentType = typeof STEP_ORDER[number] | "unclassified";
 
 class ProviderError extends Error {
@@ -169,7 +169,8 @@ function stepAfter(step: AdmissionsStep, profile: Profile, reminders: Reminders)
   if (step === "details") return missingFields(profile).length ? "details" : "details_confirm";
   const docs = neededDocs(profile);
   let index = -1;
-  if (step !== "details_confirm") {
+  if (step === "details_confirm") return "docs_consent";
+  if (step !== "docs_consent") {
     if (step === "final_reminder" || step === "ready_review") return "ready_review";
     index = STEP_ORDER.indexOf(step as typeof STEP_ORDER[number]);
   }
@@ -188,6 +189,7 @@ function stepInstruction(step: AdmissionsStep, profile: Profile, reminders: Remi
       return `Collect personal details conversationally, ONE question per message. Still missing: ${missing.map((f) => PROFILE_LABEL[f]).join("; ")}. Ask for the first missing item only (you may combine address and postcode). Thank them briefly for what they just shared.`;
     }
     case "details_confirm": return `Show a short friendly recap of the details below and ask them to reply "yes" if correct or tell you what to change. Details: ${PROFILE_FIELDS.map((f) => `${PROFILE_LABEL[f].split(" (")[0]}: ${profile[f] ?? "-"}`).join("; ")}.`;
+    case "docs_consent": return "Before any document: in one friendly sentence explain the university admissions team needs a few documents to process the application, and that files are stored privately and only seen by Momentum One advisors. Then ask whether they would like to send them here in this chat, or prefer an advisor to call them first. Do not ask for a document yet. Intent: 'confirm' if they agree to send here, 'call_first' if they want a call first.";
     case "final_reminder": return `Gently mention the items they skipped (${(reminders.skipped ?? []).map((d) => DOC_LABEL[d as typeof STEP_ORDER[number]]?.split(",")[0] ?? d).join(", ")}). Say they can send them now, or later in this chat, no pressure. This is the only reminder.`;
     case "ready_review": return "Thank them sincerely, give a one-line recap that their details and documents are with the team, and say an advisor will review everything and contact them about next steps. Do not say anything was approved.";
     default: return `Now collecting documents (document ${done + 1} of ${docs.length}). Ask kindly for their ${DOC_LABEL[step as typeof STEP_ORDER[number]]}. Say a photo or PDF is fine. Mention they can say "later" if they do not have it to hand.`;
@@ -199,7 +201,30 @@ function isOptOut(text: string) {
 }
 
 function wantsAdvisor(text: string) {
-  return /\b(advisor|adviser|agent|human|real person|call me|complaint|speak to|consilier|persoană|agente|asesor)\b/i.test(text);
+  return /\b(advisor|adviser|agent|human|real person|call me|speak to|consilier|persoană|agente|asesor)\b/i.test(text);
+}
+
+/** Fast server-side red flags; the AI adds a second, contextual check. */
+function suspiciousReason(text: string): string | null {
+  if (/https?:\/\/|www\.|bit\.ly|t\.me\//i.test(text)) return "Sent a link";
+  if (/\b(ignore (all|previous|your) (instructions|rules)|system prompt|your instructions|jailbreak|act as)\b/i.test(text)) return "Tried to change the bot's instructions";
+  if (/\b(guarantee(d)? (visa|admission|place)|pay (you|cash)|bribe|money to get|buy (a )?(degree|place|offer)|fake (document|certificate|passport))\b/i.test(text)) return "Payment or guarantee request";
+  if (/\b(card number|cvv|bank details|password|pin code|iban)\b/i.test(text)) return "Shared or asked for financial or login details";
+  if (/\b(complaint|lawyer|solicitor|sue|police|scam|fraud|suicid|self[- ]harm|abuse)\b/i.test(text)) return "Complaint or sensitive topic";
+  if (/\b(fuck|shit|bitch|idiot|stupid bot)\b/i.test(text)) return "Abusive language";
+  return null;
+}
+
+const HOLD_MESSAGES = [
+  "Thanks, give me a moment. I'm passing you to one of our advisors, who will reply here shortly.",
+  "Hold on a second, I'm bringing in one of our advisors to help you with this. They'll reply here soon.",
+  "Thanks for your patience, one of our advisors will pick this up and reply to you here shortly.",
+];
+
+async function flagAndHold(conversationId: string, to: string, reason: string) {
+  const now = new Date().toISOString();
+  await supabaseAdmin.from("whatsapp_conversations").update({ status: "queued", queued_at: now, flagged: true, flag_reason: reason.slice(0, 200), summary: `Needs attention: ${reason}`.slice(0, 300), updated_at: now }).eq("id", conversationId);
+  await sendText(conversationId, to, HOLD_MESSAGES[Math.floor(Math.random() * HOLD_MESSAGES.length)]!);
 }
 
 function documentTypeForStep(step: AdmissionsStep): DocumentType {
