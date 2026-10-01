@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import logo from "@/assets/logo.png";
 import { Funnel } from "@/components/funnel";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IconArrowRight, IconBook, IconCalendar, IconCampus, IconMortarboard, IconPassport, IconPin, IconSeal, IconTick } from "@/components/icons";
 import { CAMPUSES } from "@/lib/funnel";
+import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 
 const TITLE = "Launch your UK degree | Momentum One";
@@ -59,7 +60,7 @@ function Index() {
           {["No long application", "Five UK campuses", "Seven degree courses"].map((item) => <span key={item} className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-medium text-primary"><IconTick size={15} />{item}</span>)}
         </div>
         <p className="text-sm text-muted-foreground">Degrees awarded by <strong className="font-semibold text-foreground">University of Wolverhampton, Arts University Bournemouth and Health Sciences University.</strong></p>
-        <Button asChild className="h-12 w-full rounded-xl sm:hidden"><a href="#signup">Check my options <IconArrowRight /></a></Button>
+        <a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl sm:hidden")}>Check my options <IconArrowRight /></a>
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .2, duration: .9, ease }}><Funnel /></motion.div>
     </section>
@@ -97,13 +98,13 @@ function Index() {
       <Accordion type="single" collapsible className="mt-8 max-w-3xl space-y-2">{FAQS.map(([question, answer]) => <AccordionItem key={question} value={question} className="rounded-xl border border-border bg-card px-4"><AccordionTrigger className="font-sans text-base font-bold">{question}</AccordionTrigger><AccordionContent className="max-w-2xl text-muted-foreground">{answer}</AccordionContent></AccordionItem>)}</Accordion>
     </Section>
 
-    <section className="mt-20 border-y border-border bg-secondary"><div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 px-5 py-12 sm:flex-row sm:items-center sm:px-8"><div><h2 className="text-3xl font-bold italic text-primary">Ready to start?</h2><p className="mt-1 text-muted-foreground">Four questions. Less than a minute.</p></div><Button asChild className="h-14 rounded-xl px-7 text-base font-bold"><a href="#signup">Check my options <IconArrowRight /></a></Button></div></section>
+    <section className="mt-20 border-y border-border bg-secondary"><div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 px-5 py-12 sm:flex-row sm:items-center sm:px-8"><div><h2 className="text-3xl font-bold italic text-primary">Ready to start?</h2><p className="mt-1 text-muted-foreground">Four questions. Less than a minute.</p></div><a href="#signup" className={cn(buttonVariants(), "h-14 rounded-xl px-7 text-base font-bold")}>Check my options <IconArrowRight /></a></div></section>
     <footer className="mx-auto grid max-w-6xl gap-5 px-5 py-10 sm:grid-cols-[auto_1fr] sm:items-center sm:px-8"><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables and admission decisions are subject to confirmation by the relevant institution. © {new Date().getFullYear()} Momentum One.</p></footer>
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur md:hidden"><Button asChild className="h-12 w-full rounded-xl font-bold"><a href="#signup">Check my options <IconArrowRight /></a></Button></div>
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur md:hidden"><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>Check my options <IconArrowRight /></a></div>
   </main>;
 }
 
-function Header() { return <header className="sticky top-0 z-40 border-b border-border/70 bg-card/90 backdrop-blur-xl"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8"><a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className="h-10 w-auto" /></a><nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">Courses</a><a href="#campuses">Campuses</a><a href="#journey">How it works</a></nav><Button asChild variant="outline" className="rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground"><a href="#signup">Start here</a></Button></div></header>; }
+function Header() { return <header className="sticky top-0 z-40 border-b border-border/70 bg-card/90 backdrop-blur-xl"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8"><a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className="h-10 w-auto" /></a><nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">Courses</a><a href="#campuses">Campuses</a><a href="#journey">How it works</a></nav><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground")}>Start here</a></div></header>; }
 function Section({ id, children }: { id: string; children: React.ReactNode }) { return <section id={id} className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-20 sm:px-8 sm:pt-24">{children}</section>; }
 function SectionHeading({ eyebrow, title, intro, inverse = false, centered = false }: { eyebrow: string; title: string; intro?: string; inverse?: boolean; centered?: boolean }) { return <div className={centered ? "text-center" : ""}><p className={inverse ? "text-xs font-semibold uppercase tracking-[.16em] text-primary-foreground/70" : "text-xs font-semibold uppercase tracking-[.16em] text-teal"}>{eyebrow}</p><h2 className={inverse ? "mt-2 text-3xl font-bold italic text-primary-foreground sm:text-4xl" : "mt-2 text-3xl font-bold italic text-primary sm:text-4xl"}>{title}</h2>{intro && <p className="mt-3 max-w-2xl text-muted-foreground">{intro}</p>}</div>; }
 function Stars() { return <div className="pointer-events-none absolute inset-0" aria-hidden>{[[8,28],[18,62],[32,22],[48,55],[65,25],[77,63],[89,32],[94,75]].map(([left, top], index) => <span key={left} className="absolute h-1 w-1 rounded-full bg-primary-foreground" style={{ left: `${left}%`, top: `${top}%`, animation: `star-twinkle ${2.5 + index * .18}s ease-in-out infinite` }} />)}</div>; }
