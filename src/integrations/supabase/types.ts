@@ -92,6 +92,7 @@ export type Database = {
           created_at: string
           distance_miles: number | null
           email: string
+          email_marketing: boolean
           full_name: string
           id: string
           intake: string | null
@@ -104,6 +105,8 @@ export type Database = {
           offer_token_hash: string | null
           page: string | null
           phone: string
+          phone_marketing: boolean
+          privacy_acknowledged_at: string | null
           ref_code: string
           selected_course: string | null
           source: string | null
@@ -111,6 +114,7 @@ export type Database = {
           student_user_id: string | null
           study_route: string | null
           whatsapp: boolean
+          whatsapp_marketing: boolean
           whatsapp_status: string
         }
         Insert: {
@@ -121,6 +125,7 @@ export type Database = {
           created_at?: string
           distance_miles?: number | null
           email: string
+          email_marketing?: boolean
           full_name: string
           id?: string
           intake?: string | null
@@ -133,6 +138,8 @@ export type Database = {
           offer_token_hash?: string | null
           page?: string | null
           phone: string
+          phone_marketing?: boolean
+          privacy_acknowledged_at?: string | null
           ref_code?: string
           selected_course?: string | null
           source?: string | null
@@ -140,6 +147,7 @@ export type Database = {
           student_user_id?: string | null
           study_route?: string | null
           whatsapp?: boolean
+          whatsapp_marketing?: boolean
           whatsapp_status?: string
         }
         Update: {
@@ -150,6 +158,7 @@ export type Database = {
           created_at?: string
           distance_miles?: number | null
           email?: string
+          email_marketing?: boolean
           full_name?: string
           id?: string
           intake?: string | null
@@ -162,6 +171,8 @@ export type Database = {
           offer_token_hash?: string | null
           page?: string | null
           phone?: string
+          phone_marketing?: boolean
+          privacy_acknowledged_at?: string | null
           ref_code?: string
           selected_course?: string | null
           source?: string | null
@@ -169,6 +180,7 @@ export type Database = {
           student_user_id?: string | null
           study_route?: string | null
           whatsapp?: boolean
+          whatsapp_marketing?: boolean
           whatsapp_status?: string
         }
         Relationships: []
