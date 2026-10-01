@@ -10,6 +10,7 @@ import { AudienceStrip, CampusCards, CourseDeck, ScrollTimeline, StatsBand } fro
 import { CourseComparison, WhatYouReceive } from "@/components/home-sections";
 import { HeroVideo } from "@/components/hero-video";
 import { PromoVideoFeature } from "@/components/promo-video";
+import { SectionVideo } from "@/components/section-video";
 import { cn } from "@/lib/utils";
 import { openCookieSettings } from "@/components/cookie-consent";
 import { IconAgents, IconUniversity } from "@/components/icons";
@@ -65,10 +66,27 @@ function Index() {
       </div>
     </section>
 
+    <section className="bg-primary py-10 text-primary-foreground sm:py-14">
+      <div className="mx-auto grid max-w-6xl items-center gap-7 px-5 sm:px-8 lg:grid-cols-[1.35fr_.65fr] lg:gap-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="overflow-hidden">
+          <SectionVideo kind="start" className="w-full" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, x: 18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">Your application, made clearer</p>
+          <h2 className="mt-3 text-3xl font-bold italic sm:text-4xl">Start your university journey with a plan.</h2>
+          <p className="mt-4 leading-relaxed text-primary-foreground/75">Check your course and campus options, receive personalised information, then continue with an advisor.</p>
+          <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "mt-6 h-12 rounded-lg px-5 font-bold")}>Check my options <IconArrowRight size={18} /></a>
+        </motion.div>
+      </div>
+    </section>
+
     <UniversityRail />
 
     <Section id="courses">
-      <SectionHeading eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
+      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
+        <SectionHeading eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
+        <SectionVideo kind="courses" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
+      </div>
       <div className="mt-6"><CourseDeck /></div>
       <CourseComparison />
     </Section>
@@ -86,12 +104,18 @@ function Index() {
     </section>
 
     <Section id="campuses">
-      <SectionHeading eyebrow="Campuses" title="Study close to home" intro="We match you to your nearest campus automatically when you sign up." />
+      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
+        <SectionHeading eyebrow="Campuses" title="Study close to home" intro="We match you to your nearest campus automatically when you sign up." />
+        <SectionVideo kind="campuses" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
+      </div>
       <CampusCards />
     </Section>
 
     <Section id="journey">
-      <SectionHeading eyebrow="How it works" title="From sign-up to your first class" />
+      <div className="grid items-center gap-7 lg:grid-cols-[1fr_340px] lg:gap-12">
+        <SectionHeading eyebrow="How it works" title="From sign-up to your first class" />
+        <SectionVideo kind="journey" className="w-full max-w-[340px] justify-self-center lg:justify-self-end" />
+      </div>
       <ScrollTimeline steps={JOURNEY} />
     </Section>
 
