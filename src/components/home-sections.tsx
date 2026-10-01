@@ -90,7 +90,7 @@ export function CourseDeck() {
           <DeckButton label="Next course" onClick={() => scrollTo(Math.min(deck.length - 1, index + 1))} />
         </div>
       </div>
-      <div ref={track} onScroll={onScroll} tabIndex={0} aria-label="Courses" className="no-scrollbar -mx-5 mt-5 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-px-5 px-5 pb-4 outline-none sm:-mx-8 sm:scroll-px-8 sm:px-8">
+      <div ref={track} onScroll={onScroll} tabIndex={0} aria-label="Courses" className="no-scrollbar -mx-5 mt-5 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-px-5 px-5 pb-4 pt-3 outline-none sm:-mx-8 sm:scroll-px-8 sm:px-8">
         {deck.map((c, i) => {
           const open = active === c.key;
           return (
