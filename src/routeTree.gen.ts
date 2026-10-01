@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +40,26 @@ const OfferTokenRoute = OfferTokenRouteImport.update({
   path: '/offer/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp/webhook',
+    path: '/api/public/whatsapp/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +68,15 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/admin' | '/offer/$token'
+  fullPaths:
+    '/' | '/auth' | '/admin' | '/offer/$token' | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/admin' | '/offer/$token'
+  to:
+    '/' | '/auth' | '/admin' | '/offer/$token' | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
     | '/'
@@ -72,6 +84,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/offer/$token'
+    | '/api/public/whatsapp/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -79,6 +92,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfferTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp/webhook': {
+      id: '/api/public/whatsapp/webhook'
+      path: '/api/public/whatsapp/webhook'
+      fullPath: '/api/public/whatsapp/webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -137,6 +158,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

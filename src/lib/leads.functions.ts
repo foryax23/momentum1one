@@ -42,13 +42,16 @@ export const submitLead = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("leads")
       .insert({ ...lead, offer_token_hash, offer_expires_at, offer_email_status: "domain_pending" })
-      .select("ref_code, full_name, city, interest, intake, nearest_campus, distance_miles, created_at, selected_course, study_route")
+      .select("id, phone, ref_code, full_name, city, interest, intake, nearest_campus, distance_miles, created_at, selected_course, study_route")
       .single();
     if (error) {
       console.error(error);
       throw new Error("Could not save your details. Please try again.");
     }
-    return { ...row, offer_url: `/offer/${token}` };
+    const { sendWelcome } = await import("./whatsapp.server");
+    await sendWelcome(row);
+    const { id: _id, phone: _phone, ...publicRow } = row;
+    return { ...publicRow, offer_url: `/offer/${token}` };
   });
 
 export const getOffer = createServerFn({ method: "GET" })
