@@ -39,7 +39,7 @@ export const getAdmissionPack = createServerFn({ method: "POST" })
     await adminOnly(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: conversation } = await supabaseAdmin.from("whatsapp_conversations")
-      .select("id, detected_language, admissions_step, status, queued_at, last_inbound_at")
+      .select("id, detected_language, admissions_step, status, queued_at, last_inbound_at, bot_enabled, activated_via, profile")
       .eq("lead_id", data.leadId).maybeSingle();
     const { data: documents, error } = await supabaseAdmin.from("admission_documents")
       .select("id, document_type, original_filename, mime_type, file_size, status, replacement_reason, received_at, reviewed_at")
