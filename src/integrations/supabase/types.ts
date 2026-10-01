@@ -28,11 +28,17 @@ export type Database = {
           interest: string | null
           nearest_campus: string | null
           notes: string | null
+          offer_email_sent_at: string | null
+          offer_email_status: string
+          offer_expires_at: string | null
+          offer_token_hash: string | null
           page: string | null
           phone: string
           ref_code: string
+          selected_course: string | null
           source: string | null
           status: string
+          study_route: string | null
           whatsapp: boolean
         }
         Insert: {
@@ -48,11 +54,17 @@ export type Database = {
           interest?: string | null
           nearest_campus?: string | null
           notes?: string | null
+          offer_email_sent_at?: string | null
+          offer_email_status?: string
+          offer_expires_at?: string | null
+          offer_token_hash?: string | null
           page?: string | null
           phone: string
           ref_code?: string
+          selected_course?: string | null
           source?: string | null
           status?: string
+          study_route?: string | null
           whatsapp?: boolean
         }
         Update: {
@@ -68,11 +80,17 @@ export type Database = {
           interest?: string | null
           nearest_campus?: string | null
           notes?: string | null
+          offer_email_sent_at?: string | null
+          offer_email_status?: string
+          offer_expires_at?: string | null
+          offer_token_hash?: string | null
           page?: string | null
           phone?: string
           ref_code?: string
+          selected_course?: string | null
           source?: string | null
           status?: string
+          study_route?: string | null
           whatsapp?: boolean
         }
         Relationships: []

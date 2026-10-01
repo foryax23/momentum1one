@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search } from "@/components/icons";
+import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search, Spinner } from "@/components/icons";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
@@ -15,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "description", content: "Momentum One admin leads dashboard." },
       { property: "og:title", content: "Leads dashboard | Momentum One" },
       { property: "og:description", content: "Momentum One admin leads dashboard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -27,6 +29,7 @@ type Lead = {
   id: string; ref_code: string; full_name: string; email: string; phone: string; city: string;
   interest: string | null; intake: string | null; status: string; notes: string | null; created_at: string;
   whatsapp: boolean; nearest_campus: string | null; distance_miles: number | null; source: string | null; campaign: string | null; page: string | null;
+  selected_course: string | null; study_route: string | null; offer_email_status: string;
 };
 
 function Admin() {
@@ -86,7 +89,7 @@ function Admin() {
   }
 
   function exportCsv() {
-    const head = ["ref_code", "full_name", "email", "phone", "whatsapp", "city", "nearest_campus", "distance_miles", "interest", "intake", "source", "campaign", "status", "created_at"] as const;
+    const head = ["ref_code", "full_name", "email", "phone", "whatsapp", "city", "nearest_campus", "distance_miles", "selected_course", "study_route", "offer_email_status", "intake", "source", "campaign", "status", "created_at"] as const;
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csv = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
     const a = document.createElement("a");
@@ -147,7 +150,7 @@ function Admin() {
                 <td className="p-3"><div className="font-semibold">{l.full_name}</div><div className="text-xs text-muted-foreground">{l.ref_code}</div></td>
                 <td className="p-3"><div>{l.email}</div><div className="text-xs text-muted-foreground">{l.phone}</div></td>
                 <td className="p-3">{l.city}</td>
-                <td className="p-3"><div>{l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
+                 <td className="p-3"><div>{l.selected_course ?? l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.study_route ?? l.intake ?? ""}</div></td>
                 <td className="p-3"><Badge s={l.status} /></td>
                 <td className="p-3 text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}</td>
               </tr>
@@ -174,6 +177,15 @@ function Badge({ s }: { s: string }) {
 
 function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; onSave: (p: Partial<Lead>) => void }) {
   const [notes, setNotes] = useState(lead.notes ?? "");
+  const [downloading, setDownloading] = useState(false);
+  async function downloadOffer() {
+    if (!lead.selected_course || !lead.study_route) return;
+    setDownloading(true);
+    try {
+      const { downloadOffer: createOffer } = await import("@/components/offer-pdf");
+      await createOffer({ ...lead, offer_url: "" });
+    } finally { setDownloading(false); }
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm sm:items-center" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-t-3xl border border-border bg-popover p-6 sm:rounded-3xl">
@@ -186,7 +198,8 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
           <Row k="Phone" v={<a href={`tel:${lead.phone}`} className="text-primary">{lead.phone}</a>} />
            <Row k="WhatsApp" v={lead.whatsapp ? "Yes" : "No"} /><Row k="City" v={lead.city} />
            <Row k="Nearest campus" v={lead.nearest_campus ?? "-"} /><Row k="Distance" v={lead.distance_miles == null ? "-" : `About ${lead.distance_miles} miles`} />
-           <Row k="Interest" v={lead.interest ?? "To discuss"} /><Row k="Intake" v={lead.intake ?? "-"} />
+            <Row k="Course" v={lead.selected_course ?? "To discuss"} /><Row k="Route" v={lead.study_route ?? "-"} />
+            <Row k="Offer email" v={lead.offer_email_status.replace("_", " ")} /><Row k="Intake" v={lead.intake ?? "-"} />
            <Row k="Source" v={lead.source ?? "Direct"} /><Row k="Campaign" v={lead.campaign ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
         </dl>
@@ -195,6 +208,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
             <button key={s} onClick={() => onSave({ status: s })} className={cn("rounded-full border px-3 py-1.5 text-xs capitalize", lead.status === s ? "border-primary bg-primary/20" : "border-border")}>{s}</button>
           ))}
         </div>
+        {lead.selected_course && lead.study_route && <button onClick={downloadOffer} disabled={downloading} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary disabled:opacity-60">{downloading ? <Spinner size={18} /> : <Download size={18} />}{downloading ? "Preparing offer" : "Download personalised offer"}</button>}
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={4} placeholder="Notes…" className="mt-4 w-full rounded-xl border border-input bg-secondary/40 p-3 text-sm outline-none focus:border-primary" />
         <button onClick={() => onSave({ notes })} className="mt-3 w-full rounded-xl bg-ink py-3 font-display font-semibold text-primary-foreground">Save notes</button>
       </div>

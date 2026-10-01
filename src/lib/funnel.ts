@@ -54,4 +54,7 @@ export type LeadResult = {
   nearest_campus: string | null;
   distance_miles: number | null;
   created_at: string;
+  selected_course: string | null;
+  study_route: string | null;
+  offer_url: string;
 };
