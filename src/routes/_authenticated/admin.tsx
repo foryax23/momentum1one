@@ -15,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "description", content: "Momentum One admin leads dashboard." },
       { property: "og:title", content: "Leads dashboard | Momentum One" },
       { property: "og:description", content: "Momentum One admin leads dashboard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

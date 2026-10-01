@@ -11,6 +11,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Momentum One staff sign in to the leads dashboard." },
       { property: "og:title", content: "Staff sign in | Momentum One" },
       { property: "og:description", content: "Momentum One staff sign in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
