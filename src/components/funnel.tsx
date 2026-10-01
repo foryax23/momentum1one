@@ -5,17 +5,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { UK_CITIES, nearestCampus, type LeadResult } from "@/lib/funnel";
 import { submitLead } from "@/lib/leads.functions";
 import { cn } from "@/lib/utils";
-import {
-  IconArrowLeft, IconArrowRight, IconDownload, IconPhone, IconTick, Spinner,
-} from "./icons";
-import { UkMap } from "./uk-map";
-import { BookScene, EnvelopeScene, LiftOffScene } from "./funnel-scenes";
+import { Button } from "@/components/ui/button";
+import { IconArrowLeft, IconArrowRight, IconDownload, IconPin, IconRocket, IconTick, Spinner } from "./icons";
+import { LiftOffScene } from "./funnel-scenes";
 
 type Data = { full_name: string; city: string; email: string; phone: string; whatsapp: boolean; consent: boolean; website: string };
 const STEPS = 4;
-const LABELS = ["Name", "City", "Phone", "Email"];
-const ease = [0.22, 1, 0.36, 1] as const;
+const LABELS = ["Name", "Location", "Phone", "Email"];
 const DRAFT_KEY = "momentum-one-application";
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Funnel() {
   const [step, setStep] = useState(0);
@@ -30,44 +28,38 @@ export function Funnel() {
     try {
       const saved = window.localStorage.getItem(DRAFT_KEY);
       if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, website: "" }));
-    } catch { /* Ignore unavailable or malformed local storage. */ }
+    } catch { /* Ignore unavailable or malformed storage. */ }
   }, []);
 
   useEffect(() => {
     if (!result) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
   }, [d, result]);
 
-  const go = (n: number) => { setDir(n > step ? 1 : -1); setStep(n); };
-  const set = <K extends keyof Data>(k: K, v: Data[K]) => setD((p) => ({ ...p, [k]: v }));
-  const pick = <K extends keyof Data>(k: K, v: Data[K], delay = 650) => { set(k, v); setTimeout(() => go(step + 1), delay); };
-
+  const go = (next: number) => { setDir(next > step ? 1 : -1); setStep(next); };
+  const set = <K extends keyof Data>(key: K, value: Data[K]) => setD((current) => ({ ...current, [key]: value }));
   const first = d.full_name.trim().split(" ")[0];
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim());
   const phoneOk = /^(\+44\s?7\d{3}|07\d{3})\s?\d{3}\s?\d{3}$/.test(d.phone.trim());
   const campus = d.city ? nearestCampus(d.city as (typeof UK_CITIES)[number]) : null;
 
   async function submit() {
-    if (!emailOk || !phoneOk || !d.consent) return;
+    if (!emailOk || !phoneOk || !d.consent || !campus) return;
     setLoading(true);
     try {
-      const row = await send({
-        data: {
-          full_name: d.full_name.trim(), email: d.email.trim(), phone: d.phone.trim(),
-          city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
-          whatsapp: d.whatsapp, nearest_campus: campus?.full ?? "Luton Campus", distance_miles: campus?.miles ?? 0,
-          source: new URLSearchParams(window.location.search).get("utm_source"),
-          campaign: new URLSearchParams(window.location.search).get("utm_campaign"),
-          page: window.location.href.slice(0, 500), website: d.website,
-        },
-      });
+      const params = new URLSearchParams(window.location.search);
+      const row = await send({ data: {
+        full_name: d.full_name.trim(), email: d.email.trim(), phone: d.phone.trim(),
+        city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
+        whatsapp: d.whatsapp, nearest_campus: campus.full, distance_miles: campus.miles,
+        source: params.get("src") ?? params.get("utm_source"), campaign: params.get("utm_campaign"),
+        page: window.location.href.slice(0, 500), website: d.website,
+      }});
       setResult(row);
       window.localStorage.removeItem(DRAFT_KEY);
       go(STEPS);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
+    } finally { setLoading(false); }
   }
 
   async function download() {
@@ -76,185 +68,103 @@ export function Funnel() {
     try {
       const { downloadOffer } = await import("./offer-pdf");
       await downloadOffer(result);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       toast.error("We couldn't create the PDF. Please try again.");
-    } finally {
-      setDownloading(false);
-    }
+    } finally { setDownloading(false); }
   }
 
   return (
-    <div className="relative w-full rounded-sm border-t-4 border-teal bg-stone p-5 shadow-paper sm:p-8">
-      {step < STEPS && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-bold sm:text-xl">Application onboarding</h2>
-            <span className="shrink-0 font-display text-[11px] font-bold tracking-[0.25em] text-muted-foreground">0{step + 1} / 0{STEPS}</span>
-          </div>
-          <div className="mt-3 flex gap-1.5">
-            {LABELS.map((l, i) => (
-              <div key={l} className="flex-1">
-                <div className="h-1 overflow-hidden rounded-full bg-ink/10">
-                  <motion.div className="h-full bg-teal" initial={false} animate={{ width: i <= step ? "100%" : "0%" }} transition={{ duration: 0.5, ease }} />
-                </div>
-                <span className={cn("mt-1 hidden text-[9px] font-bold uppercase tracking-widest sm:block", i <= step ? "text-teal" : "text-muted-foreground/60")}>{l}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+    <div id="signup" className="relative w-full scroll-mt-24 overflow-hidden rounded-[22px] border border-border bg-card shadow-paper">
+      {step < STEPS && <Progress step={step} onBack={() => step > 0 && go(step - 1)} />}
+      <div className="p-5 sm:p-6">
+        <AnimatePresence mode="wait" custom={dir} initial={false}>
+          <motion.div key={step} custom={dir}
+            initial={{ opacity: 0, x: dir * 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -28 }}
+            transition={{ duration: 0.42, ease }}>
+            {step === 0 && (
+              <form onSubmit={(event) => { event.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }} className="space-y-4">
+                <Question title="What's your name?" hint="So we know what to call you." />
+                <FieldLabel>Full name</FieldLabel>
+                <input autoFocus autoComplete="name" value={d.full_name} maxLength={100} onChange={(event) => set("full_name", event.target.value)} placeholder="e.g. Amira Khan" className={inputClass} />
+                <Primary disabled={d.full_name.trim().length < 2}>Next question <IconArrowRight size={20} /></Primary>
+                <p className="text-center text-xs text-muted-foreground">Four quick questions. No long application.</p>
+              </form>
+            )}
 
-      <AnimatePresence mode="wait" custom={dir} initial={false}>
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: dir * 36, rotateY: dir * 8 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          exit={{ opacity: 0, x: dir * -36, rotateY: dir * -8 }}
-          transition={{ duration: 0.45, ease }}
-          style={{ transformPerspective: 1200 }}
-        >
-          {step === 0 && (
-            <form onSubmit={(e) => { e.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }}>
-              <BookScene name={d.full_name.trim()} />
-               <Q title="First, what's your name?" sub="It takes less than a minute. Your personalised pathway is waiting at the end." />
-              <Label>Full name</Label>
-              <input autoComplete="name" value={d.full_name} maxLength={100} onChange={(e) => set("full_name", e.target.value)} placeholder="e.g. Amira Khan" className={inputCls} />
-              <Primary disabled={d.full_name.trim().length < 2}>Continue <IconArrowRight size={20} /></Primary>
-            </form>
-          )}
-
-          {step === 1 && (
-            <div>
-              <Back onClick={() => go(0)} />
-               <Q title={`Nice to meet you, ${first}. Which city are you closest to?`} sub="Choose one of the 20 main UK cities and we will find your nearest campus." />
-              <div className="mt-4 grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
-                <UkMap selected={d.city} className="h-full max-h-56 w-full" />
-                <div className="grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto pr-1">
-                  {UK_CITIES.map((c) => (
-                    <button key={c} onClick={() => pick("city", c, 900)}
-                      className={cn("rounded-sm border px-2.5 py-2 text-left text-[13px] font-semibold transition active:scale-95", d.city === c ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
-                      {c}
-                    </button>
+            {step === 1 && (
+              <div className="space-y-4">
+                <Question title={`Hi ${first}, where in the UK do you live?`} hint="Choose the nearest major city and we will match your campus." />
+                <div className="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto pr-1">
+                  {UK_CITIES.map((city) => (
+                    <Button key={city} type="button" variant="outline" onClick={() => set("city", city)}
+                      className={cn("h-10 justify-start rounded-full px-3 shadow-none", d.city === city && "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}>{city}</Button>
                   ))}
                 </div>
+                {campus && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><IconPin size={18} /></span>
+                    <p className="text-sm"><strong className="block text-primary">Nearest campus: {campus.name}</strong><span className="text-muted-foreground">About {campus.miles} miles from {d.city}</span></p>
+                  </motion.div>
+                )}
+                <Primary type="button" disabled={!d.city} onClick={() => go(2)}>Use this location <IconArrowRight size={20} /></Primary>
               </div>
-              {campus && <p className="mt-3 rounded-sm border border-teal/30 bg-teal/10 px-3 py-2 text-xs"><strong>Nearest campus: {campus.full}</strong><br /><span className="text-muted-foreground">Approximately {campus.miles} miles from {d.city}</span></p>}
-            </div>
-          )}
+            )}
 
-          {step === 2 && (
-            <form onSubmit={(e) => { e.preventDefault(); if (phoneOk) go(3); }}>
-               <Back onClick={() => go(1)} />
-              <div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-full border border-teal/30 bg-teal/10 text-teal"><IconPhone size={36} /></div>
-              <Q title="What is the best number to reach you on?" sub="A course advisor will use this to discuss your options." />
-              <Label>UK mobile</Label>
-              <Field type="tel" autoComplete="tel" placeholder="07700 900123" value={d.phone} onChange={(v) => set("phone", v)} ok={phoneOk} />
-              <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm">
-                <input type="checkbox" checked={d.whatsapp} onChange={(e) => set("whatsapp", e.target.checked)} className="h-4 w-4 accent-[var(--teal)]" />
-                This number is available on WhatsApp
-              </label>
-              <Primary disabled={!phoneOk}>Continue <IconArrowRight size={20} /></Primary>
-            </form>
-          )}
+            {step === 2 && (
+              <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(3); }} className="space-y-4">
+                <Question title="What's the best number to reach you?" hint="A course advisor will use it to discuss your options." />
+                <FieldLabel>UK mobile</FieldLabel>
+                <div className="flex gap-2"><span className="grid h-14 place-items-center rounded-xl border border-border bg-secondary px-3 font-bold text-primary">+44</span><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder="7700 900123" className={cn(inputClass, "min-w-0 flex-1")} /></div>
+                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
+                  <span><strong className="block text-sm">WhatsApp is okay</strong><span className="text-xs text-muted-foreground">Usually the quickest way to reach you</span></span>
+                  <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
+                </label>
+                <Primary disabled={!phoneOk}>Next question <IconArrowRight size={20} /></Primary>
+                {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">Enter a valid UK mobile number.</p>}
+              </form>
+            )}
 
-          {step === 3 && (
-            <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
-              <Back onClick={() => go(2)} />
-              <EnvelopeScene sealed={emailOk} />
-              <Q title="Where should we send your course options?" sub="We will also prepare your personalised pathway certificate." />
-              <Label>Email address</Label>
-              <Field type="email" autoComplete="email" placeholder="you@example.com" value={d.email} onChange={(v) => set("email", v)} ok={emailOk} />
-              <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(e) => set("website", e.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
-              <label className="mt-4 flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-muted-foreground">
-                <input type="checkbox" checked={d.consent} onChange={(e) => set("consent", e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--teal)]" />
-                Momentum One can contact me by phone, WhatsApp or email about courses. I can ask them to stop at any time.
-              </label>
-              <Primary disabled={!emailOk || !d.consent || loading}>
-                {loading ? <Spinner /> : null}
-                {loading ? "Preparing your options" : "Show my course options"}
-                {!loading && <IconArrowRight size={20} />}
-              </Primary>
-            </form>
-          )}
+            {step === 3 && (
+              <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="space-y-4">
+                <Question title="Where should we send your course options?" hint="We will also prepare your personalised pathway certificate." />
+                <FieldLabel>Email address</FieldLabel>
+                <div className="relative"><input type="email" autoFocus autoComplete="email" value={d.email} maxLength={255} onChange={(event) => set("email", event.target.value)} placeholder="you@example.com" className={inputClass} />{emailOk && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-chart-4" />}</div>
+                <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(event) => set("website", event.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
+                <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={d.consent} onChange={(event) => set("consent", event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--primary)]" /><span>Momentum One can contact me by phone, WhatsApp or email about courses. I can ask them to stop at any time.</span></label>
+                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-gold" />Your details are used only to discuss your study options.</div>
+                <Primary disabled={!emailOk || !d.consent || loading}>{loading ? <Spinner /> : null}{loading ? "Preparing your options" : "Show my course options"}{!loading && <IconArrowRight size={20} />}</Primary>
+              </form>
+            )}
 
-          {step === STEPS && result && (
-            <div className="text-center">
-              <LiftOffScene />
-              <h3 className="mt-3 text-2xl font-bold sm:text-3xl">Lift off, {first}.</h3>
-               <p className="mt-1 text-sm text-muted-foreground">Your personalised UK university pathway is ready.</p>
-
-              <motion.div initial={{ y: 40, opacity: 0, rotateX: 25 }} animate={{ y: 0, opacity: 1, rotateX: 0 }} transition={{ delay: 0.6, duration: 0.9, ease }} style={{ transformPerspective: 900 }}
-                className="relative mx-auto mt-5 border-2 border-gold bg-card p-1.5 shadow-paper">
-                <div className="border border-teal/50 px-4 py-5">
-                   <p className="text-[9px] font-bold tracking-[0.3em] text-gold">PERSONALISED PATHWAY CERTIFICATE</p>
-                  <p className="mt-3 font-serif text-3xl font-semibold italic">{result.full_name}</p>
-                  <div className="mx-auto mt-2 h-px w-40 bg-gold" />
-                   <p className="mt-3 text-xs text-muted-foreground">{result.nearest_campus ?? "University pathway"} · {result.intake ?? "January 2027"} · {result.city}</p>
-                  <p className="mt-2 font-display text-[10px] font-bold tracking-widest text-teal">{result.ref_code}</p>
-                </div>
-                <motion.div initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 1.3, type: "spring", stiffness: 300, damping: 12 }}
-                  className="absolute -bottom-5 -right-4 grid h-14 w-14 place-items-center rounded-full border-2 border-gold bg-paper font-display text-[8px] font-bold leading-tight text-gold shadow-paper">
-                  M1<br />2027
-                </motion.div>
-              </motion.div>
-
-              <Primary type="button" onClick={download} disabled={downloading}>
-                {downloading ? <Spinner /> : <IconDownload size={20} />}
-                 Download your pathway (PDF)
-              </Primary>
-              <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground"><IconPhone size={16} /> An advisor will call you within 24 hours.</p>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {step < STEPS && (
-        <svg width="60" height="60" viewBox="0 0 60 60" className="pointer-events-none absolute -bottom-6 -right-6 text-gold" aria-hidden>
-          <circle cx="30" cy="30" r="25" fill="var(--paper)" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 2" />
-          <path d="M22 30l5 5 11-11" stroke="currentColor" strokeWidth="2.5" fill="none" />
-        </svg>
-      )}
+            {step === STEPS && result && (
+              <div className="grid justify-items-center gap-3 text-center">
+                <LiftOffScene />
+                <Question title={`You're on the list, ${first}.`} hint="Your nearest campus and course options are ready for an advisor to review." centered />
+                <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
+                <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}Download your pathway PDF</Primary>
+                <p className="text-xs text-muted-foreground">Reference: {result.ref_code}</p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-const inputCls = "w-full rounded border border-ink/15 bg-card px-4 py-3.5 text-base outline-none transition focus:border-transparent focus:ring-2 focus:ring-teal";
-
-function Label({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1 mt-4 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{children}</label>;
-}
-
-function Q({ title, sub }: { title: string; sub: string }) {
-  return (
-    <div className="mt-1">
-      <h3 className="text-xl font-bold leading-tight sm:text-2xl">{title}</h3>
-      <p className="mt-1.5 text-sm text-muted-foreground">{sub}</p>
+function Progress({ step, onBack }: { step: number; onBack: () => void }) {
+  return <div className="px-4 pt-4">
+    <div className="flex min-h-8 items-center justify-between"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", step === 0 && "invisible")}><IconArrowLeft size={16} />Back</Button><span className="text-xs font-semibold tabular-nums text-muted-foreground">{step + 1} of {STEPS}</span></div>
+    <div className="relative mx-3 mt-2 h-9"><div className="absolute left-[12.5%] right-[12.5%] top-4 h-0.5 bg-secondary" /><motion.div className="absolute left-[12.5%] top-4 h-0.5 bg-teal" animate={{ width: `${step * 25}%` }} transition={{ duration: .55, ease }} />
+      {LABELS.map((label, index) => <span key={label} className={cn("absolute top-[11px] h-3 w-3 -translate-x-1/2 rounded-full border-2", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${12.5 + index * 25}%` }} />)}
+      <motion.span className="absolute top-0 z-10 -translate-x-1/2 text-primary" animate={{ left: `${12.5 + step * 25}%` }} transition={{ duration: .55, ease }}><IconRocket size={34} className="rotate-90" /></motion.span>
     </div>
-  );
+    <div className="flex justify-between px-1">{LABELS.map((label, index) => <span key={label} className={cn("w-1/4 text-center text-[10px] font-semibold uppercase tracking-wider", index <= step ? "text-primary" : "text-muted-foreground")}>{label}</span>)}</div>
+  </div>;
 }
 
-function Back({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="mb-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition hover:text-ink">
-      <IconArrowLeft size={16} /> Back
-    </button>
-  );
-}
-
-function Primary({ children, ...p }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button {...p} className="group mt-6 flex w-full items-center justify-center gap-3 rounded bg-ink px-6 py-4 font-display font-bold text-primary-foreground transition-all hover:bg-teal active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-ink">
-      {children}
-    </button>
-  );
-}
-
-function Field({ ok, onChange, ...p }: { ok: boolean; onChange: (v: string) => void; value: string; type: string; placeholder: string; autoComplete: string }) {
-  return (
-    <div className="relative">
-      <input {...p} maxLength={255} onChange={(e) => onChange(e.target.value)} className={cn(inputCls, "pr-12")} />
-      {ok && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-teal" />}
-    </div>
-  );
-}
+const inputClass = "h-14 w-full rounded-xl border border-input bg-card px-4 text-base outline-none transition focus:border-teal focus:ring-4 focus:ring-teal/15";
+function FieldLabel({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</label>; }
+function Question({ title, hint, centered = false }: { title: string; hint: string; centered?: boolean }) { return <div className={centered ? "text-center" : ""}><h2 className="text-[1.45rem] font-semibold leading-tight text-primary">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{hint}</p></div>; }
+function Primary({ children, className, ...props }: React.ComponentProps<typeof Button>) { return <Button {...props} className={cn("h-14 w-full rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-none transition-transform hover:bg-primary/95 active:scale-[.985]", className)}>{children}</Button>; }
