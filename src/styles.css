@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -55,34 +55,35 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Paper & Ink + Teal, gold reserved for certificate moments */
+/* Momentum One launch sequence */
 :root {
-  --radius: 0.375rem;
-  --paper: oklch(0.966 0.008 85);   /* #f5f3ee */
-  --stone: oklch(0.92 0.011 80);    /* #e8e4dd */
-  --ink: oklch(0.255 0.06 255);     /* #0c2340 */
-  --teal: oklch(0.55 0.09 225);     /* #2a7f9e */
-  --gold: oklch(0.67 0.11 80);      /* #b8923a */
-  --margin: oklch(0.75 0.09 20);
+  color-scheme: light;
+  --radius: 0.875rem;
+  --paper: oklch(1 0 0);
+  --stone: oklch(0.972 0.011 230);
+  --ink: oklch(0.205 0.033 235);
+  --teal: oklch(0.48 0.09 230);
+  --gold: oklch(0.79 0.14 75);
+  --margin: oklch(0.76 0.04 225);
   --background: var(--paper);
   --foreground: var(--ink);
-  --card: oklch(0.985 0.004 85);
+  --card: var(--paper);
   --card-foreground: var(--ink);
-  --popover: oklch(0.985 0.004 85);
+  --popover: var(--paper);
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
+  --primary: oklch(0.34 0.075 235);
   --primary-foreground: var(--paper);
   --secondary: var(--stone);
   --secondary-foreground: var(--ink);
   --muted: var(--stone);
-  --muted-foreground: oklch(0.48 0.03 250);
+  --muted-foreground: oklch(0.45 0.04 230);
   --accent: var(--teal);
   --accent-foreground: var(--paper);
   --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.255 0.06 255 / 12%);
-  --input: oklch(0.255 0.06 255 / 18%);
-  --ring: var(--teal);
+  --border: oklch(0.88 0.025 230);
+  --input: oklch(0.88 0.025 230);
+  --ring: oklch(0.7 0.09 225);
   --chart-1: var(--teal);
   --chart-2: var(--gold);
   --chart-3: var(--ink);
@@ -96,7 +97,7 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--teal);
-  --shadow-paper: 0 1px 0 oklch(1 0 0 / 60%) inset, 0 30px 60px -30px oklch(0.255 0.06 255 / 35%), 0 8px 20px -10px oklch(0.255 0.06 255 / 20%);
+  --shadow-paper: 0 1px 2px oklch(0.34 0.075 235 / 6%), 0 18px 50px -18px oklch(0.34 0.075 235 / 35%);
 }
 
 @layer base {
@@ -104,7 +105,6 @@
     border-color: var(--color-border);
   }
   html {
-    scroll-snap-type: y proximity;
     scroll-behavior: smooth;
   }
   body {
@@ -115,50 +115,30 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
+    text-wrap: balance;
   }
   ::selection {
     background: color-mix(in oklab, var(--teal) 25%, transparent);
   }
 }
 
-/* Ruled notebook paper with a margin line */
-@utility bg-ruled {
-  background-image:
-    linear-gradient(to right, transparent 4.9rem, color-mix(in oklab, var(--margin) 45%, transparent) 4.9rem, color-mix(in oklab, var(--margin) 45%, transparent) calc(4.9rem + 1px), transparent calc(4.9rem + 1px)),
-    linear-gradient(color-mix(in oklab, var(--gold) 22%, transparent) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 2.5rem;
-  @media (max-width: 640px) {
-    background-image: linear-gradient(color-mix(in oklab, var(--gold) 20%, transparent) 1px, transparent 1px);
-    background-size: 100% 2.5rem;
-  }
-}
-
-/* Graph paper used on the "process" slide */
-@utility bg-grid {
-  background-image:
-    linear-gradient(color-mix(in oklab, var(--teal) 9%, transparent) 1px, transparent 1px),
-    linear-gradient(to right, color-mix(in oklab, var(--teal) 9%, transparent) 1px, transparent 1px);
-  background-size: 2rem 2rem;
-}
-
-/* Open book page: soft gutter shadow down the centre */
-@utility bg-pages {
-  background-image:
-    linear-gradient(to right, transparent 46%, color-mix(in oklab, var(--ink) 7%, transparent) 50%, transparent 54%),
-    radial-gradient(ellipse at top, color-mix(in oklab, var(--stone) 80%, transparent), transparent 70%);
-}
-
 @utility shadow-paper {
   box-shadow: var(--shadow-paper);
 }
 
-@utility snap-slide {
-  scroll-snap-align: start;
-}
-
 @keyframes ink-draw {
   to { stroke-dashoffset: 0; }
+}
+
+@keyframes flame-flicker {
+  from { transform: scaleY(.75); opacity: .82; }
+  to { transform: scaleY(1.15); opacity: 1; }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: .35; transform: scale(.75); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
