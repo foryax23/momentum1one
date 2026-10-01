@@ -34,6 +34,17 @@ export function Funnel() {
       if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, website: "" }));
     } catch { /* Ignore unavailable or malformed storage. */ }
   }, []);
+  useEffect(() => {
+    const onCity = (event: Event) => {
+      const city = (event as CustomEvent<string>).detail;
+      if (UK_CITIES.includes(city as (typeof UK_CITIES)[number])) {
+        set("city", city as (typeof UK_CITIES)[number]);
+        go(2);
+      }
+    };
+    window.addEventListener("mo:pick-city", onCity);
+    return () => window.removeEventListener("mo:pick-city", onCity);
+  }, []);
 
   useEffect(() => {
     if (!result) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));

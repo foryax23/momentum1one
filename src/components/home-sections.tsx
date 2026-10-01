@@ -3,6 +3,7 @@ import { animate, motion, useInView, useReducedMotion, useScroll, useTransform }
 import { CAMPUS_COURSES } from "@/lib/offer-catalog";
 import { CAMPUSES } from "@/lib/funnel";
 import { IconArrowRight } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import business from "@/assets/courses/business.jpg";
 import marketing from "@/assets/courses/marketing.jpg";
@@ -46,6 +47,11 @@ function buildDeck(): DeckCourse[] {
 
 export function pickCourse(title: string) {
   window.dispatchEvent(new CustomEvent("mo:pick-course", { detail: title }));
+  document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function pickCampus(city: string) {
+  window.dispatchEvent(new CustomEvent("mo:pick-city", { detail: city }));
   document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -145,13 +151,56 @@ export function CampusCards() {
                 <div><h3 className="font-display text-2xl font-bold italic">{campus.name}</h3><p className="text-sm text-primary-foreground/80">{campus.full}</p></div>
                 <p className="text-right"><span className="block font-display text-3xl font-bold italic">{titles.length}</span><span className="text-xs text-primary-foreground/70">{titles.length === 1 ? "degree" : "degrees"}</span></p>
               </div>
-              <p className="mt-3 max-h-0 overflow-hidden text-xs leading-relaxed text-primary-foreground/80 transition-all duration-500 group-hover:max-h-24">{titles.join(" · ")}</p>
+              <div className="grid max-h-0 overflow-hidden transition-all duration-500 group-hover:max-h-44 group-focus-within:max-h-44">
+                <p className="mt-3 text-xs leading-relaxed text-primary-foreground/80">{titles.join(" · ")}</p>
+                <p className="mt-2 line-clamp-2 text-xs text-primary-foreground/70">{[...new Set(courses.flatMap((c) => c.patterns))].slice(0, 2).join(" · ")}</p>
+                <Button type="button" variant="secondary" size="sm" onClick={() => pickCampus(campus.name)} className="mt-3 w-fit">See my options <IconArrowRight size={15} /></Button>
+              </div>
             </div>
           </motion.article>
         );
       })}
     </div>
   );
+}
+
+export function CourseComparison() {
+  const deck = useMemo(buildDeck, []);
+  const [selected, setSelected] = useState(deck[0]?.key ?? "");
+  const course = deck.find((item) => item.key === selected) ?? deck[0];
+  if (!course) return null;
+  const options = Object.entries(CAMPUS_COURSES).flatMap(([campus, courses]) => courses.filter((item) => item.title === course.title).map((item) => ({ campus, ...item })));
+  return (
+    <div className="mt-8 grid gap-7 border-y border-border py-7 lg:grid-cols-[.8fr_1.2fr] lg:gap-12">
+      <div>
+        <p className="text-sm font-bold text-primary">Choose a subject</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {deck.map((item) => <Button key={item.key} type="button" variant={item.key === course.key ? "default" : "outline"} size="sm" onClick={() => setSelected(item.key)} className="h-auto rounded-full py-2 shadow-none">{item.name}</Button>)}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[.14em] text-teal">Compare routes and schedules</p>
+        <h3 className="mt-2 text-2xl font-bold italic text-primary">{course.title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Awarded by {course.university}</p>
+        <div className="mt-5 divide-y divide-border border-y border-border">
+          {options.map((item) => <div key={`${item.campus}-${item.id}`} className="grid gap-2 py-4 sm:grid-cols-[110px_130px_1fr_auto] sm:items-center">
+            <strong className="text-sm text-primary">{item.campus}</strong><span className="text-sm font-semibold text-teal">{item.route}</span><span className="text-sm text-muted-foreground">{item.patterns.join(" · ")}</span>
+            <Button type="button" variant="ghost" size="sm" onClick={() => pickCourse(item.title)} className="w-fit px-0 text-primary">Choose <IconArrowRight size={15} /></Button>
+          </div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function WhatYouReceive() {
+  const items = [
+    ["01", "A five-page offer", "Your selected degree, entry route, campus and current study pattern in one document."],
+    ["02", "A document checklist", "The identity, address and study documents to prepare before assessment."],
+    ["03", "Advisor guidance", "A person checks your route, answers questions and supports the application."],
+    ["04", "WhatsApp follow-up", "Continue the conversation from your phone and ask for an advisor when needed."],
+  ];
+  return <div className="grid gap-px overflow-hidden rounded-2xl border border-primary-foreground/15 bg-primary-foreground/15 md:grid-cols-4">{items.map(([n, title, text]) => <div key={n} className="bg-primary/90 p-6"><span className="font-display text-sm font-bold text-gold">{n}</span><h3 className="mt-8 text-lg font-bold text-primary-foreground">{title}</h3><p className="mt-2 text-sm leading-relaxed text-primary-foreground/70">{text}</p></div>)}</div>;
 }
 
 const AUDIENCE = [
