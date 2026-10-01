@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search } from "@/components/icons";
+import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search, Spinner } from "@/components/icons";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
@@ -177,6 +177,15 @@ function Badge({ s }: { s: string }) {
 
 function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; onSave: (p: Partial<Lead>) => void }) {
   const [notes, setNotes] = useState(lead.notes ?? "");
+  const [downloading, setDownloading] = useState(false);
+  async function downloadOffer() {
+    if (!lead.selected_course || !lead.study_route) return;
+    setDownloading(true);
+    try {
+      const { downloadOffer: createOffer } = await import("@/components/offer-pdf");
+      await createOffer({ ...lead, offer_url: "" });
+    } finally { setDownloading(false); }
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm sm:items-center" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-t-3xl border border-border bg-popover p-6 sm:rounded-3xl">
@@ -199,6 +208,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
             <button key={s} onClick={() => onSave({ status: s })} className={cn("rounded-full border px-3 py-1.5 text-xs capitalize", lead.status === s ? "border-primary bg-primary/20" : "border-border")}>{s}</button>
           ))}
         </div>
+        {lead.selected_course && lead.study_route && <button onClick={downloadOffer} disabled={downloading} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary disabled:opacity-60">{downloading ? <Spinner size={18} /> : <Download size={18} />}{downloading ? "Preparing offer" : "Download personalised offer"}</button>}
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={4} placeholder="Notes…" className="mt-4 w-full rounded-xl border border-input bg-secondary/40 p-3 text-sm outline-none focus:border-primary" />
         <button onClick={() => onSave({ notes })} className="mt-3 w-full rounded-xl bg-ink py-3 font-display font-semibold text-primary-foreground">Save notes</button>
       </div>

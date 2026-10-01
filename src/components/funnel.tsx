@@ -80,7 +80,7 @@ export function Funnel() {
   return (
     <div id="signup" className="relative w-full scroll-mt-24 overflow-hidden rounded-[22px] border border-border bg-card shadow-paper">
       {step < STEPS && <Progress step={step} onBack={() => step > 0 && go(step - 1)} />}
-      <div className="p-5 sm:p-6">
+      <div className={cn("p-5 sm:p-6", result && "pb-24 sm:pb-6")}>
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div key={step} custom={dir}
             initial={{ opacity: 0, x: dir * 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -28 }}
