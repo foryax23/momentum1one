@@ -39,18 +39,25 @@ const patterns: Record<string, Record<string, string[]>> = {
   },
 };
 
+function campusFoundation(name: "Manchester" | "Derby" | "Sunderland"): CourseOption[] {
+  const campusPatterns = patterns[name] ?? {};
+  return foundation.map(([id, title, university]) => ({
+    id, title, university, route: "Foundation Year", patterns: campusPatterns[id] ?? ["Timetable to be confirmed"],
+  }));
+}
+
 export const CAMPUS_COURSES: Record<string, CourseOption[]> = {
   Manchester: [
-    ...foundation.map(([id, title, university]) => ({ id, title, university, route: "Foundation Year" as const, patterns: patterns.Manchester[id] })),
+    ...campusFoundation("Manchester"),
     { id: "business-year-1", title: "BA (Hons) Business Management", university: "University of Wolverhampton", route: "Year 1", patterns: ["Timetable confirmed after application"] },
     { id: "marketing-year-1", title: "BA (Hons) Digital Marketing Management", university: "University of Wolverhampton", route: "Year 1", patterns: ["Timetable confirmed after application"] },
   ],
   Derby: [
-    ...foundation.map(([id, title, university]) => ({ id, title, university, route: "Foundation Year" as const, patterns: patterns.Derby[id] })),
+    ...campusFoundation("Derby"),
     { id: "business-year-1", title: "BA (Hons) Business Management", university: "University of Wolverhampton", route: "Year 1", patterns: ["Timetable confirmed after application"] },
     { id: "marketing-year-1", title: "BA (Hons) Digital Marketing Management", university: "University of Wolverhampton", route: "Year 1", patterns: ["Timetable confirmed after application"] },
   ],
-  Sunderland: foundation.map(([id, title, university]) => ({ id, title, university, route: "Foundation Year", patterns: patterns.Sunderland[id] })),
+  Sunderland: campusFoundation("Sunderland"),
   Newcastle: foundation.slice(0, 2).map(([id, title, university], index) => ({ id, title, university, route: "Foundation Year", patterns: [index === 0 ? "Tuesday, 9am to 5pm" : "Wednesday, 9am to 5pm"] })),
   Luton: [{ id: "public-health-foundation", title: "BSc (Hons) Public Health", university: "University of Wolverhampton", route: "Foundation Year", patterns: ["Timetable to be confirmed"] }],
 };
@@ -60,5 +67,5 @@ export function campusName(full: string | null) {
 }
 
 export function coursesForCampus(full: string | null) {
-  return CAMPUS_COURSES[campusName(full)] ?? CAMPUS_COURSES.Luton;
+  return CAMPUS_COURSES[campusName(full)] ?? CAMPUS_COURSES["Luton"] ?? [];
 }
