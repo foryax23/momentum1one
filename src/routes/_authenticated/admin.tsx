@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
-import { WhatsAppQueue, WhatsAppThread } from "@/components/whatsapp-admin";
+import { WhatsAppHealth, WhatsAppQueue, WhatsAppThread } from "@/components/whatsapp-admin";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -128,6 +128,7 @@ function Admin() {
         <Card l="Top cities" v={stats.top} small />
       </div>
 
+      <WhatsAppHealth />
       <WhatsAppQueue onOpenLead={(id) => { const l = leads.data?.find((x) => x.id === id); if (l) setOpen(l); }} />
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">

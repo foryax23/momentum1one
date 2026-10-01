@@ -171,6 +171,7 @@ export function Funnel() {
                 <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}Download your personalised offer</Primary>
                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">Open your secure offer link</a>
+                <WhatsAppRedirect name={first} reference={result.ref_code} />
                 <p className="text-xs text-muted-foreground">Reference: {result.ref_code}</p>
               </div>
             )}
