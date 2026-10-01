@@ -6,8 +6,8 @@ const TEAL = "#2a7f9e";
 const GOLD = "#b8923a";
 const CREAM = "#fbf8f0";
 
-const W = 841.89;
-const H = 595.28;
+const W = 841;
+const H = 594;
 
 const s = StyleSheet.create({
   page: { backgroundColor: CREAM, fontFamily: "Helvetica", color: INK },
