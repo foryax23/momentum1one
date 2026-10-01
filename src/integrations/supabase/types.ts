@@ -16,46 +16,64 @@ export type Database = {
     Tables: {
       leads: {
         Row: {
+          campaign: string | null
           city: string
           consent: boolean
           created_at: string
+          distance_miles: number | null
           email: string
           full_name: string
           id: string
           intake: string | null
           interest: string | null
+          nearest_campus: string | null
           notes: string | null
+          page: string | null
           phone: string
           ref_code: string
+          source: string | null
           status: string
+          whatsapp: boolean
         }
         Insert: {
+          campaign?: string | null
           city: string
           consent?: boolean
           created_at?: string
+          distance_miles?: number | null
           email: string
           full_name: string
           id?: string
           intake?: string | null
           interest?: string | null
+          nearest_campus?: string | null
           notes?: string | null
+          page?: string | null
           phone: string
           ref_code?: string
+          source?: string | null
           status?: string
+          whatsapp?: boolean
         }
         Update: {
+          campaign?: string | null
           city?: string
           consent?: boolean
           created_at?: string
+          distance_miles?: number | null
           email?: string
           full_name?: string
           id?: string
           intake?: string | null
           interest?: string | null
+          nearest_campus?: string | null
           notes?: string | null
+          page?: string | null
           phone?: string
           ref_code?: string
+          source?: string | null
           status?: string
+          whatsapp?: boolean
         }
         Relationships: []
       }
