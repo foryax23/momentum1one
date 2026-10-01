@@ -114,7 +114,7 @@ export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: stri
   const issued = new Date(lead.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   return (
     <Document title={`Momentum One Offer, ${lead.full_name}`} author="Momentum One">
-      <Page size="A4" orientation="landscape" style={s.page} wrap={false}>
+      <Page size="A4" orientation="landscape" style={s.page}>
         <Frame />
         <Image src={`${origin}/logo-mark.png`} style={{ position: "absolute", top: 150, left: W / 2 - 150, width: 300, height: 250, opacity: 0.04 }} />
         <View style={s.content}>
