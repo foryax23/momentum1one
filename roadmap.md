@@ -2,7 +2,7 @@
 
 - [x] Add course and secure offer fields to student leads
 - [x] Add campus-specific course choice to onboarding
-- [x] Add premium five-page personalised offer and separate pathway certificate
+- [x] Replace certificate with five-page personalised offer
 - [x] Add secure return link and admin offer status
 - [ ] Add offer email after sender domain setup
 - [x] Verify mobile, desktop and generated PDFs
@@ -32,7 +32,3 @@
 - [x] Place the new landscape, courses, campuses and journey films in their matching homepage sections
 - [x] Blend section videos into the page while keeping their content clearly visible
 - [x] Add persisted EN/RO/ES selection across the public homepage, application, account entry, offers, cookies and key legal notices
-- [x] Replace the onboarding rocket drawing with the supplied layered artwork
-- [x] Show square section films in full with distinct edge effects
-- [x] Add both document downloads to the private offer page
-- [ ] Configure a Momentum One sender domain and activate the offer email

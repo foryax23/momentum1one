@@ -1,15 +1,6 @@
 import { motion } from "motion/react";
 import logoMark from "@/assets/logo-mark.png";
 import { INTAKES } from "@/lib/funnel";
-import hullAsset from "@/assets/rocket/01-hull.png.asset.json";
-import noseAsset from "@/assets/rocket/02-nose-cone.png.asset.json";
-import antennaAsset from "@/assets/rocket/03-antenna.png.asset.json";
-import leftFinAsset from "@/assets/rocket/04-left-fin.png.asset.json";
-import rightFinAsset from "@/assets/rocket/05-right-fin.png.asset.json";
-import portholeAsset from "@/assets/rocket/06-porthole.png.asset.json";
-import nozzleAsset from "@/assets/rocket/07-engine-nozzle.png.asset.json";
-import flameAsset from "@/assets/rocket/08-flame.png.asset.json";
-import footAsset from "@/assets/rocket/09-landing-foot.png.asset.json";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -80,39 +71,87 @@ export function LiftOffScene() {
   );
 }
 
-const STAGE_LABELS = ["Hull and engine", "Navigation system", "Fins and landing gear", "Command porthole", "Engine ignition"];
+const STAGE_LABELS = ["Launch pad and hull", "Side boosters", "Command capsule", "Nose cone", "Engine ignition"];
 
 /** Modular rocket: each funnel step docks one new piece from its own direction; completion ignites and lifts off. */
 export function RocketAssembly({ step, total = 5, complete = false }: { step: number; total?: number; complete?: boolean }) {
   const shown = complete ? total : step + 1;
   const spring = { type: "spring" as const, stiffness: 260, damping: 19 };
-  const layer = (n: number, src: string, className: string, from: { x?: number; y?: number; rotate?: number }, extra?: Record<string, unknown>) => (
-    <motion.img src={src} alt="" draggable={false} className={`pointer-events-none absolute select-none object-contain ${className}`}
-      initial={false} animate={shown >= n ? { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1, ...extra } : { opacity: 0.08, x: from.x ?? 0, y: from.y ?? 0, rotate: from.rotate ?? 0, scale: 0.82 }} transition={spring} />
+  const dock = (n: number, from: { x?: number; y?: number }, children: React.ReactNode) => (
+    <motion.g initial={false}
+      animate={shown >= n ? { opacity: 1, x: 0, y: 0, scale: 1 } : { opacity: 0.1, x: from.x ?? 0, y: from.y ?? 0, scale: 0.9 }}
+      transition={spring} style={{ transformOrigin: "100px 110px" }}>
+      {children}
+    </motion.g>
   );
+  // Seam flash when a piece lands
+  const Flash = ({ n, y }: { n: number; y: number }) => shown === n && !complete ? (
+    <motion.rect key={`f${n}-${shown}`} x="66" y={y - 1.5} width="68" height="3" rx="1.5" fill="var(--gold)"
+      initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: [0, 1, 0], scaleX: [0, 1, 1] }} transition={{ duration: 0.7, delay: 0.25 }}
+      style={{ transformOrigin: "100px center" }} />
+  ) : null;
 
   return (
-    <motion.div className="relative mx-auto w-full max-w-[240px]" role="img"
+    <motion.div className="relative mx-auto w-full max-w-[210px]" role="img"
       aria-label={`Rocket ${shown} of ${total} parts assembled${complete ? ", launching" : ""}`}
       animate={{ scale: 0.68 + (shown / total) * 0.32 }} transition={{ type: "spring", stiffness: 160, damping: 22 }}>
-      <motion.div className="relative mx-auto h-48 w-48 sm:h-56 sm:w-56" animate={complete ? { y: [0, 2, -2, 1, -70] } : { y: 0 }} transition={complete ? { duration: 2.4, times: [0, .15, .3, .45, 1], ease: "easeIn", delay: .6 } : {}}>
-        {[[8,18],[88,9],[18,52],[92,57],[72,28]].map(([left, top], index) => <motion.span key={left} className="absolute h-1 w-1 rounded-full bg-gold" style={{ left: `${left}%`, top: `${top}%` }} animate={{ opacity: [.2, 1, .2] }} transition={{ repeat: Infinity, duration: 2 + index * .35 }} />)}
-        {layer(5, flameAsset.url, "z-0 left-[41%] top-[72%] w-[18%] origin-top", { y: 28 }, complete ? { scaleY: [1, 1.55, 1.2, 1.7] } : { scaleY: [1, 1.12, .94, 1] })}
-        {layer(3, leftFinAsset.url, "z-10 left-[10%] top-[47%] w-[42%]", { x: -64, rotate: -10 })}
-        {layer(3, rightFinAsset.url, "z-10 right-[10%] top-[47%] w-[42%]", { x: 64, rotate: 10 })}
-        {layer(3, footAsset.url, "z-10 left-[19%] top-[77%] w-[28%] -rotate-12", { x: -42, y: 22 })}
-        {layer(3, footAsset.url, "z-10 right-[19%] top-[77%] w-[28%] rotate-12", { x: 42, y: 22 })}
-        {layer(2, antennaAsset.url, "z-20 left-[43%] top-[1%] w-[14%]", { y: -54 })}
-        {layer(1, hullAsset.url, "z-30 left-[31%] top-[28%] w-[38%]", { y: -38 })}
-        {layer(2, noseAsset.url, "z-40 left-[29%] top-[15%] w-[42%]", { y: -56 })}
-        {layer(1, nozzleAsset.url, "z-40 left-[31%] top-[69%] w-[38%]", { y: 35 })}
-        {layer(4, portholeAsset.url, "z-50 left-[40%] top-[43%] w-[20%]", { y: -26 })}
-        {shown > 1 && <motion.span key={`flash-${shown}`} className="absolute left-[37%] top-[52%] z-[60] h-px w-[26%] bg-gold" initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: [0, 1, 0], scaleX: [0, 1, 1] }} transition={{ duration: .75, delay: .18 }} />}
-      </motion.div>
+      <motion.svg viewBox="0 0 200 240" className="h-36 w-full overflow-visible sm:h-44" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        animate={complete ? { y: [0, 2, -2, 1, -60] } : { y: 0 }}
+        transition={complete ? { duration: 2.4, times: [0, .15, .3, .45, 1], ease: "easeIn", delay: 0.6 } : {}}>
+        {/* stars */}
+        {[[24, 30], [176, 46], [36, 120], [168, 140], [150, 18], [52, 70]].map(([x, y], i) => (
+          <motion.circle key={i} cx={x} cy={y} r="1.4" fill="var(--gold)" animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 2 + i * 0.4, delay: i * 0.3 }} />
+        ))}
+
+        {/* 1: hull */}
+        {dock(1, { y: -40 }, <>
+          <path d="M78 168V100c0-30 9-52 22-66 13 14 22 36 22 66v68Z" fill="var(--primary)" stroke="var(--teal)" />
+          <path d="M78 124h44M78 150h44" stroke="var(--teal)" strokeOpacity=".5" strokeWidth="1.4" />
+          <path d="M88 104v56" stroke="var(--primary-foreground)" strokeOpacity=".18" strokeWidth="4" />
+        </>)}
+        <Flash n={1} y={150} />
+
+        {/* 2: boosters */}
+        {dock(2, { x: -46 }, <>
+          <path d="M78 128 52 156v30l26-14Z" fill="var(--teal)" stroke="var(--teal)" />
+          <path d="M56 186h12v6H56Z" fill="var(--gold)" stroke="var(--gold)" />
+        </>)}
+        {dock(2, { x: 46 }, <>
+          <path d="m122 128 26 28v30l-26-14Z" fill="var(--teal)" stroke="var(--teal)" />
+          <path d="M132 186h12v6h-12Z" fill="var(--gold)" stroke="var(--gold)" />
+        </>)}
+
+        {/* 3: capsule porthole */}
+        {dock(3, { y: -30 }, <>
+          <circle cx="100" cy="92" r="15" fill="var(--paper, var(--card))" stroke="var(--gold)" strokeWidth="3" />
+          <motion.circle cx="100" cy="92" r="9" fill="var(--gold)" animate={shown >= 3 ? { opacity: [0.35, 0.9, 0.35] } : { opacity: 0.2 }} transition={{ repeat: Infinity, duration: 2.2 }} />
+          <circle cx="95" cy="87" r="3" fill="var(--primary-foreground)" opacity=".7" />
+        </>)}
+        <Flash n={3} y={77} />
+
+        {/* 4: nose cone + antenna */}
+        {dock(4, { y: -50 }, <>
+          <path d="M84 56c4-11 9-19 16-24 7 5 12 13 16 24Z" fill="var(--gold)" stroke="var(--gold)" />
+          <path d="M100 32V14" stroke="var(--gold)" />
+          <motion.circle cx="100" cy="12" r="3" fill="var(--teal)" animate={shown >= 4 ? { scale: [1, 1.6, 1] } : {}} transition={{ repeat: Infinity, duration: 1.4 }} />
+        </>)}
+        <Flash n={4} y={56} />
+
+        {/* 5: engine nozzle + flame */}
+        {dock(5, { y: 36 }, <>
+          <path d="M86 168h28l5 16H81Z" fill="var(--primary)" stroke="var(--teal)" />
+          <motion.g style={{ transformOrigin: "100px 184px" }}
+            animate={complete ? { scaleY: [1, 1.9, 1.5, 2.1], scaleX: [1, 1.1, .95, 1.1] } : { scaleY: [1, 1.15, .9, 1] }}
+            transition={{ repeat: Infinity, duration: complete ? .35 : .8 }}>
+            <path d="M84 186c0 20 16 40 16 40s16-20 16-40Z" fill="var(--teal)" opacity=".55" />
+            <path d="M90 186c0 14 10 28 10 28s10-14 10-28Z" fill="var(--gold)" />
+          </motion.g>
+        </>)}
+      </motion.svg>
 
       {/* exhaust smoke on launch */}
       {complete && [0, 1, 2, 3, 4, 5].map((i) => (
-        <motion.span key={i} className="absolute bottom-5 left-1/2 h-6 w-6 rounded-full bg-muted"
+        <motion.span key={i} className="absolute bottom-0 left-1/2 h-6 w-6 rounded-full bg-muted"
           initial={{ opacity: 0, x: 0, scale: .4 }}
           animate={{ opacity: [0, .7, 0], x: (i % 2 ? 1 : -1) * (20 + i * 10), y: [0, 6], scale: [.4, 1.6] }}
           transition={{ duration: 1.6, delay: 0.8 + i * 0.12, repeat: Infinity, repeatDelay: 0.6 }} />

@@ -178,24 +178,3 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
-
-.section-film-media {
-  -webkit-mask-image: radial-gradient(circle at center, #000 64%, rgb(0 0 0 / .98) 76%, transparent 100%);
-  mask-image: radial-gradient(circle at center, #000 64%, rgb(0 0 0 / .98) 76%, transparent 100%);
-}
-.section-film-courses .section-film-media { animation: film-focus 7s ease-in-out infinite; }
-.section-film-campuses .section-film-media {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-}
-.section-film-journey .section-film-media {
-  -webkit-mask-image: linear-gradient(100deg, transparent 0%, #000 16%, #000 91%, transparent 100%);
-  mask-image: linear-gradient(100deg, transparent 0%, #000 16%, #000 91%, transparent 100%);
-}
-.section-film-grid { position: absolute; inset: 9%; pointer-events: none; opacity: .22; background-image: linear-gradient(var(--gold) 1px, transparent 1px), linear-gradient(90deg, var(--gold) 1px, transparent 1px); background-size: 42px 42px; -webkit-mask-image: radial-gradient(circle, #000, transparent 70%); mask-image: radial-gradient(circle, #000, transparent 70%); }
-.section-film-route { position: absolute; left: 8%; right: 8%; bottom: 14%; height: 2px; overflow: hidden; background: color-mix(in oklab, var(--gold) 28%, transparent); }
-.section-film-route::after { content: ""; display: block; width: 24%; height: 100%; background: var(--gold); animation: route-trace 3.5s ease-in-out infinite; }
-@keyframes film-focus { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
-@keyframes route-trace { 0% { transform: translateX(-110%); } 100% { transform: translateX(520%); } }
