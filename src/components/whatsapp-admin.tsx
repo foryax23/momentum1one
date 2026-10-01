@@ -27,7 +27,7 @@ export function WhatsAppHealth() {
 const LABEL: Record<string, string> = { bot: "Bot chatting", queued: "Waiting for agent", agent: "With agent", closed: "Closed" };
 
 async function setStatus(id: string, status: string, qc: ReturnType<typeof useQueryClient>) {
-  const { error } = await supabase.from("whatsapp_conversations").update({ status, updated_at: new Date().toISOString(), ...(status === "bot" ? { queued_at: null } : {}) }).eq("id", id);
+  const { error } = await supabase.from("whatsapp_conversations").update({ status, updated_at: new Date().toISOString(), ...(status === "bot" ? { queued_at: null, flagged: false, flag_reason: null } : {}) }).eq("id", id);
   if (error) { toast.error(error.message); return; }
   qc.invalidateQueries({ queryKey: ["wa"] });
   toast.success("Updated");
@@ -42,8 +42,8 @@ export function WhatsAppQueue({ onOpenLead }: { onOpenLead: (leadId: string) => 
     refetchInterval: 20000,
     queryFn: async () => {
       const { data, error } = await supabase.from("whatsapp_conversations")
-        .select("id, wa_phone, status, queued_at, summary, lead_id, leads(full_name, selected_course, nearest_campus)")
-        .eq("status", "queued").order("queued_at", { ascending: true });
+        .select("id, wa_phone, status, queued_at, summary, lead_id, flagged, flag_reason, leads(full_name, selected_course, nearest_campus)")
+        .eq("status", "queued").order("flagged", { ascending: false }).order("queued_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -74,7 +74,8 @@ export function WhatsAppQueue({ onOpenLead }: { onOpenLead: (leadId: string) => 
               <div className="min-w-0">
                 <button className="text-left font-semibold text-primary" onClick={() => c.lead_id && onOpenLead(c.lead_id)}>{lead?.full_name ?? `+${c.wa_phone}`}</button>
                 <p className="text-xs text-muted-foreground">{lead?.selected_course ?? "No application"}{lead?.nearest_campus ? ` · ${lead.nearest_campus}` : ""} · waiting {mins < 60 ? `${mins} min` : `${Math.round(mins / 60)} h`}</p>
-                {c.summary && <p className="mt-1 text-sm">{c.summary}</p>}
+                {c.flagged && <span className="mt-1 inline-block rounded-full bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground">Needs attention{c.flag_reason ? `: ${c.flag_reason}` : ""}</span>}
+                {c.summary && !c.flagged && <p className="mt-1 text-sm">{c.summary}</p>}
               </div>
               <div className="flex flex-wrap gap-2">
                 <a href={waLink(c.wa_phone)} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">Open in WhatsApp</a>
