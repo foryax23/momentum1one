@@ -150,7 +150,8 @@ function canSkip(step: AdmissionsStep, text: string) {
 function nextStep(step: AdmissionsStep): AdmissionsStep {
   if (step === "confirm_identity") return "identity";
   const index = STEP_ORDER.indexOf(step as typeof STEP_ORDER[number]);
-  return index < 0 || index === STEP_ORDER.length - 1 ? "ready_review" : STEP_ORDER[index + 1];
+  if (index < 0 || index === STEP_ORDER.length - 1) return "ready_review";
+  return STEP_ORDER[index + 1] ?? "ready_review";
 }
 
 function documentTypeForStep(step: AdmissionsStep): DocumentType {
@@ -358,8 +359,17 @@ export async function processEvent(eventId: string): Promise<string[]> {
         const conv = await ensureConversation(m.from, null);
         const media = m.document ?? m.image;
         const body = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? media?.caption ?? `[${m.type} received]`;
+        const mediaFields = media ? {
+          media_id: media.id,
+          media_type: m.type,
+          media_mime_type: media.mime_type ?? null,
+          media_filename: m.document?.filename ?? null,
+          media_sha256: media.sha256 ?? null,
+          media_status: "pending",
+          media_next_attempt_at: new Date().toISOString(),
+        } : {};
         const { data: ins, error: e } = await supabaseAdmin.from("whatsapp_messages")
-          .upsert({ conversation_id: conv.id, direction: "in", body, wa_message_id: m.id, status: "received", reply_status: conv.status === "bot" ? "pending" : "skipped", reply_next_attempt_at: new Date().toISOString(), ...(media ? { media_id: media.id, media_type: m.type, media_mime_type: media.mime_type ?? null, media_filename: "filename" in media ? media.filename ?? null : null, media_sha256: media.sha256 ?? null, media_status: "pending", media_next_attempt_at: new Date().toISOString() } : {}) }, { onConflict: "wa_message_id", ignoreDuplicates: true })
+          .upsert({ conversation_id: conv.id, direction: "in", body, wa_message_id: m.id, status: "received", reply_status: conv.status === "bot" ? "pending" : "skipped", reply_next_attempt_at: new Date().toISOString(), ...mediaFields }, { onConflict: "wa_message_id", ignoreDuplicates: true })
           .select("id, reply_status");
         if (e) throw e;
         await supabaseAdmin.from("whatsapp_conversations").update({ last_inbound_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", conv.id);
