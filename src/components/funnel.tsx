@@ -43,7 +43,9 @@ export function Funnel() {
   const set = <K extends keyof Data>(key: K, value: Data[K]) => setD((current) => ({ ...current, [key]: value }));
   const first = d.full_name.trim().split(" ")[0];
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim());
-  const [cc, setCc] = useState("44");
+  const [cc, setCcState] = useState("44");
+  useEffect(() => { const v = window.localStorage.getItem(DRAFT_KEY + "-cc"); if (v) setCcState(v); }, []);
+  const setCc = (v: string) => { setCcState(v); window.localStorage.setItem(DRAFT_KEY + "-cc", v); };
   const local = d.phone.replace(/\D/g, "").replace(/^0+/, "");
   const phoneOk = cc === "44" ? /^7\d{9}$/.test(local) : local.length >= 6 && local.length <= 14;
   const fullPhone = `+${cc} ${local}`;
@@ -139,8 +141,8 @@ export function Funnel() {
             {step === 3 && (
               <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(4); }} className="space-y-4">
                 <Question title="What's the best number to reach you?" hint="A course advisor will use it to discuss your options." />
-                <FieldLabel>UK mobile</FieldLabel>
-                <div className="flex gap-2"><select aria-label="Country code" value={cc} onChange={(event) => setCc(event.target.value)} className="h-14 w-28 shrink-0 rounded-xl border border-border bg-secondary px-2 font-bold text-primary outline-none focus:border-teal">{COUNTRY_CODES.map(([code, name]) => <option key={name} value={code}>{name} +{code}</option>)}</select><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder="7700 900123" className={cn(inputClass, "min-w-0 flex-1")} /></div>
+                <FieldLabel>Mobile number</FieldLabel>
+                <div className="flex gap-2"><select aria-label="Country code" value={cc} onChange={(event) => setCc(event.target.value)} className="h-14 w-28 shrink-0 rounded-xl border border-border bg-secondary px-2 font-bold text-primary outline-none focus:border-teal">{COUNTRY_CODES.map(([code, name]) => <option key={name} value={code}>{name} +{code}</option>)}</select><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder={cc === "44" ? "7700 900123" : "Mobile number without the country code"} className={cn(inputClass, "min-w-0 flex-1")} /></div>
                 <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
                   <span><strong className="block text-sm">WhatsApp is okay</strong><span className="text-xs text-muted-foreground">Usually the quickest way to reach you</span></span>
                   <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>

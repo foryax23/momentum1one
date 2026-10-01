@@ -84,7 +84,8 @@ export async function sendWelcome(lead: { id: string; full_name: string; phone: 
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await supabaseAdmin.from("whatsapp_messages").insert({ conversation_id: conv.id, direction: "system", body, status: "failed", error: message.slice(0, 1000) });
-      await supabaseAdmin.from("leads").update({ whatsapp_status: "failed" }).eq("id", lead.id);
+      const awaiting = /13200[01]|132015|does not exist in/.test(message);
+      await supabaseAdmin.from("leads").update({ whatsapp_status: awaiting ? "awaiting_template" : "failed" }).eq("id", lead.id);
       console.error("WhatsApp welcome failed", message);
     }
   } catch (error) {
