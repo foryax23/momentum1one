@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
-import { GraduationCap, ClipboardCheck, CalendarCheck, Award, MapPin } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useState, type ComponentType } from "react";
 import logo from "@/assets/logo.png";
-import { Starfield } from "@/components/starfield";
+import logoMark from "@/assets/logo-mark.png";
 import { Funnel } from "@/components/funnel";
+import { UkMap } from "@/components/uk-map";
+import { IconBook, IconCalendar, IconCampus, IconMortarboard, IconPassport, IconPin, IconQuill, IconSeal } from "@/components/icons";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const TITLE = "Momentum One — Start your UK university degree";
-const DESC = "Get matched with top UK universities near you in 60 seconds and download your personalised pathway offer. January 2027 intake open.";
+const TITLE = "Momentum One | Start your UK university degree";
+const DESC = "Get matched with UK universities near you in 60 seconds and download your personalised pathway certificate. January 2027 intake now open.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,165 +26,241 @@ export const Route = createFileRoute("/")({
 });
 
 const ease = [0.22, 1, 0.36, 1] as const;
+const SLIDES = ["start", "partners", "process", "courses", "students", "faq"] as const;
 
 function Index() {
-  const hero = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: hero, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 160]);
-  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (es) => es.forEach((e) => e.isIntersecting && setActive(SLIDES.indexOf(e.target.id as (typeof SLIDES)[number]))),
+      { threshold: 0.45 },
+    );
+    SLIDES.forEach((id) => { const el = document.getElementById(id); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <main className="relative overflow-x-hidden">
-      {/* HERO */}
-      <section ref={hero} className="relative min-h-[100svh] overflow-hidden">
-        <Starfield />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
+      <SlideRail active={active} />
 
-        <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 pt-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }} className="flex items-center gap-2">
-            <img src={logo} alt="Momentum One" width={44} height={44} className="h-11 w-11 rounded-full bg-foreground object-contain p-0.5" />
-            <span className="font-display text-sm font-bold tracking-tight">MOMENTUM<span className="text-launch">ONE</span></span>
-          </motion.div>
-          <a href="#how" className="rounded-full border border-border px-4 py-2 text-xs text-muted-foreground transition hover:text-foreground">How it works</a>
-        </header>
+      {/* 01 START */}
+      <section id="start" className="snap-slide relative min-h-[100svh] bg-ruled">
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 sm:px-8 lg:px-12">
+          <header className="flex items-center justify-between py-5 sm:py-8">
+            <motion.a href="#start" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
+              <img src={logo} alt="Momentum One, Building Momentum For Your Future" width={374} height={320} className="h-14 w-auto sm:h-20" />
+            </motion.a>
+            <nav className="hidden gap-8 text-sm font-semibold uppercase tracking-wide md:flex">
+              <a href="#partners" className="transition-colors hover:text-teal">Partners</a>
+              <a href="#process" className="transition-colors hover:text-teal">Process</a>
+              <a href="#courses" className="transition-colors hover:text-teal">Courses</a>
+            </nav>
+          </header>
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-16">
-          <motion.div style={{ y, opacity: fade }}>
-            <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8, ease }}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /> January 2027 intake — applications open
-            </motion.span>
-            <h1 className="mt-5 text-[2.6rem] font-extrabold leading-[0.95] sm:text-6xl lg:text-7xl">
-              {["Your degree", "starts with", "one launch."].map((line, i) => (
-                <span key={line} className="block overflow-hidden">
-                  <motion.span className={i === 2 ? "block text-launch" : "block"} initial={{ y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.3 + i * 0.12, duration: 1, ease }}>
-                    {line}
-                  </motion.span>
-                </span>
-              ))}
-            </h1>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 1 }} className="mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
-              We connect you with leading UK universities near you, then guide you all the way from application to enrolment — free.
-            </motion.p>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 1 }} className="mt-6 hidden gap-6 text-sm lg:flex">
-              <Stat n="20+" l="UK cities" /><Stat n="4" l="partner universities" /><Stat n="1:1" l="advisor support" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.5, duration: 1.1, ease }} className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-launch opacity-20 blur-3xl" />
-            <Funnel />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* PARTNERS */}
-      <section className="border-y border-border bg-secondary/30 py-8">
-        <p className="text-center text-[10px] tracking-[0.3em] text-muted-foreground">WORKING WITH</p>
-        <div className="mx-auto mt-4 flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 font-display text-sm font-semibold text-foreground/70 sm:text-base">
-          <span>University of Wolverhampton</span><span>Arts University Bournemouth</span><span>Green Valley Academy</span><span>Partner Colleges</span>
-        </div>
-      </section>
-
-      {/* HOW */}
-      <section id="how" className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
-        <Reveal><h2 className="text-3xl font-bold sm:text-5xl">From first click to <span className="text-launch">campus.</span></h2></Reveal>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { i: GraduationCap, t: "Apply", d: "Tell us about you. We match the right course and campus." },
-            { i: ClipboardCheck, t: "Prepare", d: "We help with documents and your short pre-task." },
-            { i: CalendarCheck, t: "PFF Day", d: "Attend your Prepare for Foundation day — we coach you first." },
-            { i: Award, t: "Enrol", d: "Receive your admission offer and start your degree." },
-          ].map((s, k) => (
-            <Reveal key={s.t} delay={k * 0.1}>
-              <div className="glass group h-full rounded-2xl p-6 transition hover:-translate-y-1 hover:border-primary/40">
-                <div className="flex items-center justify-between">
-                  <s.i className="h-7 w-7 text-primary" />
-                  <span className="font-display text-4xl font-bold text-foreground/10">0{k + 1}</span>
+          <div className="flex flex-1 flex-col items-center justify-center gap-10 pb-16 pt-2 lg:flex-row lg:gap-16 lg:py-10">
+            <div className="w-full max-w-xl flex-1 space-y-6 lg:space-y-8">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8, ease }}
+                className="inline-block rounded-full border border-teal px-4 py-1 text-xs font-bold uppercase tracking-widest text-teal">
+                January 2027 intake
+              </motion.div>
+              <h1 className="text-[2.6rem] font-bold leading-[1.05] sm:text-6xl lg:text-7xl">
+                {[["Building"], ["Momentum", true], ["For Your Future"]].map(([w, accent], i) => (
+                  <span key={w as string} className="block overflow-hidden pb-1">
+                    <motion.span className={accent ? "block text-teal" : "block"} initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ delay: 0.3 + i * 0.12, duration: 1, ease }}>
+                      {w}
+                    </motion.span>
+                  </span>
+                ))}
+              </h1>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 1 }} className="max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+                We match you with UK universities near you, then guide you from application to enrolment, one clear step at a time. Our support is free.
+              </motion.p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 1 }} className="flex items-center gap-5 pt-2">
+                <div className="flex -space-x-3">
+                  {["bg-stone", "bg-teal/40", "bg-gold/70", "bg-ink/80"].map((c, i) => (
+                    <span key={i} className={`grid h-10 w-10 place-items-center rounded-full border-2 border-paper font-display text-xs font-bold text-paper ${c}`}>{["A", "D", "S", "K"][i]}</span>
+                  ))}
                 </div>
-                <h3 className="mt-6 text-xl font-bold">{s.t}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
-              </div>
-            </Reveal>
-          ))}
+                <p className="text-sm font-medium">Students across 20 UK cities</p>
+              </motion.div>
+            </div>
+
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 1.1, ease }} className="w-full max-w-md">
+              <Funnel />
+            </motion.div>
+          </div>
+
+          <footer className="hidden items-end justify-between pb-8 text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground lg:flex">
+            <span>01 / 06</span>
+            <a href="#partners" className="flex flex-col items-center gap-2">
+              <span>Scroll to explore</span>
+              <span className="relative h-12 w-px overflow-hidden bg-ink/40"><span className="absolute top-0 h-1/2 w-full animate-bounce bg-teal" /></span>
+            </a>
+            <span>Luton · Manchester · London</span>
+          </footer>
         </div>
       </section>
 
-      {/* COURSES */}
-      <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8">
-        <Reveal><h2 className="text-3xl font-bold sm:text-5xl">Featured courses</h2></Reveal>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {[
-            { t: "BSc (Hons) Public Health with Foundation Year", m: "Luton · 4 years · Full-time" },
-            { t: "BA (Hons) Business Management", m: "Manchester · Derby · Birmingham" },
-            { t: "Health & Social Care", m: "Manchester / Salford · Flexible days" },
-          ].map((c, k) => (
-            <Reveal key={c.t} delay={k * 0.1}>
-              <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-background p-6">
-                <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-2xl" />
-                <h3 className="relative text-lg font-bold leading-snug">{c.t}</h3>
-                <p className="relative mt-4 flex items-center gap-2 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{c.m}</p>
-              </div>
-            </Reveal>
-          ))}
+      {/* 02 PARTNERS */}
+      <Slide id="partners" n="02" kicker="Who we work with" className="bg-pages">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_380px]">
+          <div>
+            <Title>Partner universities and <span className="text-teal">campuses near you.</span></Title>
+            <ul className="mt-10 divide-y divide-ink/15 border-y border-ink/15">
+              {[
+                ["University of Wolverhampton", "Awarding body · Business, Health and Public Health"],
+                ["Arts University Bournemouth", "Fashion Management and Events"],
+                ["Green Valley Academy", "Partner institution · Luton campus"],
+                ["Partner colleges", "Manchester, Salford, Derby and Birmingham"],
+              ].map(([n, s], i) => (
+                <motion.li key={n} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.6 }} transition={{ delay: i * 0.12, duration: 0.8, ease }}
+                  className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-4 py-5 sm:gap-8">
+                  <span className="font-display text-sm font-bold text-teal">0{i + 1}</span>
+                  <div className="min-w-0">
+                    <p className="font-display text-xl font-bold sm:text-2xl">{n}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{s}</p>
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+          <div className="mx-auto w-56 sm:w-72 lg:w-full"><UkMap network className="w-full" /></div>
         </div>
-      </section>
+      </Slide>
 
-      {/* TESTIMONIALS */}
-      <section className="bg-secondary/30 py-20">
-        <div className="mx-auto grid max-w-6xl gap-4 px-5 sm:px-8 md:grid-cols-3">
-          {[
-            { q: "I didn't think university was for me. Momentum One made every step simple.", n: "Amira, Birmingham" },
-            { q: "They helped me prep for the PFF day — I got my offer the same week.", n: "Daniel, Manchester" },
-            { q: "Back in education at 34 studying Health & Social Care. Best decision ever.", n: "Sofia, London" },
-          ].map((t, k) => (
-            <Reveal key={t.n} delay={k * 0.1}>
-              <figure className="glass h-full rounded-2xl p-6">
-                <blockquote className="text-base leading-relaxed">“{t.q}”</blockquote>
-                <figcaption className="mt-4 text-xs text-muted-foreground">— {t.n}</figcaption>
-              </figure>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
-        <Reveal><h2 className="text-3xl font-bold sm:text-4xl">Questions</h2></Reveal>
-        <Accordion type="single" collapsible className="mt-8">
+      {/* 03 PROCESS */}
+      <Slide id="process" n="03" kicker="How it works" className="bg-grid">
+        <Title>From first click <span className="text-teal">to campus.</span></Title>
+        <div className="mt-10 grid gap-px overflow-hidden rounded-sm border border-ink/15 bg-ink/15 sm:grid-cols-2 lg:grid-cols-4">
           {([
-            ["Do I need A-levels?", "No. Offers are based on passing the Prepare for Foundation (PFF) Day, regardless of age, experience or academic background."],
-            ["Does your service cost anything?", "Our guidance is free for students."],
-            ["What documents will I need?", "Photo ID (passport or ID card), a share code if non-UK, proof of address, and ideally a CV and any certificates."],
-            ["When does the next intake start?", "January 2027 — applications are already open, so the sooner you start the better."],
-          ] as const).map(([q, a]) => (
-            <AccordionItem key={q} value={q}>
-              <AccordionTrigger className="text-left font-display">{q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
-            </AccordionItem>
+            [IconMortarboard, "Apply", "Tell us about you. We match the right course and campus."],
+            [IconPassport, "Prepare", "We help with your documents and the short PFF pre-task."],
+            [IconCalendar, "PFF Day", "Attend your Prepare for Foundation day. We coach you first."],
+            [IconSeal, "Enrol", "Receive your admission offer and start your degree."],
+          ] as [ComponentType<{ size?: number }>, string, string][]).map(([I, t, dsc], k) => (
+            <motion.div key={t} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.4 }} transition={{ delay: k * 0.12, duration: 0.8, ease }}
+              className="group relative bg-paper p-6 sm:p-8">
+              <span className="font-display text-6xl font-bold text-ink/[0.07]">0{k + 1}</span>
+              <div className="mt-2 text-teal transition-transform duration-500 group-hover:-translate-y-1"><I size={40} /></div>
+              <h3 className="mt-5 text-xl font-bold">{t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{dsc}</p>
+              <motion.span className="absolute bottom-0 left-0 h-0.5 bg-teal" initial={{ width: 0 }} whileInView={{ width: "100%" }} viewport={{ once: true }} transition={{ delay: 0.4 + k * 0.15, duration: 0.8 }} />
+            </motion.div>
           ))}
-        </Accordion>
-        <div className="mt-12 text-center">
-          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex rounded-full bg-launch px-8 py-4 font-display font-semibold text-primary-foreground glow">Get my offer →</a>
         </div>
-      </section>
+      </Slide>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Momentum One · Building Momentum For Your Future
-      </footer>
+      {/* 04 COURSES */}
+      <Slide id="courses" n="04" kicker="Featured courses" className="bg-ruled">
+        <Title>Courses that <span className="text-teal">open doors.</span></Title>
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {[
+            { t: "BSc (Hons) Public Health with Foundation Year", m: "Luton campus", d: "4 years · Full time", i: IconBook },
+            { t: "BA (Hons) Business Management", m: "Manchester, Derby, Birmingham", d: "Flexible weekly timetable", i: IconCampus },
+            { t: "Health and Social Care", m: "Manchester and Salford", d: "Day, evening and weekend groups", i: IconPin },
+          ].map((c, k) => (
+            <motion.article key={c.t} initial={{ opacity: 0, rotateY: -25, x: -20 }} whileInView={{ opacity: 1, rotateY: 0, x: 0 }} viewport={{ once: true, amount: 0.4 }}
+              transition={{ delay: k * 0.15, duration: 0.9, ease }} style={{ transformPerspective: 1200, transformOrigin: "left center" }}
+              className="relative flex flex-col rounded-sm border border-ink/15 bg-card p-7 shadow-paper">
+              <span className="absolute right-5 top-5 font-display text-[10px] font-bold tracking-[0.3em] text-muted-foreground">P. {12 + k * 8}</span>
+              <span className="text-teal"><c.i size={36} /></span>
+              <h3 className="mt-6 text-lg font-bold leading-snug">{c.t}</h3>
+              <div className="mt-auto pt-8">
+                <div className="h-px w-full bg-ink/15" />
+                <p className="mt-4 text-sm font-semibold">{c.m}</p>
+                <p className="text-xs text-muted-foreground">{c.d}</p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </Slide>
+
+      {/* 05 STUDENTS */}
+      <Slide id="students" n="05" kicker="Student stories" className="bg-pages">
+        <div className="grid gap-8 lg:grid-cols-3">
+          {[
+            { q: "I didn't think university was for me. Momentum One made every step simple.", n: "Amira", c: "Birmingham" },
+            { q: "They helped me prepare for the PFF day and I got my offer the same week.", n: "Daniel", c: "Manchester" },
+            { q: "Back in education at 34, studying Health and Social Care. Best decision ever.", n: "Sofia", c: "London" },
+          ].map((t, k) => (
+            <motion.figure key={t.n} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: k * 0.15, duration: 0.9, ease }}
+              className={k === 0 ? "lg:col-span-3" : ""}>
+              <IconQuill size={28} className="text-gold" />
+              <blockquote className={`mt-4 font-serif font-semibold italic leading-tight ${k === 0 ? "text-3xl sm:text-5xl" : "text-2xl sm:text-3xl"}`}>"{t.q}"</blockquote>
+              <figcaption className="mt-4 text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">{t.n} · {t.c}</figcaption>
+            </motion.figure>
+          ))}
+        </div>
+      </Slide>
+
+      {/* 06 FAQ */}
+      <Slide id="faq" n="06" kicker="Questions" className="bg-ruled">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]">
+          <div>
+            <Title>Everything you <span className="text-teal">need to know.</span></Title>
+            <img src={logoMark} alt="" width={300} height={249} loading="lazy" className="mt-10 hidden w-40 opacity-90 lg:block" />
+          </div>
+          <div>
+            <Accordion type="single" collapsible>
+              {([
+                ["Do I need A-levels?", "No. Offers depend on passing the Prepare for Foundation (PFF) Day, whatever your age, experience or academic background."],
+                ["Does your service cost anything?", "Our guidance is free for students."],
+                ["What documents will I need?", "Photo ID (passport or ID card), a share code if you are not a UK national, proof of address, and ideally a CV and any certificates."],
+                ["When does the next intake start?", "January 2027. Applications are already open, so the sooner you start the better."],
+              ] as const).map(([q, a]) => (
+                <AccordionItem key={q} value={q} className="border-ink/15">
+                  <AccordionTrigger className="text-left font-display text-base">{q}</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+            <a href="#start" className="mt-10 inline-flex items-center gap-3 rounded bg-ink px-8 py-4 font-display font-bold text-primary-foreground transition hover:bg-teal">Get my offer</a>
+          </div>
+        </div>
+        <footer className="mt-20 flex flex-col items-center gap-3 border-t border-ink/15 pt-8 text-center text-xs text-muted-foreground sm:flex-row sm:justify-between">
+          <img src={logo} alt="Momentum One" width={374} height={320} loading="lazy" className="h-12 w-auto" />
+          <span>© {new Date().getFullYear()} Momentum One. Building Momentum For Your Future.</span>
+        </footer>
+      </Slide>
     </main>
   );
 }
 
-function Stat({ n, l }: { n: string; l: string }) {
-  return <div><div className="font-display text-2xl font-bold">{n}</div><div className="text-xs text-muted-foreground">{l}</div></div>;
+function SlideRail({ active }: { active: number }) {
+  return (
+    <nav className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-3 md:flex" aria-label="Slides">
+      {SLIDES.map((s, i) => (
+        <a key={s} href={`#${s}`} className="group flex items-center gap-3">
+          <span className={`font-display text-[10px] font-bold tracking-widest transition ${i === active ? "text-teal opacity-100" : "opacity-0 group-hover:opacity-60"}`}>0{i + 1}</span>
+          <span className={`block h-px transition-all duration-500 ${i === active ? "w-10 bg-teal" : "w-5 bg-ink/30"}`} />
+        </a>
+      ))}
+    </nav>
+  );
 }
 
-function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+function Slide({ id, n, kicker, className, children }: { id: string; n: string; kicker: string; className?: string; children: React.ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.8, delay, ease }} className="h-full">
-      {children}
-    </motion.div>
+    <section id={id} className={`snap-slide relative flex min-h-[100svh] items-center border-t border-ink/10 ${className ?? ""}`}>
+      <div className="mx-auto w-full max-w-7xl px-5 py-20 sm:px-8 lg:px-12">
+        <motion.p initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease }}
+          className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] text-gold">
+          <span className="font-display text-teal">{n}</span><span className="h-px w-8 bg-gold" />{kicker}
+        </motion.p>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function Title({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="overflow-hidden">
+      <motion.h2 initial={{ y: "100%" }} whileInView={{ y: 0 }} viewport={{ once: true, amount: 0.6 }} transition={{ duration: 1, ease }}
+        className="max-w-3xl text-4xl font-bold leading-[1.05] sm:text-6xl">
+        {children}
+      </motion.h2>
+    </div>
   );
 }
