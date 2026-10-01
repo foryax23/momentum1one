@@ -20,9 +20,10 @@ const media = {
 type SectionVideoProps = {
   kind: keyof typeof media;
   className?: string;
+  immersive?: boolean;
 };
 
-export function SectionVideo({ kind, className }: SectionVideoProps) {
+export function SectionVideo({ kind, className, immersive = false }: SectionVideoProps) {
   const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [nearby, setNearby] = useState(false);
@@ -51,7 +52,15 @@ export function SectionVideo({ kind, className }: SectionVideoProps) {
   }, [nearby]);
 
   return (
-    <div ref={frame} className={cn("relative overflow-hidden border border-primary-foreground/15 bg-primary shadow-paper", item.ratio, className)} aria-hidden>
+    <div
+      ref={frame}
+      className={cn(
+        "relative overflow-hidden bg-primary",
+        immersive ? "h-full min-h-64" : `border border-primary-foreground/15 shadow-paper ${item.ratio}`,
+        className,
+      )}
+      aria-hidden
+    >
       <img src={item.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
       {nearby && !reduce && !saveData && (
         <video ref={video} muted autoPlay loop playsInline preload="metadata" poster={item.poster} className="absolute inset-0 h-full w-full object-cover">
