@@ -21,9 +21,10 @@ type SectionVideoProps = {
   kind: keyof typeof media;
   className?: string;
   immersive?: boolean;
+  effect?: "courses" | "campuses" | "journey";
 };
 
-export function SectionVideo({ kind, className, immersive = false }: SectionVideoProps) {
+export function SectionVideo({ kind, className, immersive = false, effect }: SectionVideoProps) {
   const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [nearby, setNearby] = useState(false);
@@ -55,15 +56,15 @@ export function SectionVideo({ kind, className, immersive = false }: SectionVide
     <div
       ref={frame}
       className={cn(
-        "relative overflow-hidden bg-primary",
-        immersive ? "h-full min-h-64" : `border border-primary-foreground/15 shadow-paper ${item.ratio}`,
+        "section-film relative overflow-hidden bg-primary",
+        immersive ? `${item.ratio} section-film-${effect ?? kind}` : `border border-primary-foreground/15 shadow-paper ${item.ratio}`,
         className,
       )}
       aria-hidden
     >
-      <img src={item.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <img src={item.poster} alt="" className="section-film-media absolute inset-0 h-full w-full object-cover" />
       {nearby && !reduce && !saveData && (
-        <video ref={video} muted autoPlay loop playsInline preload="metadata" poster={item.poster} className="absolute inset-0 h-full w-full object-cover">
+        <video ref={video} muted autoPlay loop playsInline preload="metadata" poster={item.poster} className="section-film-media absolute inset-0 h-full w-full object-cover">
           <source src={item.video} type="video/mp4" />
         </video>
       )}

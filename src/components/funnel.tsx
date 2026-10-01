@@ -101,7 +101,7 @@ export function Funnel() {
     } finally { setLoading(false); }
   }
 
-  async function download() {
+  async function downloadOfferDocument() {
     if (!result) return;
     setDownloading(true);
     try {
@@ -176,7 +176,7 @@ export function Funnel() {
                    <span><strong className="block text-sm">{t("funnel.whatsappOk", undefined, "WhatsApp is okay")}</strong><span className="text-xs text-muted-foreground">{t("funnel.whatsappFast", undefined, "Usually the quickest way to reach you")}</span></span>
                   <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
                 </label>
-                  <Primary disabled={!phoneOk} onClick={() => phoneOk && go(4)}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
+                  <Primary disabled={!phoneOk}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
                  {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">{cc === "44" ? t("funnel.invalidUk", undefined, "Enter a valid UK mobile number.") : t("funnel.invalid", undefined, "Enter a valid mobile number.")}</p>}
               </form>
             )}
@@ -202,8 +202,8 @@ export function Funnel() {
                  <RocketAssembly step={STEPS - 1} complete />
                   <Question title={t("funnel.ready", { name: first ?? "" }, `Your offer is ready, ${first}.`)} hint={`${result.selected_course} at ${result.nearest_campus}.`} centered />
                 <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
-                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
-                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your secure offer link")}</a>
+                  <Primary type="button" onClick={downloadOfferDocument} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
+                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your private document centre")}</a>
                  <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} />
                  <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">{t("funnel.create", undefined, "Create my student account")}</a>
                  <p className="text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")}: {result.ref_code}</p>

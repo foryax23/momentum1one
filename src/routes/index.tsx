@@ -197,16 +197,15 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) { 
 function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) { return <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, ease }}><p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{title}</h2>{intro && <p className="mt-3 max-w-2xl text-muted-foreground">{intro}</p>}</motion.div>; }
 function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: { kind: "courses" | "campuses" | "journey"; eyebrow: string; title: string; intro?: string; align?: "left" | "right" }) {
   const right = align === "right";
-  return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
-    <SectionVideo kind={kind} immersive className="absolute inset-0" />
-    <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary/90 via-primary/40 to-transparent" : "bg-gradient-to-r from-primary/90 via-primary/40 to-transparent")} />
-    <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-primary/70 to-transparent" />
-    <div className={cn("relative flex min-h-80 max-w-3xl flex-col justify-end px-5 pb-12 pt-24 text-primary-foreground sm:min-h-96 sm:px-10 sm:pb-16", right && "ml-auto text-right sm:items-end")}>
+  return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 overflow-hidden bg-primary px-5 py-8 sm:-mx-8 sm:px-8 sm:py-10 lg:mx-0 lg:px-10">
+    <div className={cn("mx-auto grid max-w-5xl items-center gap-6 lg:grid-cols-[minmax(0,.9fr)_minmax(300px,1fr)] lg:gap-12", right && "lg:grid-cols-[minmax(300px,1fr)_minmax(0,.9fr)]")}>
+      <div className={cn("relative mx-auto w-full max-w-md", right && "lg:order-2")}><SectionVideo kind={kind} immersive effect={kind} className="w-full" />{kind === "campuses" && <div className="section-film-grid" />}{kind === "journey" && <div className="section-film-route" />}</div>
+      <div className={cn("relative py-4 text-primary-foreground", right && "lg:order-1 lg:text-right")}>
       <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">{eyebrow}</p>
       <h2 className="mt-3 text-3xl font-bold italic sm:text-5xl">{title}</h2>
       {intro && <p className="mt-4 max-w-xl leading-relaxed text-primary-foreground/75">{intro}</p>}
+      </div>
     </div>
-    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent" />
   </motion.div>;
 }
 function Stars() { return <div className="pointer-events-none absolute inset-0" aria-hidden>{[[8,28],[18,62],[32,22],[48,55],[65,25],[77,63],[89,32],[94,75]].map(([left, top], index) => <span key={left} className="absolute h-1 w-1 rounded-full bg-primary-foreground" style={{ left: `${left}%`, top: `${top}%`, animation: `star-twinkle ${2.5 + index * .18}s ease-in-out infinite` }} />)}</div>; }
