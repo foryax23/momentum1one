@@ -73,7 +73,7 @@ function Admin() {
 
   async function update(id: string, patch: Partial<Lead>) {
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["leads"] });
     toast.success("Saved");
   }

@@ -152,12 +152,12 @@ function Index() {
       <section className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
         <Reveal><h2 className="text-3xl font-bold sm:text-4xl">Questions</h2></Reveal>
         <Accordion type="single" collapsible className="mt-8">
-          {[
+          {([
             ["Do I need A-levels?", "No. Offers are based on passing the Prepare for Foundation (PFF) Day, regardless of age, experience or academic background."],
             ["Does your service cost anything?", "Our guidance is free for students."],
             ["What documents will I need?", "Photo ID (passport or ID card), a share code if non-UK, proof of address, and ideally a CV and any certificates."],
             ["When does the next intake start?", "January 2027 — applications are already open, so the sooner you start the better."],
-          ].map(([q, a]) => (
+          ] as const).map(([q, a]) => (
             <AccordionItem key={q} value={q}>
               <AccordionTrigger className="text-left font-display">{q}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
