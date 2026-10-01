@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -69,7 +70,7 @@ export function Funnel() {
     if (!result) return;
     setDownloading(true);
     try {
-      const { downloadOffer } = await import("./offer-pdf");
+      const { downloadOffer } = await loadOfferPdf();
       await downloadOffer(result);
     } catch (error) {
       console.error(error);

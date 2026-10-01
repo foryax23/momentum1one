@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search, Spinner } from "@/components/icons";
@@ -185,7 +186,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
     if (!lead.selected_course || !lead.study_route) return;
     setDownloading(true);
     try {
-      const { downloadOffer: createOffer } = await import("@/components/offer-pdf");
+      const { downloadOffer: createOffer } = await loadOfferPdf();
       await createOffer({ ...lead, offer_url: "" });
     } finally { setDownloading(false); }
   }
