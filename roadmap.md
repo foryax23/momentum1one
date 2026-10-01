@@ -15,3 +15,6 @@
 - [x] Add a private admissions document checklist and advisor review controls
 - [ ] Verify one complete real-student WhatsApp document flow after publishing
 - [ ] Welcome message begins sending after Meta changes the template from Pending to Approved
+- [x] Bot replies only to website students (welcome sent or reference code quoted)
+- [x] Friendlier admissions chat: details first, then only needed documents, skip and later supported
+- [ ] Test one real conversation after publishing
