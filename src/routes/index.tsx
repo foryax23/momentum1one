@@ -256,11 +256,11 @@ function Slide({ id, n, kicker, className, children }: { id: string; n: string; 
 
 function Title({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden">
-      <motion.h2 initial={{ y: "100%" }} whileInView={{ y: 0 }} viewport={{ once: true, amount: 0.6 }} transition={{ duration: 1, ease }}
+    <motion.div className="overflow-hidden" initial="hide" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
+      <motion.h2 variants={{ hide: { y: "100%" }, show: { y: 0 } }} transition={{ duration: 1, ease }}
         className="max-w-3xl text-4xl font-bold leading-[1.05] sm:text-6xl">
         {children}
       </motion.h2>
-    </div>
+    </motion.div>
   );
 }
