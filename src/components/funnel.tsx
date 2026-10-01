@@ -14,6 +14,8 @@ import { LiftOffScene } from "./funnel-scenes";
 type Data = { full_name: string; city: string; selected_course: string; study_route: "Foundation Year" | "Year 1" | ""; email: string; phone: string; whatsapp: boolean; consent: boolean; website: string };
 const STEPS = 5;
 const LABELS = ["Name", "Location", "Course", "Phone", "Email"];
+const COUNTRY_CODES: [string, string][] = [["44","UK"],["353","Ireland"],["40","Romania"],["48","Poland"],["359","Bulgaria"],["370","Lithuania"],["371","Latvia"],["372","Estonia"],["36","Hungary"],["420","Czechia"],["421","Slovakia"],["39","Italy"],["34","Spain"],["351","Portugal"],["33","France"],["49","Germany"],["31","Netherlands"],["32","Belgium"],["30","Greece"],["385","Croatia"],["90","Turkey"],["380","Ukraine"],["373","Moldova"],["91","India"],["92","Pakistan"],["880","Bangladesh"],["234","Nigeria"],["233","Ghana"],["254","Kenya"],["27","South Africa"],["20","Egypt"],["971","UAE"],["966","Saudi Arabia"],["86","China"],["63","Philippines"],["1","USA/Canada"],["55","Brazil"]];
+const WA_NUMBER = "447593855452";
 const DRAFT_KEY = "momentum-one-application";
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -41,7 +43,10 @@ export function Funnel() {
   const set = <K extends keyof Data>(key: K, value: Data[K]) => setD((current) => ({ ...current, [key]: value }));
   const first = d.full_name.trim().split(" ")[0];
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim());
-  const phoneOk = /^(\+44\s?7\d{3}|07\d{3})\s?\d{3}\s?\d{3}$/.test(d.phone.trim());
+  const [cc, setCc] = useState("44");
+  const local = d.phone.replace(/\D/g, "").replace(/^0+/, "");
+  const phoneOk = cc === "44" ? /^7\d{9}$/.test(local) : local.length >= 6 && local.length <= 14;
+  const fullPhone = `+${cc} ${local}`;
   const campus = d.city ? nearestCampus(d.city as (typeof UK_CITIES)[number]) : null;
   const courses = coursesForCampus(campus?.full ?? null);
 
@@ -51,7 +56,7 @@ export function Funnel() {
     try {
       const params = new URLSearchParams(window.location.search);
       const row = await send({ data: {
-        full_name: d.full_name.trim(), email: d.email.trim(), phone: d.phone.trim(),
+        full_name: d.full_name.trim(), email: d.email.trim(), phone: fullPhone,
         city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
         whatsapp: d.whatsapp, nearest_campus: campus.full, distance_miles: campus.miles,
         source: params.get("src") ?? params.get("utm_source"), campaign: params.get("utm_campaign"),
@@ -135,13 +140,13 @@ export function Funnel() {
               <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(4); }} className="space-y-4">
                 <Question title="What's the best number to reach you?" hint="A course advisor will use it to discuss your options." />
                 <FieldLabel>UK mobile</FieldLabel>
-                <div className="flex gap-2"><span className="grid h-14 place-items-center rounded-xl border border-border bg-secondary px-3 font-bold text-primary">+44</span><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder="7700 900123" className={cn(inputClass, "min-w-0 flex-1")} /></div>
+                <div className="flex gap-2"><select aria-label="Country code" value={cc} onChange={(event) => setCc(event.target.value)} className="h-14 w-28 shrink-0 rounded-xl border border-border bg-secondary px-2 font-bold text-primary outline-none focus:border-teal">{COUNTRY_CODES.map(([code, name]) => <option key={name} value={code}>{name} +{code}</option>)}</select><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder="7700 900123" className={cn(inputClass, "min-w-0 flex-1")} /></div>
                 <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
                   <span><strong className="block text-sm">WhatsApp is okay</strong><span className="text-xs text-muted-foreground">Usually the quickest way to reach you</span></span>
                   <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
                 </label>
                  <Primary disabled={!phoneOk} onClick={() => phoneOk && go(4)}>Next question <IconArrowRight size={20} /></Primary>
-                {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">Enter a valid UK mobile number.</p>}
+                {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">{cc === "44" ? "Enter a valid UK mobile number." : "Enter a valid mobile number."}</p>}
               </form>
             )}
 
@@ -189,3 +194,19 @@ const inputClass = "h-14 w-full rounded-xl border border-input bg-card px-4 text
 function FieldLabel({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</label>; }
 function Question({ title, hint, centered = false }: { title: string; hint: string; centered?: boolean }) { return <div className={centered ? "text-center" : ""}><h2 className="text-[1.45rem] font-semibold leading-tight text-primary">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{hint}</p></div>; }
 function Primary({ children, className, ...props }: React.ComponentProps<typeof Button>) { return <Button {...props} className={cn("h-14 w-full rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-none transition-transform hover:bg-primary/95 active:scale-[.985]", className)}>{children}</Button>; }
+
+function WhatsAppRedirect({ name, reference }: { name: string; reference: string }) {
+  const [left, setLeft] = useState(6);
+  const [cancelled, setCancelled] = useState(false);
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi Momentum One, I'm ${name}. My reference is ${reference}.`)}`;
+  useEffect(() => {
+    if (cancelled) return;
+    if (left <= 0) { window.location.href = url; return; }
+    const t = window.setTimeout(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [left, cancelled, url]);
+  return <div className="grid w-full gap-1">
+    <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-14 w-full place-items-center rounded-xl bg-chart-4 px-5 text-base font-bold text-primary-foreground transition-transform active:scale-[.985]">Connect with us on WhatsApp</a>
+    {!cancelled && left > 0 && <p className="text-xs text-muted-foreground">Opening WhatsApp in {left}s. <button type="button" onClick={() => setCancelled(true)} className="font-semibold underline">Stay here</button></p>}
+  </div>;
+}
