@@ -9,6 +9,7 @@ import { IconArrowRight, IconTick } from "@/components/icons";
 import { AudienceStrip, CampusCards, CourseDeck, ScrollTimeline, StatsBand } from "@/components/home-sections";
 import { CourseComparison, WhatYouReceive } from "@/components/home-sections";
 import { HeroVideo } from "@/components/hero-video";
+import { PromoVideoFeature } from "@/components/promo-video";
 import { cn } from "@/lib/utils";
 import heroImage from "@/assets/courses/business.jpg";
 
@@ -27,11 +28,11 @@ export const Route = createFileRoute("/")({
 });
 
 const JOURNEY = [
-  { title: "Check your options", text: "Answer a few quick questions and get your personalised offer straight away." },
-  { title: "Talk to an advisor", text: "Agree the right course, campus and study pattern for your week." },
-  { title: "Prepare documents", text: "We help with ID, address evidence, certificates and your CV." },
-  { title: "Attend PFF Day", text: "Complete a short written pre-task, then a one-day assessment at the campus." },
-  { title: "Start your course", text: "Enrol once your application and assessment are approved." },
+  { title: "Check your options", text: "Answer five quick questions and receive your personalised course information." },
+  { title: "Choose how to continue", text: "Continue on WhatsApp or ask for an advisor to call before the application continues." },
+  { title: "Confirm your details", text: "Share the relevant personal information and prepare only the documents your route needs." },
+  { title: "Prepare for PFF Day", text: "Complete the written pre-task and attend the campus assessment day." },
+  { title: "Move towards enrolment", text: "Enrol after the institution approves your application and assessment." },
 ];
 
 const FAQS: [string, string][] = [
@@ -80,6 +81,8 @@ function Index() {
       <SectionHeading eyebrow="Who it's for" title="Built for real lives" />
       <AudienceStrip />
     </Section>
+
+    <div className="mt-20 sm:mt-24"><PromoVideoFeature /></div>
 
     <section className="relative mt-20 overflow-hidden rounded-t-[50%_70px] bg-primary text-primary-foreground sm:mt-24 sm:rounded-t-[50%_90px]">
       <Stars />
@@ -152,7 +155,7 @@ function Header() {
     <div className={cn("mx-auto flex max-w-6xl items-center justify-between px-5 transition-all duration-300 sm:px-8", scrolled ? "py-2" : "py-3")}>
       <a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className={cn("w-auto transition-all duration-300", scrolled ? "h-8" : "h-10")} /></a>
       <nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">Courses</a><a href="#campuses">Campuses</a><a href="#journey">How it works</a><a href="#finance">Funding</a></nav>
-      <a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground")}>Start here</a>
+      <div className="flex items-center gap-2"><a href="/auth" className="hidden text-sm font-semibold text-primary hover:text-teal sm:block">My account</a><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground")}>Start here</a></div>
     </div>
   </header>;
 }
