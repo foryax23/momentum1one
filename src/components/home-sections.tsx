@@ -259,7 +259,7 @@ function CountUp({ to }: { to: number }) {
 }
 
 export function StatsBand() {
-  const stats: [number, string, React.ComponentType<{ size?: number }>][] = [[10, "agents", IconAgents], [20, "UK campuses", IconPin], [10, "awarding universities", IconUniversity], [1, "minute to check options", IconClock]];
+  const stats: [number, string, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: number }>][] = [[10, "agents", IconAgents], [20, "UK campuses", IconPin], [10, "awarding universities", IconUniversity], [1, "minute to check options", IconClock]];
   return (
     <div className="grid grid-cols-2 gap-y-8 lg:grid-cols-4">
       {stats.map(([n, label, Icon]) => <div key={label} className="group border-l border-primary-foreground/20 pl-5"><Icon size={28} className="mb-6 text-gold transition-transform duration-500 group-hover:-translate-y-1" /><p className="font-display text-5xl font-bold text-primary-foreground sm:text-6xl"><CountUp to={n} />{n > 1 ? "+" : ""}</p><p className="mt-1 text-sm uppercase tracking-[.12em] text-primary-foreground/65">{label}</p></div>)}

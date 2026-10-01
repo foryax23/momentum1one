@@ -9,5 +9,5 @@ const shapes: Record<string, React.ReactNode> = {
 };
 
 export function CourseArt({ subject, className = "" }: { subject: string; className?: string }) {
-  return <div className={`course-art ${className}`} aria-hidden><svg viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">{shapes[subject] ?? shapes.business}</svg></div>;
+  return <div className={`course-art ${className}`} aria-hidden><svg viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">{shapes[subject] ?? shapes["business"]}</svg></div>;
 }
