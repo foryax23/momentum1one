@@ -1,30 +1,41 @@
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { INTAKES, INTERESTS, UK_CITIES, type LeadResult } from "@/lib/funnel";
+import { UK_CITIES, nearestCampus, type LeadResult } from "@/lib/funnel";
 import { submitLead } from "@/lib/leads.functions";
 import { cn } from "@/lib/utils";
 import {
-  IconArrowLeft, IconArrowRight, IconCare, IconCompass, IconDownload, IconGlobe, IconHanger, IconLedger, IconPhone, IconTick, Spinner,
+  IconArrowLeft, IconArrowRight, IconDownload, IconPhone, IconTick, Spinner,
 } from "./icons";
 import { UkMap } from "./uk-map";
-import { BookScene, CalendarScene, EnvelopeScene, LiftOffScene } from "./funnel-scenes";
+import { BookScene, EnvelopeScene, LiftOffScene } from "./funnel-scenes";
 
-type Data = { full_name: string; city: string; interest: string; intake: string; email: string; phone: string; consent: boolean };
-const STEPS = 5;
-const LABELS = ["Name", "City", "Course", "Intake", "Contact"];
+type Data = { full_name: string; city: string; email: string; phone: string; whatsapp: boolean; consent: boolean; website: string };
+const STEPS = 4;
+const LABELS = ["Name", "City", "Phone", "Email"];
 const ease = [0.22, 1, 0.36, 1] as const;
-const ICONS: Record<string, ComponentType<{ size?: number }>> = { ledger: IconLedger, care: IconCare, globe: IconGlobe, hanger: IconHanger, compass: IconCompass };
+const DRAFT_KEY = "momentum-one-application";
 
 export function Funnel() {
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
-  const [d, setD] = useState<Data>({ full_name: "", city: "", interest: "", intake: "", email: "", phone: "", consent: false });
+  const [d, setD] = useState<Data>({ full_name: "", city: "", email: "", phone: "", whatsapp: true, consent: false, website: "" });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LeadResult | null>(null);
   const [downloading, setDownloading] = useState(false);
   const send = useServerFn(submitLead);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(DRAFT_KEY);
+      if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, website: "" }));
+    } catch { /* Ignore unavailable or malformed local storage. */ }
+  }, []);
+
+  useEffect(() => {
+    if (!result) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  }, [d, result]);
 
   const go = (n: number) => { setDir(n > step ? 1 : -1); setStep(n); };
   const set = <K extends keyof Data>(k: K, v: Data[K]) => setD((p) => ({ ...p, [k]: v }));
@@ -33,6 +44,7 @@ export function Funnel() {
   const first = d.full_name.trim().split(" ")[0];
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim());
   const phoneOk = /^(\+44\s?7\d{3}|07\d{3})\s?\d{3}\s?\d{3}$/.test(d.phone.trim());
+  const campus = d.city ? nearestCampus(d.city as (typeof UK_CITIES)[number]) : null;
 
   async function submit() {
     if (!emailOk || !phoneOk || !d.consent) return;
@@ -41,10 +53,15 @@ export function Funnel() {
       const row = await send({
         data: {
           full_name: d.full_name.trim(), email: d.email.trim(), phone: d.phone.trim(),
-          city: d.city as (typeof UK_CITIES)[number], interest: d.interest || null, intake: d.intake || null, consent: true,
+          city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
+          whatsapp: d.whatsapp, nearest_campus: campus?.full ?? "Luton Campus", distance_miles: campus?.miles ?? 0,
+          source: new URLSearchParams(window.location.search).get("utm_source"),
+          campaign: new URLSearchParams(window.location.search).get("utm_campaign"),
+          page: window.location.href.slice(0, 500), website: d.website,
         },
       });
       setResult(row);
+      window.localStorage.removeItem(DRAFT_KEY);
       go(STEPS);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
@@ -100,7 +117,7 @@ export function Funnel() {
           {step === 0 && (
             <form onSubmit={(e) => { e.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }}>
               <BookScene name={d.full_name.trim()} />
-              <Q title="First, what's your name?" sub="It takes 60 seconds. Your personalised offer is waiting at the end." />
+               <Q title="First, what's your name?" sub="It takes less than a minute. Your personalised pathway is waiting at the end." />
               <Label>Full name</Label>
               <input autoComplete="name" value={d.full_name} maxLength={100} onChange={(e) => set("full_name", e.target.value)} placeholder="e.g. Amira Khan" className={inputCls} />
               <Primary disabled={d.full_name.trim().length < 2}>Continue <IconArrowRight size={20} /></Primary>
@@ -110,7 +127,7 @@ export function Funnel() {
           {step === 1 && (
             <div>
               <Back onClick={() => go(0)} />
-              <Q title={`Nice to meet you, ${first}. Which city are you closest to?`} sub="We'll match you with your nearest campus." />
+               <Q title={`Nice to meet you, ${first}. Which city are you closest to?`} sub="Choose one of the 20 main UK cities and we will find your nearest campus." />
               <div className="mt-4 grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
                 <UkMap selected={d.city} className="h-full max-h-56 w-full" />
                 <div className="grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto pr-1">
@@ -122,64 +139,40 @@ export function Funnel() {
                   ))}
                 </div>
               </div>
+              {campus && <p className="mt-3 rounded-sm border border-teal/30 bg-teal/10 px-3 py-2 text-xs"><strong>Nearest campus: {campus.full}</strong><br /><span className="text-muted-foreground">Approximately {campus.miles} miles from {d.city}</span></p>}
             </div>
           )}
 
           {step === 2 && (
-            <div>
-              <Back onClick={() => go(1)} />
-              <Q title="What would you love to study?" sub="Pick the closest match. You can change it later." />
-              <div className="mt-4 grid grid-cols-2 gap-2" style={{ perspective: 800 }}>
-                {INTERESTS.map((o, i) => {
-                  const I = ICONS[o.icon] ?? IconCompass;
-                  const on = d.interest === o.value;
-                  return (
-                    <motion.button key={o.value} onClick={() => pick("interest", o.value)}
-                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, rotateY: on ? 360 : 0 }} transition={{ delay: on ? 0 : i * 0.05, duration: on ? 0.6 : 0.4, ease }}
-                      className={cn("flex flex-col items-start gap-2 rounded-sm border p-3 text-left transition", i === 4 && "col-span-2", on ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
-                      <span className={on ? "text-accent-foreground" : "text-teal"}><I size={28} /></span>
-                      <span className="text-sm font-bold leading-tight">{o.value}</span>
-                      <span className={cn("text-[11px] leading-snug", on ? "text-accent-foreground/80" : "text-muted-foreground")}>{o.hint}</span>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
+            <form onSubmit={(e) => { e.preventDefault(); if (phoneOk) go(3); }}>
+              <Back onClick={() => go(2)} />
+              <div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-full border border-teal/30 bg-teal/10 text-teal"><IconPhone size={36} /></div>
+              <Q title="What is the best number to reach you on?" sub="A course advisor will use this to discuss your options." />
+              <Label>UK mobile</Label>
+              <Field type="tel" autoComplete="tel" placeholder="07700 900123" value={d.phone} onChange={(v) => set("phone", v)} ok={phoneOk} />
+              <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm">
+                <input type="checkbox" checked={d.whatsapp} onChange={(e) => set("whatsapp", e.target.checked)} className="h-4 w-4 accent-[var(--teal)]" />
+                This number is available on WhatsApp
+              </label>
+              <Primary disabled={!phoneOk}>Continue <IconArrowRight size={20} /></Primary>
+            </form>
           )}
 
           {step === 3 && (
-            <div>
-              <Back onClick={() => go(2)} />
-              <CalendarScene intake={d.intake} />
-              <Q title="When would you like to start?" sub="January 2027 applications are open right now." />
-              <div className="mt-4 space-y-2">
-                {INTAKES.map((o) => (
-                  <button key={o.value} onClick={() => pick("intake", o.value, 800)}
-                    className={cn("flex w-full items-center justify-between gap-3 rounded-sm border px-4 py-3.5 text-left transition active:scale-[0.98]", d.intake === o.value ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
-                    <span><span className="block font-bold">{o.value}</span><span className={cn("block text-xs", d.intake === o.value ? "text-accent-foreground/80" : "text-muted-foreground")}>{o.hint}</span></span>
-                    {d.intake === o.value ? <IconTick size={20} /> : <IconArrowRight size={18} className="text-muted-foreground" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
             <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
-              <Back onClick={() => go(3)} />
-              <EnvelopeScene sealed={emailOk && phoneOk} />
-              <Q title="Where should we send your offer?" sub="Your certificate is generated instantly." />
+              <Back onClick={() => go(2)} />
+              <EnvelopeScene sealed={emailOk} />
+              <Q title="Where should we send your course options?" sub="We will also prepare your personalised pathway certificate." />
               <Label>Email address</Label>
               <Field type="email" autoComplete="email" placeholder="you@example.com" value={d.email} onChange={(v) => set("email", v)} ok={emailOk} />
-              <Label>UK mobile</Label>
-              <Field type="tel" autoComplete="tel" placeholder="07700 900123" value={d.phone} onChange={(v) => set("phone", v)} ok={phoneOk} />
+              <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(e) => set("website", e.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
               <label className="mt-4 flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-muted-foreground">
                 <input type="checkbox" checked={d.consent} onChange={(e) => set("consent", e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--teal)]" />
-                I agree that Momentum One may contact me by phone, email or WhatsApp about university options.
+                Momentum One can contact me by phone, WhatsApp or email about courses. I can ask them to stop at any time.
               </label>
-              <Primary disabled={!emailOk || !phoneOk || !d.consent || loading}>
+              <Primary disabled={!emailOk || !d.consent || loading}>
                 {loading ? <Spinner /> : null}
-                {loading ? "Preparing your offer" : "Get my offer"}
+                {loading ? "Preparing your options" : "Show my course options"}
                 {!loading && <IconArrowRight size={20} />}
               </Primary>
             </form>
@@ -189,15 +182,15 @@ export function Funnel() {
             <div className="text-center">
               <LiftOffScene />
               <h3 className="mt-3 text-2xl font-bold sm:text-3xl">Lift off, {first}.</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Your Certificate of Pre-Approved Pathway is ready.</p>
+               <p className="mt-1 text-sm text-muted-foreground">Your personalised UK university pathway is ready.</p>
 
               <motion.div initial={{ y: 40, opacity: 0, rotateX: 25 }} animate={{ y: 0, opacity: 1, rotateX: 0 }} transition={{ delay: 0.6, duration: 0.9, ease }} style={{ transformPerspective: 900 }}
                 className="relative mx-auto mt-5 border-2 border-gold bg-card p-1.5 shadow-paper">
                 <div className="border border-teal/50 px-4 py-5">
-                  <p className="text-[9px] font-bold tracking-[0.3em] text-gold">CERTIFICATE OF PRE-APPROVED PATHWAY</p>
+                   <p className="text-[9px] font-bold tracking-[0.3em] text-gold">PERSONALISED PATHWAY CERTIFICATE</p>
                   <p className="mt-3 font-serif text-3xl font-semibold italic">{result.full_name}</p>
                   <div className="mx-auto mt-2 h-px w-40 bg-gold" />
-                  <p className="mt-3 text-xs text-muted-foreground">{result.interest ?? "University pathway"} · {result.intake ?? "January 2027"} · {result.city}</p>
+                   <p className="mt-3 text-xs text-muted-foreground">{result.nearest_campus ?? "University pathway"} · {result.intake ?? "January 2027"} · {result.city}</p>
                   <p className="mt-2 font-display text-[10px] font-bold tracking-widest text-teal">{result.ref_code}</p>
                 </div>
                 <motion.div initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 1.3, type: "spring", stiffness: 300, damping: 12 }}

@@ -113,7 +113,7 @@ function RefBlock({ code }: { code: string }) {
 export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: string }) {
   const issued = new Date(lead.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   return (
-    <Document title={`Momentum One Offer, ${lead.full_name}`} author="Momentum One">
+    <Document title={`Momentum One Pathway, ${lead.full_name}`} author="Momentum One">
       <Page size="A4" orientation="landscape" style={s.page}>
         <Frame />
         <Image src={`${origin}/logo-mark.png`} style={{ position: "absolute", top: 150, left: W / 2 - 150, width: 300, height: 250, opacity: 0.04 }} />
@@ -128,17 +128,17 @@ export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: stri
           </View>
 
           <Text style={s.eyebrow}>MOMENTUM ONE · UK UNIVERSITY PATHWAYS</Text>
-          <Text style={s.title}>Certificate of Pre-Approved Pathway</Text>
+          <Text style={s.title}>Personalised Pathway Certificate</Text>
           <Text style={s.presented}>This certificate is proudly presented to</Text>
           <Text style={s.name}>{lead.full_name}</Text>
           <Text style={s.body}>
-            In recognition of taking the first step toward a UK university degree. You have been selected for a personal
-            admissions pathway with our partner universities, with one-to-one guidance through your application, your
-            documents and your Prepare for Foundation (PFF) Day.
+            In recognition of taking the first step toward a UK university degree. Momentum One will provide personal
+            guidance as you explore a suitable course, prepare your application documents and get ready for the
+            Prepare for Foundation (PFF) Day.
           </Text>
 
           <View style={s.facts}>
-            {[["AREA OF STUDY", lead.interest ?? "To be advised"], ["TARGET INTAKE", lead.intake ?? "January 2027"], ["NEAREST CITY", lead.city], ["STATUS", "Pre-approved"]].map(([l, v], i) => (
+            {[["HOME CITY", lead.city], ["TARGET INTAKE", lead.intake ?? "January 2027"], ["NEAREST CAMPUS", lead.nearest_campus ?? "To be confirmed"], ["NEXT STEP", "Advisor review"]].map(([l, v], i) => (
               <View key={l} style={[s.fact, i === 3 ? { borderRightWidth: 0 } : {}]}>
                 <Text style={s.factLabel}>{l}</Text>
                 <Text style={s.factValue}>{v}</Text>
@@ -158,7 +158,7 @@ export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: stri
               <View style={{ marginLeft: 8, width: 130 }}>
                 <Text style={{ fontSize: 6.5, letterSpacing: 1.5, color: TEAL }}>VERIFICATION</Text>
                 <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", marginTop: 2 }}>{lead.ref_code}</Text>
-                <Text style={{ fontSize: 6.5, color: "#5b6b80", marginTop: 3, lineHeight: 1.4 }}>Valid for the selected intake, subject to the PFF assessment.</Text>
+                 <Text style={{ fontSize: 6.5, color: "#5b6b80", marginTop: 3, lineHeight: 1.4 }}>This pathway is not an admission offer. Eligibility is confirmed after application review and assessment.</Text>
               </View>
             </View>
             <SealSvg />
@@ -180,7 +180,7 @@ export async function downloadOffer(lead: LeadResult) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Momentum-One-Offer-${lead.ref_code}.pdf`;
+  a.download = `Momentum-One-Pathway-${lead.ref_code}.pdf`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

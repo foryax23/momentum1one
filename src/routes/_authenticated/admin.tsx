@@ -26,6 +26,7 @@ const STATUSES = ["new", "contacted", "applied", "enrolled", "lost"] as const;
 type Lead = {
   id: string; ref_code: string; full_name: string; email: string; phone: string; city: string;
   interest: string | null; intake: string | null; status: string; notes: string | null; created_at: string;
+  whatsapp: boolean; nearest_campus: string | null; distance_miles: number | null; source: string | null; campaign: string | null; page: string | null;
 };
 
 function Admin() {
@@ -85,7 +86,7 @@ function Admin() {
   }
 
   function exportCsv() {
-    const head = ["ref_code", "full_name", "email", "phone", "city", "interest", "intake", "status", "created_at"] as const;
+    const head = ["ref_code", "full_name", "email", "phone", "whatsapp", "city", "nearest_campus", "distance_miles", "interest", "intake", "source", "campaign", "status", "created_at"] as const;
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csv = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
     const a = document.createElement("a");
@@ -183,7 +184,10 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
         <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
           <Row k="Email" v={<a href={`mailto:${lead.email}`} className="text-primary">{lead.email}</a>} />
           <Row k="Phone" v={<a href={`tel:${lead.phone}`} className="text-primary">{lead.phone}</a>} />
-          <Row k="City" v={lead.city} /><Row k="Interest" v={lead.interest ?? "-"} /><Row k="Intake" v={lead.intake ?? "-"} />
+           <Row k="WhatsApp" v={lead.whatsapp ? "Yes" : "No"} /><Row k="City" v={lead.city} />
+           <Row k="Nearest campus" v={lead.nearest_campus ?? "-"} /><Row k="Distance" v={lead.distance_miles == null ? "-" : `About ${lead.distance_miles} miles`} />
+           <Row k="Interest" v={lead.interest ?? "To discuss"} /><Row k="Intake" v={lead.intake ?? "-"} />
+           <Row k="Source" v={lead.source ?? "Direct"} /><Row k="Campaign" v={lead.campaign ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
