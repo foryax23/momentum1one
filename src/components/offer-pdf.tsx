@@ -34,7 +34,7 @@ const s = StyleSheet.create({
   sign: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 18 },
   // The PNG has transparent margins around the ink, so the rule is pulled up to sit under the pen stroke.
   signature: { width: 170, height: 85, marginBottom: -14 }, signRule: { width: 170, borderTopWidth: 1, borderTopColor: INK },
-  issued: { alignItems: "flex-end" },
+  issued: { alignItems: "flex-end" }, hair: { fontSize: 0.1 },
 });
 
 // Name and title as the client brief and plan docs give them; no surname is known. "Director" reads the same in English, Romanian and Spanish.
@@ -122,6 +122,22 @@ function Header({ lead, page, origin, offer }: { lead: LeadResult; page: number;
 }
 function Footer({ tagline, campus }: { tagline: string; campus: string }) { return <View style={s.footer} fixed><Text>{tagline}</Text><Text>{campus}</Text></View>; }
 
+// With hyphenation off, a name part too wide for the 96pt STUDENT box would print over the next column. Such a name may wrap after its own hyphens
+// (the hair-width space is a break point that adds no second hyphen), and a part that is still too wide wraps in even pieces that do take one.
+// The width is estimated from average Manrope Bold advances at 10pt (narrow letters, wide letters, capitals, the rest), which is within a few points.
+const tooWide = (part: string) => Array.from(part).reduce((width, char) => width + (/[fijlrtI'.-]/.test(char) ? 3.5 : /[mwMW]/.test(char) ? 8.8 : char === char.toLowerCase() ? 5.9 : 6.7), 0) > 96;
+function namePieces(part: string) {
+  if (!tooWide(part)) return [part];
+  const chars = Array.from(part), size = Math.ceil(chars.length / Math.ceil(chars.length / 12)), pieces: string[] = [];
+  while (chars.length > size) pieces.push(chars.splice(0, size).join(""));
+  return [...pieces, chars.join("")];
+}
+function StudentName({ name }: { name: string }) {
+  if (!name.split(" ").some(tooWide)) return <Text style={s.value}>{name}</Text>;
+  const parts = name.split("-");
+  return <Text style={s.value} hyphenationCallback={namePieces}>{parts.map((part, i) => i < parts.length - 1 ? <Text key={i}>{`${part}-`}<Text style={s.hair}>{" "}</Text></Text> : part)}</Text>;
+}
+
 export function OfferDocument({ lead, locale = "en", origin = window.location.origin }: { lead: LeadResult; origin?: string; locale?: Locale }) {
   const c = PDF_COPY[locale];
   const campus = campusName(lead.nearest_campus), courses = coursesForCampus(lead.nearest_campus);
@@ -136,7 +152,7 @@ export function OfferDocument({ lead, locale = "en", origin = window.location.or
     <Page size="A4" style={s.page}>{header(1)}
       <Text style={s.eyebrow}>{c.pathway}</Text><Text style={s.h1}>{fill(c.launch, { campus })}</Text>
       <Text style={s.lead}>{fill(c.intro, { name: lead.full_name, course: chosen?.title ?? c.courseTbc, route: routeName(lead.study_route ?? "Foundation Year") })}</Text>
-      <View style={s.grid}>{facts.map(([label, value]) => <View key={label} style={s.stat}><Text style={s.label}>{label}</Text><Text style={s.value}>{value}</Text></View>)}</View>
+      <View style={s.grid}>{facts.map(([label, value], i) => <View key={label} style={s.stat}><Text style={s.label}>{label}</Text>{i === 0 ? <StudentName name={lead.full_name} /> : <Text style={s.value}>{value}</Text>}</View>)}</View>
       <View style={s.band}><Text style={s.bandTitle}>{c.fit}</Text><Text style={s.bandText}>{c.fitText}</Text></View>
       <Text style={s.h2}>{c.conversation}</Text><Text style={s.lead}>{c.guide}</Text>
       <View style={s.sign} wrap={false}>
