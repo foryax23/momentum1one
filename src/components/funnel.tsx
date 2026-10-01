@@ -51,6 +51,21 @@ export function Funnel() {
   const fullPhone = `+${cc} ${local}`;
   const campus = d.city ? nearestCampus(d.city as (typeof UK_CITIES)[number]) : null;
   const courses = coursesForCampus(campus?.full ?? null);
+  const [preferred, setPreferred] = useState("");
+  useEffect(() => {
+    const onPick = (event: Event) => {
+      const title = (event as CustomEvent<string>).detail;
+      setPreferred(title);
+      setD((current) => ({ ...current, selected_course: "", study_route: "" }));
+    };
+    window.addEventListener("mo:pick-course", onPick);
+    return () => window.removeEventListener("mo:pick-course", onPick);
+  }, []);
+  useEffect(() => {
+    if (!preferred || d.selected_course) return;
+    const match = courses.find((c) => c.title === preferred && c.route === "Foundation Year");
+    if (match) setD((current) => ({ ...current, selected_course: match.title, study_route: match.route }));
+  }, [preferred, courses, d.selected_course]);
 
   async function submit() {
     if (!emailOk || !phoneOk || !d.consent || !campus || !d.selected_course || !d.study_route) return;
