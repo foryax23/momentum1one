@@ -80,6 +80,15 @@ export const IconClose = (p: P) => (
 export const IconQuill = (p: P) => (
   <Base {...p}><path d="M27 4.5C17 6 10 13 7.5 24.5M27 4.5c-1 7-5 12.5-13.5 14.5M5 27.5l2.5-3" /></Base>
 );
+export const IconAgents = (p: P) => (
+  <Base {...p}><circle cx="12" cy="11" r="4" /><circle cx="23" cy="13" r="3" /><path d="M4.5 27c.4-6 3.3-9 7.5-9s7.1 3 7.5 9M19 19c4.8-.5 7.5 2.2 8 7" /></Base>
+);
+export const IconUniversity = (p: P) => (
+  <Base {...p}><path d="m3 12 13-7 13 7H3ZM6 27h20M8 24V14m5 10V14m6 10V14m5 10V14" /></Base>
+);
+export const IconClock = (p: P) => (
+  <Base {...p}><circle cx="16" cy="16" r="12" /><path d="M16 9v8l5 3" /></Base>
+);
 
 export function Spinner({ size = 20 }: { size?: number }) {
   return (

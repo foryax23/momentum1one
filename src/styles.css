@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Sora", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -142,12 +142,36 @@
   50% { opacity: 1; transform: scale(1.1); }
 }
 
+@keyframes ticker-scroll {
+  to { transform: translateX(-50%); }
+}
+
+@utility animate-ticker {
+  animation: ticker-scroll 24s linear infinite;
+}
+
+@utility course-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 70% 20%, color-mix(in oklab, var(--gold) 22%, transparent), transparent 35%), linear-gradient(145deg, color-mix(in oklab, var(--teal) 30%, var(--primary)), var(--primary));
+  color: var(--primary-foreground);
+  &::before { content: ""; position: absolute; inset: 12%; border: 1px solid color-mix(in oklab, var(--primary-foreground) 18%, transparent); transform: rotate(12deg); }
+  &::after { content: ""; position: absolute; inset: 25%; border: 1px solid color-mix(in oklab, var(--gold) 35%, transparent); transform: rotate(45deg); }
+  & svg { position: relative; z-index: 1; width: 52%; height: 52%; transition: transform .7s cubic-bezier(.22,1,.36,1); }
+  &:hover svg { transform: scale(1.12) rotate(-3deg); }
+}
+
+.legal-copy ul { list-style: disc; padding-left: 1.25rem; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  .animate-ticker { animation: none; transform: none; }
 }
 
 @utility no-scrollbar {

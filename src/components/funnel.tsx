@@ -8,10 +8,10 @@ import { coursesForCampus } from "@/lib/offer-catalog";
 import { submitLead } from "@/lib/leads.functions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { IconArrowLeft, IconArrowRight, IconDownload, IconPin, IconRocket, IconTick, Spinner } from "./icons";
-import { LiftOffScene } from "./funnel-scenes";
+import { IconArrowLeft, IconArrowRight, IconDownload, IconPin, IconTick, Spinner } from "./icons";
+import { RocketAssembly } from "./funnel-scenes";
 
-type Data = { full_name: string; city: string; selected_course: string; study_route: "Foundation Year" | "Year 1" | ""; email: string; phone: string; whatsapp: boolean; consent: boolean; website: string };
+type Data = { full_name: string; city: string; selected_course: string; study_route: "Foundation Year" | "Year 1" | ""; email: string; phone: string; whatsapp: boolean; consent: boolean; email_marketing: boolean; phone_marketing: boolean; whatsapp_marketing: boolean; website: string };
 const STEPS = 5;
 const LABELS = ["Name", "Location", "Course", "Phone", "Email"];
 const COUNTRY_CODES: [string, string][] = [["44","UK"],["353","Ireland"],["40","Romania"],["48","Poland"],["359","Bulgaria"],["370","Lithuania"],["371","Latvia"],["372","Estonia"],["36","Hungary"],["420","Czechia"],["421","Slovakia"],["39","Italy"],["34","Spain"],["351","Portugal"],["33","France"],["49","Germany"],["31","Netherlands"],["32","Belgium"],["30","Greece"],["385","Croatia"],["90","Turkey"],["380","Ukraine"],["373","Moldova"],["91","India"],["92","Pakistan"],["880","Bangladesh"],["234","Nigeria"],["233","Ghana"],["254","Kenya"],["27","South Africa"],["20","Egypt"],["971","UAE"],["966","Saudi Arabia"],["86","China"],["63","Philippines"],["1","USA/Canada"],["55","Brazil"]];
@@ -22,7 +22,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export function Funnel() {
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
-  const [d, setD] = useState<Data>({ full_name: "", city: "", selected_course: "", study_route: "", email: "", phone: "", whatsapp: true, consent: false, website: "" });
+  const [d, setD] = useState<Data>({ full_name: "", city: "", selected_course: "", study_route: "", email: "", phone: "", whatsapp: true, consent: false, email_marketing: false, phone_marketing: false, whatsapp_marketing: false, website: "" });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LeadResult | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -31,7 +31,7 @@ export function Funnel() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(DRAFT_KEY);
-      if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, website: "" }));
+       if (saved) setD((current) => ({ ...current, ...JSON.parse(saved), consent: false, email_marketing: false, phone_marketing: false, whatsapp_marketing: false, website: "" }));
     } catch { /* Ignore unavailable or malformed storage. */ }
   }, []);
   useEffect(() => {
@@ -86,7 +86,7 @@ export function Funnel() {
       const row = await send({ data: {
         full_name: d.full_name.trim(), email: d.email.trim(), phone: fullPhone,
         city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
-        whatsapp: d.whatsapp, nearest_campus: campus.full, distance_miles: campus.miles,
+         whatsapp: d.whatsapp, email_marketing: d.email_marketing, phone_marketing: d.phone_marketing, whatsapp_marketing: d.whatsapp_marketing, nearest_campus: campus.full, distance_miles: campus.miles,
         source: params.get("src") ?? params.get("utm_source"), campaign: params.get("utm_campaign"),
         page: window.location.href.slice(0, 500), website: d.website,
         selected_course: d.selected_course, study_route: d.study_route,
@@ -115,6 +115,7 @@ export function Funnel() {
     <div id="signup" className="relative w-full scroll-mt-24 overflow-hidden rounded-[22px] border border-border bg-card shadow-paper">
       {step < STEPS && <Progress step={step} onBack={() => step > 0 && go(step - 1)} />}
       <div className={cn("p-5 sm:p-6", result && "pb-24 sm:pb-6")}>
+        {step < STEPS && <RocketAssembly step={step} />}
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div key={step} custom={dir}
             initial={{ opacity: 0, x: dir * 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -28 }}
@@ -184,15 +185,19 @@ export function Funnel() {
                 <FieldLabel>Email address</FieldLabel>
                 <div className="relative"><input type="email" autoFocus autoComplete="email" value={d.email} maxLength={255} onChange={(event) => set("email", event.target.value)} placeholder="you@example.com" className={inputClass} />{emailOk && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-chart-4" />}</div>
                 <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(event) => set("website", event.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
-                <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={d.consent} onChange={(event) => set("consent", event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--primary)]" /><span>Momentum One can contact me by phone, WhatsApp or email about courses. I can ask them to stop at any time.</span></label>
-                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-gold" />Your details are used only to discuss your study options.</div>
+                 <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={d.consent} onChange={(event) => set("consent", event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--primary)]" /><span>I have read the <a href="/privacy" target="_blank" className="font-bold text-primary underline">privacy notice</a> and understand how my enquiry will be handled.</span></label>
+                 <fieldset className="space-y-2 border-t border-border pt-3"><legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Optional updates</legend>
+                   <ConsentChoice checked={d.whatsapp_marketing} onChange={(v) => set("whatsapp_marketing", v)}>WhatsApp updates</ConsentChoice>
+                   <ConsentChoice checked={d.email_marketing} onChange={(v) => set("email_marketing", v)}>Email updates</ConsentChoice>
+                   <ConsentChoice checked={d.phone_marketing} onChange={(v) => set("phone_marketing", v)}>Phone updates</ConsentChoice>
+                 </fieldset>
                 <Primary disabled={!emailOk || !d.consent || loading}>{loading ? <Spinner /> : null}{loading ? "Preparing your options" : "Show my course options"}{!loading && <IconArrowRight size={20} />}</Primary>
               </form>
             )}
 
             {step === STEPS && result && (
               <div className="grid justify-items-center gap-3 text-center">
-                <LiftOffScene />
+                 <RocketAssembly step={STEPS - 1} complete />
                  <Question title={`Your offer is ready, ${first}.`} hint={`${result.selected_course} at ${result.nearest_campus}.`} centered />
                 <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}Download your personalised offer</Primary>
@@ -212,9 +217,8 @@ export function Funnel() {
 function Progress({ step, onBack }: { step: number; onBack: () => void }) {
   return <div className="px-4 pt-4">
     <div className="flex min-h-8 items-center justify-between"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", step === 0 && "invisible")}><IconArrowLeft size={16} />Back</Button><span className="text-xs font-semibold tabular-nums text-muted-foreground">{step + 1} of {STEPS}</span></div>
-    <div className="relative mx-3 mt-2 h-9"><div className="absolute left-[10%] right-[10%] top-4 h-0.5 bg-secondary" /><motion.div className="absolute left-[10%] top-4 h-0.5 bg-teal" animate={{ width: `${step * 20}%` }} transition={{ duration: .55, ease }} />
+    <div className="relative mx-3 mt-2 h-5"><div className="absolute left-[10%] right-[10%] top-2 h-0.5 bg-secondary" /><motion.div className="absolute left-[10%] top-2 h-0.5 bg-teal" animate={{ width: `${step * 20}%` }} transition={{ duration: .55, ease }} />
       {LABELS.map((label, index) => <span key={label} className={cn("absolute top-[11px] h-3 w-3 -translate-x-1/2 rounded-full border-2", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${10 + index * 20}%` }} />)}
-      <motion.span className="absolute top-0 z-10 -translate-x-1/2 text-primary" animate={{ left: `${10 + step * 20}%` }} transition={{ duration: .55, ease }}><IconRocket size={34} className="rotate-90" /></motion.span>
     </div>
     <div className="flex justify-between px-1">{LABELS.map((label, index) => <span key={label} className={cn("w-1/5 text-center text-[9px] font-semibold uppercase tracking-wider", index <= step ? "text-primary" : "text-muted-foreground")}>{label}</span>)}</div>
   </div>;
@@ -224,6 +228,7 @@ const inputClass = "h-14 w-full rounded-xl border border-input bg-card px-4 text
 function FieldLabel({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</label>; }
 function Question({ title, hint, centered = false }: { title: string; hint: string; centered?: boolean }) { return <div className={centered ? "text-center" : ""}><h2 className="text-[1.45rem] font-semibold leading-tight text-primary">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{hint}</p></div>; }
 function Primary({ children, className, ...props }: React.ComponentProps<typeof Button>) { return <Button {...props} className={cn("h-14 w-full rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-none transition-transform hover:bg-primary/95 active:scale-[.985]", className)}>{children}</Button>; }
+function ConsentChoice({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) { return <label className="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-[var(--primary)]" /><span>{children}</span></label>; }
 
 function WhatsAppRedirect({ name, reference }: { name: string; reference: string }) {
   const [left, setLeft] = useState(6);

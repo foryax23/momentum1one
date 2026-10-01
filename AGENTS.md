@@ -20,3 +20,4 @@
 - The PDF renderer is loaded only via loadOfferPdf(), gated on import.meta.env.SSR, because bundling it into the server worker crashed every page.
 - The homepage hero video is a silent, reduced-motion-aware CDN asset; factual text and application controls stay as semantic foreground content.
 - Account roles stay in `user_roles`; student application ownership and advisor assignment live on leads, with role-specific protected dashboards and server-validated privileged actions.
+- Privacy acknowledgement and each optional marketing channel are stored separately on a lead so service contact is never bundled with marketing consent.
