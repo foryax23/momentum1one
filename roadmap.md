@@ -29,3 +29,4 @@
 - [ ] Supply approved official university logo assets
 - [ ] Confirm ICO registration, retention schedule and final legal review
 - [ ] Verify password recovery email and expired-link handling after publishing
+- [x] Place the new landscape, courses, campuses and journey films in their matching homepage sections
