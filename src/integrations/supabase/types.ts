@@ -187,7 +187,9 @@ export type Database = {
       }
       whatsapp_conversations: {
         Row: {
+          activated_via: string | null
           admissions_step: string
+          bot_enabled: boolean
           created_at: string
           detected_language: string | null
           id: string
@@ -195,14 +197,18 @@ export type Database = {
           last_outbound_at: string | null
           lead_id: string | null
           opted_out_at: string | null
+          profile: Json
           queued_at: string | null
+          reminders: Json
           status: string
           summary: string | null
           updated_at: string
           wa_phone: string
         }
         Insert: {
+          activated_via?: string | null
           admissions_step?: string
+          bot_enabled?: boolean
           created_at?: string
           detected_language?: string | null
           id?: string
@@ -210,14 +216,18 @@ export type Database = {
           last_outbound_at?: string | null
           lead_id?: string | null
           opted_out_at?: string | null
+          profile?: Json
           queued_at?: string | null
+          reminders?: Json
           status?: string
           summary?: string | null
           updated_at?: string
           wa_phone: string
         }
         Update: {
+          activated_via?: string | null
           admissions_step?: string
+          bot_enabled?: boolean
           created_at?: string
           detected_language?: string | null
           id?: string
@@ -225,7 +235,9 @@ export type Database = {
           last_outbound_at?: string | null
           lead_id?: string | null
           opted_out_at?: string | null
+          profile?: Json
           queued_at?: string | null
+          reminders?: Json
           status?: string
           summary?: string | null
           updated_at?: string
