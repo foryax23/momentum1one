@@ -66,7 +66,7 @@ export const inviteAdvisor = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const redirectTo = `${process.env['SITE_URL'] ?? "https://momentum1one.lovable.app"}/auth`;
+    const redirectTo = `${process.env['SITE_URL'] ?? "https://momentum1one.lovable.app"}/auth?setup=true`;
     const { data: invitation, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, { redirectTo, data: { full_name: data.name } });
     if (error || !invitation.user) throw new Error(error?.message ?? "Could not invite this advisor.");
     await supabaseAdmin.from("profiles").upsert({ id: invitation.user.id, display_name: data.name, email: data.email });

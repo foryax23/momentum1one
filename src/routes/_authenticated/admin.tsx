@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IconClose as X, IconDoor as LogOut, IconDownload as Download, IconSearch as Search, Spinner } from "@/components/icons";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +60,7 @@ function Admin() {
     },
   });
 
-  useMemo(() => { if (role.data === true && !advisors.data && !advisors.isFetching) void advisors.refetch(); return null; }, [role.data]);
+  useEffect(() => { if (role.data === true && !advisors.data && !advisors.isFetching) void advisors.refetch(); }, [role.data, advisors.data, advisors.isFetching]);
 
   const leads = useQuery({
     queryKey: ["leads"],

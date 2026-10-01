@@ -34,7 +34,7 @@ function StudentDashboard() {
   const query = useQuery({ queryKey: ["student-applications"], queryFn: () => load() });
   const application = query.data?.[0];
   const current = application ? Math.max(0, STAGES.indexOf(application.status)) : 0;
-  const [title, next] = COPY[application?.status ?? "new"] ?? COPY.new;
+  const [title, next] = COPY[application?.status ?? "new"] ?? COPY["new"]!;
   return <AccountShell eyebrow="Student account" title="My application">
     {query.isLoading ? <DashboardMessage title="Loading your application" text="We are securely linking applications that use your confirmed email address." /> : application ? <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
       <section className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
