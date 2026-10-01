@@ -197,7 +197,7 @@ export function CourseComparison() {
         })}
       </div>
       <AnimatePresence mode="wait">
-        <motion.div key={course.key} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -10 }} transition={{ duration: .4, ease }}
+        <motion.div key={course.key} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }} transition={{ duration: .4, ease }}
           className="mt-5 grid overflow-hidden rounded-3xl border border-border bg-card lg:grid-cols-[.9fr_1.1fr]">
           <div className="relative min-h-56 overflow-hidden">
             <motion.img src={course.image} alt={course.title} initial={reduce ? false : { scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 1.2, ease }} className="absolute inset-0 h-full w-full object-cover" />
