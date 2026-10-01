@@ -14,3 +14,4 @@
 - The offer PDF is rendered client-side with @react-pdf/renderer, dynamically imported so it stays out of SSR.
 - Campus course choices, offer content, and study patterns use one typed catalogue so student, admin, and PDF views stay consistent.
 - Public offer links use expiring random tokens stored only as SHA-256 hashes so lead data is not enumerable.
+- WhatsApp: inbound webhook stores every delivery in whatsapp_webhook_events before processing; bot replies are claimed per inbound message (reply_status) so retries never double-send.
