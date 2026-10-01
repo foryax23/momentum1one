@@ -9,6 +9,9 @@ import { UK_CITIES } from "@/lib/funnel";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { WhatsAppHealth, WhatsAppQueue, WhatsAppThread } from "@/components/whatsapp-admin";
+import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { assignAdvisor, getAdvisors, inviteAdvisor } from "@/lib/accounts.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -32,7 +35,10 @@ type Lead = {
   interest: string | null; intake: string | null; status: string; notes: string | null; created_at: string;
   whatsapp: boolean; nearest_campus: string | null; distance_miles: number | null; source: string | null; campaign: string | null; page: string | null;
   selected_course: string | null; study_route: string | null; offer_email_status: string; whatsapp_status: string;
+  advisor_user_id: string | null;
 };
+
+type Advisor = { id: string; display_name: string | null; email: string | null };
 
 function Admin() {
   const nav = useNavigate();
@@ -41,15 +47,20 @@ function Admin() {
   const [city, setCity] = useState("");
   const [status, setStatus] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
+  const loadAdvisors = useServerFn(getAdvisors);
+  const advisors = useQuery({ queryKey: ["advisors"], enabled: false, queryFn: () => loadAdvisors() });
 
   const role = useQuery({
     queryKey: ["is-admin"],
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user!.id).eq("role", "admin").maybeSingle();
+      if (!u.user) return false;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
       return !!data;
     },
   });
+
+  useMemo(() => { if (role.data === true && !advisors.data && !advisors.isFetching) void advisors.refetch(); return null; }, [role.data]);
 
   const leads = useQuery({
     queryKey: ["leads"],
@@ -110,7 +121,7 @@ function Admin() {
     );
 
   return (
-    <main className="min-h-screen bg-ruled"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
+    <main className="min-h-screen bg-secondary/45"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <img src={logo} alt="" width={56} height={48} className="h-12 w-auto shrink-0" />
@@ -130,6 +141,7 @@ function Admin() {
 
       <WhatsAppHealth />
       <WhatsAppQueue onOpenLead={(id) => { const l = leads.data?.find((x) => x.id === id); if (l) setOpen(l); }} />
+      <AdvisorManager advisors={advisors.data ?? []} />
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
@@ -166,13 +178,13 @@ function Admin() {
       </div>
 
       </div>
-      {open && <Detail lead={open} onClose={() => setOpen(null)} onSave={(p) => { update(open.id, p); setOpen({ ...open, ...p }); }} />}
+      {open && <Detail lead={open} advisors={advisors.data ?? []} onClose={() => setOpen(null)} onSave={(p) => { update(open.id, p); setOpen({ ...open, ...p }); }} />}
     </main>
   );
 }
 
 function Card({ l, v, small }: { l: string; v: string; small?: boolean }) {
-  return <div className="rounded-sm border border-ink/15 bg-card p-5 shadow-paper"><div className="text-xs text-muted-foreground">{l}</div><div className={cn("mt-1 font-display font-bold", small ? "text-sm" : "text-3xl")}>{v}</div></div>;
+  return <div className="rounded-xl border border-border bg-card p-5 shadow-sm"><div className="text-xs text-muted-foreground">{l}</div><div className={cn("mt-1 font-display font-bold text-primary", small ? "text-sm" : "text-3xl")}>{v}</div></div>;
 }
 
 function Badge({ s }: { s: string }) {
@@ -180,7 +192,7 @@ function Badge({ s }: { s: string }) {
   return <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium capitalize", tone[s] ?? "bg-secondary")}>{s}</span>;
 }
 
-function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; onSave: (p: Partial<Lead>) => void }) {
+function Detail({ lead, advisors, onClose, onSave }: { lead: Lead; advisors: Advisor[]; onClose: () => void; onSave: (p: Partial<Lead>) => void }) {
   const [notes, setNotes] = useState(lead.notes ?? "");
   const [downloading, setDownloading] = useState(false);
   async function downloadOffer() {
@@ -207,12 +219,14 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
             <Row k="Offer email" v={lead.offer_email_status.replace("_", " ")} /><Row k="Intake" v={lead.intake ?? "-"} />
            <Row k="Source" v={lead.source ?? "Direct"} /><Row k="Campaign" v={lead.campaign ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
+          <Row k="Assigned advisor" v={advisors.find((item) => item.id === lead.advisor_user_id)?.display_name ?? "Unassigned"} />
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
           {STATUSES.map((s) => (
             <button key={s} onClick={() => onSave({ status: s })} className={cn("rounded-full border px-3 py-1.5 text-xs capitalize", lead.status === s ? "border-primary bg-primary/20" : "border-border")}>{s}</button>
           ))}
         </div>
+        <AdvisorAssignment lead={lead} advisors={advisors} onAssigned={(advisorId) => onSave({ advisor_user_id: advisorId })} />
         {lead.selected_course && lead.study_route && <button onClick={downloadOffer} disabled={downloading} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary disabled:opacity-60">{downloading ? <Spinner size={18} /> : <Download size={18} />}{downloading ? "Preparing offer" : "Download personalised offer"}</button>}
         <WhatsAppThread leadId={lead.id} welcomeStatus={lead.whatsapp_status} />
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={4} placeholder="Notes…" className="mt-4 w-full rounded-xl border border-input bg-secondary/40 p-3 text-sm outline-none focus:border-primary" />
@@ -220,6 +234,19 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
       </div>
     </div>
   );
+}
+
+function AdvisorManager({ advisors }: { advisors: Advisor[] }) {
+  const invite = useServerFn(inviteAdvisor); const qc = useQueryClient();
+  const [email, setEmail] = useState(""); const [name, setName] = useState(""); const [busy, setBusy] = useState(false);
+  async function submit(event: React.FormEvent) { event.preventDefault(); setBusy(true); try { await invite({ data: { email, name } }); toast.success("Advisor invitation sent"); setEmail(""); setName(""); qc.invalidateQueries({ queryKey: ["advisors"] }); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not invite advisor"); } finally { setBusy(false); } }
+  return <section className="mt-6 rounded-xl border border-border bg-card p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-teal">Team</p><h2 className="mt-1 text-xl font-bold text-primary">Advisor access</h2><p className="mt-1 text-sm text-muted-foreground">Invite advisors securely, then assign applications from each lead.</p></div><span className="rounded-full bg-secondary px-3 py-1 text-xs font-bold">{advisors.length} advisors</span></div><form onSubmit={submit} className="mt-4 grid gap-2 sm:grid-cols-[1fr_1.2fr_auto]"><input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Advisor name" className="h-11 rounded-lg border border-input px-3" /><input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="advisor@example.com" className="h-11 rounded-lg border border-input px-3" /><Button disabled={busy} className="h-11">{busy ? "Sending" : "Invite advisor"}</Button></form></section>;
+}
+
+function AdvisorAssignment({ lead, advisors, onAssigned }: { lead: Lead; advisors: Advisor[]; onAssigned: (id: string | null) => void }) {
+  const assign = useServerFn(assignAdvisor); const qc = useQueryClient(); const [busy, setBusy] = useState(false);
+  async function change(value: string) { setBusy(true); const advisorId = value || null; try { await assign({ data: { leadId: lead.id, advisorId } }); onAssigned(advisorId); qc.invalidateQueries({ queryKey: ["leads"] }); toast.success(advisorId ? "Advisor assigned" : "Application unassigned"); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not assign advisor"); } finally { setBusy(false); } }
+  return <div className="mt-5"><label className="block text-xs font-bold uppercase tracking-[.14em] text-muted-foreground">Assigned advisor</label><select value={lead.advisor_user_id ?? ""} onChange={(event) => change(event.target.value)} disabled={busy} className="mt-2 h-11 w-full rounded-lg border border-input bg-card px-3"><option value="">Unassigned</option>{advisors.map((advisor) => <option key={advisor.id} value={advisor.id}>{advisor.display_name ?? advisor.email ?? "Advisor"}</option>)}</select></div>;
 }
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
