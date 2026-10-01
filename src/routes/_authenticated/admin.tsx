@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
+import { WhatsAppQueue, WhatsAppThread } from "@/components/whatsapp-admin";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -29,7 +30,7 @@ type Lead = {
   id: string; ref_code: string; full_name: string; email: string; phone: string; city: string;
   interest: string | null; intake: string | null; status: string; notes: string | null; created_at: string;
   whatsapp: boolean; nearest_campus: string | null; distance_miles: number | null; source: string | null; campaign: string | null; page: string | null;
-  selected_course: string | null; study_route: string | null; offer_email_status: string;
+  selected_course: string | null; study_route: string | null; offer_email_status: string; whatsapp_status: string;
 };
 
 function Admin() {
@@ -126,6 +127,8 @@ function Admin() {
         <Card l="Top cities" v={stats.top} small />
       </div>
 
+      <WhatsAppQueue onOpenLead={(id) => { const l = leads.data?.find((x) => x.id === id); if (l) setOpen(l); }} />
+
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -209,6 +212,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
           ))}
         </div>
         {lead.selected_course && lead.study_route && <button onClick={downloadOffer} disabled={downloading} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary disabled:opacity-60">{downloading ? <Spinner size={18} /> : <Download size={18} />}{downloading ? "Preparing offer" : "Download personalised offer"}</button>}
+        <WhatsAppThread leadId={lead.id} welcomeStatus={lead.whatsapp_status} />
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={4} placeholder="Notes…" className="mt-4 w-full rounded-xl border border-input bg-secondary/40 p-3 text-sm outline-none focus:border-primary" />
         <button onClick={() => onSave({ notes })} className="mt-3 w-full rounded-xl bg-ink py-3 font-display font-semibold text-primary-foreground">Save notes</button>
       </div>
