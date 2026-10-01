@@ -183,7 +183,7 @@ function stepInstruction(step: AdmissionsStep, profile: Profile, reminders: Remi
   const docs = neededDocs(profile);
   const done = STEP_ORDER.includes(step as typeof STEP_ORDER[number]) ? docs.indexOf(step as typeof STEP_ORDER[number]) : 0;
   switch (step) {
-    case "welcome": return "This is the mandatory first permission step. Greet the student warmly by first name and confirm their course and campus. Ask whether they would like to continue the application here in WhatsApp, or have an advisor call them instead. Do not mention, request or describe personal details or documents yet. Do not begin the application until they clearly choose to continue here. Use intent 'confirm' only when they clearly choose WhatsApp, and intent 'call_first' when they prefer a phone call or advisor.";
+    case "welcome": return `This is the mandatory first permission step. Greet the student warmly by first name and confirm their course and campus. Ask whether they would like to continue the application here in WhatsApp, or have an advisor call them instead. Do not mention, request or describe documents yet. Do not begin the application until they clearly choose to continue here. Use intent 'confirm' only when they clearly choose WhatsApp, and intent 'call_first' when they prefer a phone call or advisor. If they clearly choose WhatsApp in this message, acknowledge their choice and ask only for their ${PROFILE_LABEL[missingFields(profile)[0] ?? "date_of_birth"]}.`;
     case "details": {
       const missing = missingFields(profile);
       return `Collect personal details conversationally, ONE question per message. Still missing: ${missing.map((f) => PROFILE_LABEL[f]).join("; ")}. Ask for the first missing item only (you may combine address and postcode). Thank them briefly for what they just shared.`;
@@ -419,7 +419,7 @@ async function answerInbound(messageRowId: string) {
   if (!claimed) return;
   const markReply = (reply_status: string) => supabaseAdmin.from("whatsapp_messages").update({ reply_status }).eq("id", messageRowId);
   try {
-    const { data: conv } = await supabaseAdmin.from("whatsapp_conversations").select("wa_phone, status, bot_enabled, opted_out_at").eq("id", claimed.conversation_id).single();
+    const { data: conv } = await supabaseAdmin.from("whatsapp_conversations").select("wa_phone, status, bot_enabled, opted_out_at, admissions_step").eq("id", claimed.conversation_id).single();
     if (!conv || conv.status !== "bot" || !conv.bot_enabled) { await markReply("skipped"); return; }
     if (conv.opted_out_at) { await markReply("opted_out"); return; }
     if (isOptOut(claimed.body)) {
@@ -436,7 +436,10 @@ async function answerInbound(messageRowId: string) {
     }
     let mediaNote: string | null = null;
     const hadMedia = Boolean(claimed.media_status);
-    if (hadMedia && claimed.media_status !== "stored") {
+    const waitingForPermission = normaliseStep(conv.admissions_step) === "welcome";
+    if (hadMedia && waitingForPermission) {
+      mediaNote = "The student sent a file before choosing how to continue. Do not process or discuss the file. Ask whether they want to continue here in WhatsApp or prefer an advisor call.";
+    } else if (hadMedia && claimed.media_status !== "stored") {
       try { await processMedia(messageRowId); mediaNote = "The file was received and saved for the advisor. Thank them; do not say it was checked or approved."; }
       catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
