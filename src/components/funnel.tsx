@@ -131,7 +131,7 @@ export function Funnel() {
               <Q title="What would you love to study?" sub="Pick the closest match. You can change it later." />
               <div className="mt-4 grid grid-cols-2 gap-2" style={{ perspective: 800 }}>
                 {INTERESTS.map((o, i) => {
-                  const I = ICONS[o.icon];
+                  const I = ICONS[o.icon] ?? IconCompass;
                   const on = d.interest === o.value;
                   return (
                     <motion.button key={o.value} onClick={() => pick("interest", o.value)}
