@@ -3,6 +3,7 @@ export const UK_CITIES = [
   "Liverpool", "Sheffield", "Bristol", "Edinburgh", "Leicester",
   "Coventry", "Bradford", "Nottingham", "Cardiff", "Belfast",
   "Newcastle", "Stoke-on-Trent", "Southampton", "Derby", "Luton",
+  "Sunderland",
 ] as const;
 
 export const CITY_COORDINATES: Record<(typeof UK_CITIES)[number], readonly [number, number]> = {
@@ -10,6 +11,7 @@ export const CITY_COORDINATES: Record<(typeof UK_CITIES)[number], readonly [numb
   Liverpool: [53.408, -2.991], Sheffield: [53.381, -1.47], Bristol: [51.454, -2.588], Edinburgh: [55.953, -3.188], Leicester: [52.637, -1.14],
   Coventry: [52.407, -1.512], Bradford: [53.795, -1.759], Nottingham: [52.954, -1.158], Cardiff: [51.481, -3.179], Belfast: [54.597, -5.93],
   Newcastle: [54.978, -1.618], "Stoke-on-Trent": [53.003, -2.18], Southampton: [50.91, -1.404], Derby: [52.922, -1.476], Luton: [51.879, -0.417],
+  Sunderland: [54.906, -1.381],
 };
 
 export const CAMPUSES = [

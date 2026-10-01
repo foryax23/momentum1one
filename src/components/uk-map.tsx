@@ -23,6 +23,7 @@ export const CITY_COORDS: Record<(typeof UK_CITIES)[number], [number, number]> =
   Edinburgh: [-3.19, 55.95], Leicester: [-1.13, 52.64], Coventry: [-1.51, 52.41], Bradford: [-1.75, 53.79],
   Nottingham: [-1.15, 52.95], Cardiff: [-3.18, 51.48], Belfast: [-5.93, 54.6], Newcastle: [-1.61, 54.97],
   "Stoke-on-Trent": [-2.18, 53.0], Southampton: [-1.4, 50.9], Derby: [-1.48, 52.92], Luton: [-0.42, 51.88],
+  Sunderland: [-1.38, 54.91],
 };
 
 const toPath = (pts: [number, number][]) =>

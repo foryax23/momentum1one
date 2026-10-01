@@ -199,6 +199,9 @@ function Detail({ lead, advisors, onClose, onSave }: { lead: Lead; advisors: Adv
     try {
       const { downloadOffer: createOffer } = await loadOfferPdf();
       await createOffer({ ...lead, offer_url: "" });
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not create the PDF. Please try again.");
     } finally { setDownloading(false); }
   }
   return (

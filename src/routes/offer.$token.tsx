@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { loadOfferPdf } from "@/lib/load-offer-pdf";
 import { useState } from "react";
+import { toast } from "sonner";
 import { getOffer } from "@/lib/leads.functions";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconSeal, Spinner } from "@/components/icons";
@@ -25,9 +26,9 @@ function OfferPage() {
   const { locale, t } = useI18n();
   const lead = Route.useLoaderData();
   const [busy, setBusy] = useState(false);
-  async function download() { setBusy(true); try { const { downloadOffer } = await loadOfferPdf(); await downloadOffer(lead, locale); } finally { setBusy(false); } }
+  async function download() { setBusy(true); try { const { downloadOffer } = await loadOfferPdf(); await downloadOffer(lead, locale); } catch (error) { console.error(error); toast.error(t("funnel.pdfError", undefined, "We couldn't create the PDF. Please try again.")); } finally { setBusy(false); } }
   return <main className="min-h-screen bg-background px-5 py-10"><div className="mx-auto max-w-xl text-center">
     <div className="flex items-center justify-between"><img src={logo} alt="Momentum One" className="h-20 w-auto" /><LanguageSwitcher compact /></div>
-    <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-paper sm:p-9"><IconSeal size={50} className="mx-auto text-gold" /><p className="mt-5 text-xs font-bold uppercase tracking-widest text-primary">{t("funnel.ready", { name: lead.full_name }, "Personalised student offer")}</p><h1 className="mt-2 text-3xl font-bold">{lead.full_name}</h1><p className="mt-3 text-muted-foreground">{lead.selected_course}<br />{lead.study_route} · {lead.nearest_campus}</p><Button onClick={download} disabled={busy} className="mt-7 h-14 w-full rounded-xl text-base font-bold">{busy ? <Spinner /> : <IconDownload size={20} />}{busy ? t("funnel.preparing", undefined, "Preparing your offer") : t("funnel.download", undefined, "Download your five-page offer")}</Button><p className="mt-4 text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")} {lead.ref_code}</p></div>
+    <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-paper sm:p-9"><IconSeal size={50} className="mx-auto text-gold" /><p className="mt-5 text-xs font-bold uppercase tracking-widest text-primary">{t("offer.eyebrow", undefined, "Personalised student offer")}</p><h1 className="mt-2 text-3xl font-bold">{lead.full_name}</h1><p className="mt-3 text-muted-foreground">{lead.selected_course}<br />{lead.study_route} · {lead.nearest_campus}</p><Button onClick={download} disabled={busy} className="mt-7 h-14 w-full rounded-xl text-base font-bold">{busy ? <Spinner /> : <IconDownload size={20} />}{busy ? t("offer.preparing", undefined, "Preparing your offer") : t("funnel.download", undefined, "Download your five-page offer")}</Button><p className="mt-4 text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")} {lead.ref_code}</p></div>
   </div></main>;
 }

@@ -3,6 +3,8 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* devices with a real hover (mouse / trackpad); anything hidden behind hover must stay visible everywhere else */
+@custom-variant hover-fine (@media (hover: hover) and (pointer: fine));
 
 @theme inline {
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
@@ -167,9 +169,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  /* One near-instant pass, then stop: without the iteration cap, infinite animations (stars, spinner, skeletons) loop every 0.01ms and strobe.
+     Entrance animations (tw-animate-css "enter" has only a from-keyframe) still finish on the element's own visible style. */
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
   }
   .animate-ticker { animation: none; transform: none; }
 }

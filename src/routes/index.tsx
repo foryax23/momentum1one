@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
 import { Funnel } from "@/components/funnel";
 import { buttonVariants } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IconArrowRight, IconTick } from "@/components/icons";
-import { AudienceStrip, CampusCards, CourseDeck, ScrollTimeline, StatsBand } from "@/components/home-sections";
-import { CourseComparison, WhatYouReceive } from "@/components/home-sections";
+import { CourseShowcase } from "@/components/course-showcase";
+import { AudienceCards, CampusStack, JourneyStack } from "@/components/home-stacks";
 import { HeroVideo } from "@/components/hero-video";
 import { PromoVideoFeature } from "@/components/promo-video";
 import { SectionVideo } from "@/components/section-video";
@@ -32,40 +32,38 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const JOURNEY = [
-  { title: "Check your options", text: "Answer five quick questions and receive your personalised course information." },
-  { title: "Choose how to continue", text: "Continue on WhatsApp or ask for an advisor to call before the application continues." },
-  { title: "Confirm your details", text: "Share the relevant personal information and prepare only the documents your route needs." },
-  { title: "Prepare for PFF Day", text: "Complete the written pre-task and attend the campus assessment day." },
-  { title: "Move towards enrolment", text: "Enrol after the institution approves your application and assessment." },
-];
-
-const FAQS: [string, string][] = [
-  ["Do I need A-levels?", "Foundation Year routes do not require the usual grade profile to apply. Admission still depends on application review and passing the PFF assessment day."],
-  ["Can I study while I work?", "Selected groups run during the day, evening or weekend. An advisor will confirm which patterns are available for your course and campus."],
-  ["Is funding available?", "Student finance may be available for eligible students to cover tuition and living costs. An advisor confirms your eligibility before you apply."],
-  ["What documents will I need?", "Usually photo ID, proof of address, a share code where relevant, and any CV or certificates you have."],
-  ["What is the PFF Day?", "Prepare for Foundation Day is a one-day campus assessment. You will receive guidance and a short written pre-task before attending."],
-];
-
 function Index() {
   const { t } = useI18n();
-  return <main id="top" className="overflow-x-hidden bg-background">
+  const journey = [
+    { title: t("journey.title1", undefined, "Check your options"), text: t("journey.text1", undefined, "Answer five quick questions and receive your personalised course information.") },
+    { title: t("journey.title2", undefined, "Choose how to continue"), text: t("journey.text2", undefined, "Continue on WhatsApp or ask for an advisor to call before the application continues.") },
+    { title: t("journey.title3", undefined, "Confirm your details"), text: t("journey.text3", undefined, "Share the relevant personal information and prepare only the documents your route needs.") },
+    { title: t("journey.title4", undefined, "Prepare for PFF Day"), text: t("journey.text4", undefined, "Complete the written pre-task and attend the campus assessment day.") },
+    { title: t("journey.title5", undefined, "Move towards enrolment"), text: t("journey.text5", undefined, "Enrol after the institution approves your application and assessment.") },
+  ];
+  const faqs: [string, string][] = [
+    [t("faq.q1", undefined, "Do I need A-levels?"), t("faq.a1", undefined, "Foundation Year routes do not require the usual grade profile to apply. Admission still depends on application review and passing the PFF assessment day.")],
+    [t("faq.q2", undefined, "Can I study while I work?"), t("faq.a2", undefined, "Selected groups run during the day, evening or weekend. An advisor will confirm which patterns are available for your course and campus.")],
+    [t("faq.q3", undefined, "Is funding available?"), t("faq.a3", undefined, "Student finance may be available for eligible students to cover tuition and living costs. An advisor confirms your eligibility before you apply.")],
+    [t("faq.q4", undefined, "What documents will I need?"), t("faq.a4", undefined, "Usually photo ID, proof of address, a share code where relevant, and any CV or certificates you have.")],
+    [t("faq.q5", undefined, "What is the PFF Day?"), t("faq.a5", undefined, "Prepare for Foundation Day is a one-day campus assessment. You will receive guidance and a short written pre-task before attending.")],
+  ];
+  // overflow-x-clip, not -hidden: hidden would turn <main> into a scroll container and the sticky header would never stick.
+  return <main id="top" className="overflow-x-clip bg-background">
     <AnnouncementBar />
     <Header />
     <section className="relative min-h-[720px] overflow-hidden bg-primary">
       <HeroVideo />
-      <div className="relative mx-auto grid max-w-6xl items-start gap-8 px-5 py-9 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14 lg:py-16">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease }} className="grid gap-5">
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">{t("home.eyebrow", undefined, "Your next move starts here")}</p>
+      <div className="relative mx-auto grid max-w-6xl items-start gap-5 px-5 pb-9 pt-5 sm:gap-8 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14 lg:py-16">
+        <div className="grid gap-3 duration-700 animate-in fade-in slide-in-from-bottom-4 sm:gap-5">
+          <p className="hidden text-xs font-bold uppercase tracking-[.18em] text-gold sm:block">{t("home.eyebrow", undefined, "Your next move starts here")}</p>
           <RotatingHeadline />
-          <p className="max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80">{t("home.intro", undefined, "Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.")}</p>
-          <div className="grid grid-cols-2 gap-px overflow-hidden border border-primary-foreground/15 bg-primary-foreground/15">
-             <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.team", undefined, "10+ team")}</strong>{t("home.teamSub", undefined, "supporting applicants")}</p></div>
-             <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.students", undefined, "100+ students")}</strong>{t("home.studentsSub", undefined, "helped")}</p></div>
-          </div>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .2, duration: .9, ease }}><Funnel /></motion.div>
+          <p className="text-[15px] leading-snug text-primary-foreground/80 sm:hidden">{t("home.introShort", undefined, "Get your personalised course offer in under a minute.")}</p>
+          <p className="hidden max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80 sm:block">{t("home.intro", undefined, "Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.")}</p>
+          <HeroStats className="hidden lg:grid" />
+        </div>
+        <div className="duration-700 animate-in fade-in slide-in-from-bottom-6"><Funnel /></div>
+        <HeroStats className="lg:hidden" />
       </div>
     </section>
 
@@ -86,31 +84,25 @@ function Index() {
     <UniversityRail />
 
     <Section id="courses">
-      <ImmersiveSectionIntro kind="courses" eyebrow={t("home.coursesEyebrow", undefined, "Courses")} title={t("home.coursesTitle", undefined, "Seven degrees. Pick the one that fits.")} intro={t("home.coursesIntro", undefined, "Hover or tap a course to see where it runs, then check your options in one click.")} />
-      <div className="mt-6"><CourseDeck /></div>
-      <CourseComparison />
+      <SectionHeading eyebrow={t("home.coursesEyebrow", undefined, "Courses")} title={t("home.coursesTitle", undefined, "Seven degrees. Pick the one that fits.")} intro={t("home.coursesSwipe", undefined, "Swipe through the degrees and tap one to see its campuses and timetables.")} />
+      <CourseShowcase />
     </Section>
 
     <Section id="for-you">
       <SectionHeading eyebrow={t("home.forYou", undefined, "Who it's for")} title={t("home.realLives", undefined, "Built for real lives")} />
-      <AudienceStrip />
+      <AudienceCards />
     </Section>
 
     <div className="mt-20 sm:mt-24"><PromoVideoFeature /></div>
 
-    <section className="relative mt-20 overflow-hidden rounded-t-[50%_70px] bg-primary text-primary-foreground sm:mt-24 sm:rounded-t-[50%_90px]">
-      <Stars />
-      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20"><StatsBand /></div>
-    </section>
-
     <Section id="campuses">
       <ImmersiveSectionIntro kind="campuses" eyebrow={t("home.campusesEyebrow", undefined, "Campuses")} title={t("home.campusesTitle", undefined, "Study close to home")} intro={t("home.campusesIntro", undefined, "We match you to your nearest campus automatically when you sign up.")} align="right" />
-      <CampusCards />
+      <CampusStack />
     </Section>
 
     <Section id="journey">
       <ImmersiveSectionIntro kind="journey" eyebrow={t("home.journeyEyebrow", undefined, "How it works")} title={t("home.journeyTitle", undefined, "From sign-up to your first class")} intro={t("home.journeyIntro", undefined, "Five clear stages, with a Momentum One advisor alongside you when you need support.")} />
-      <ScrollTimeline steps={JOURNEY} />
+      <JourneyStack steps={journey} />
     </Section>
 
     <Section id="finance">
@@ -118,26 +110,17 @@ function Index() {
         <div>
            <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{t("home.financeEyebrow", undefined, "Funding and eligibility")}</p>
            <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{t("home.financeTitle", undefined, "Know what to prepare")}</h2>
-          <p className="mt-3 text-muted-foreground">Foundation Year can be a route for applicants without the usual A-level profile. Year 1 is available for selected courses and campuses. Admission and student finance depend on your circumstances, so an advisor confirms both before you commit.</p>
-          <div className="mt-5 flex flex-wrap gap-2">{["Foundation routes", "Selected Year 1 routes", "Day, evening and weekend patterns"].map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div>
+          <p className="mt-3 text-muted-foreground">{t("home.financeText", undefined, "Foundation Year can be a route for applicants without the usual A-level profile. Year 1 is available for selected courses and campuses. Admission and student finance depend on your circumstances, so an advisor confirms both before you commit.")}</p>
+          <div className="mt-5 flex flex-wrap gap-2">{[t("home.financeChip1", undefined, "Foundation routes"), t("home.financeChip2", undefined, "Selected Year 1 routes"), t("home.financeChip3", undefined, "Day, evening and weekend patterns")].map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div>
         </div>
         <div className="rounded-2xl bg-card p-5">
-          <h3 className="font-sans text-lg font-bold text-primary">Documents commonly requested</h3>
+          <h3 className="font-sans text-lg font-bold text-primary">{t("home.docsTitle", undefined, "Documents commonly requested")}</h3>
           <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
-            {["Proof of identity", "Proof of address dated within three months of the course start", "Share code if your passport is not British", "Duolingo English certificate", "CV and qualification certificates, if available"].map((t) => <li key={t} className="flex items-start gap-3"><IconTick size={18} className="mt-0.5 shrink-0 text-teal" />{t}</li>)}
+            {[t("home.doc1", undefined, "Proof of identity"), t("home.doc2", undefined, "Proof of address dated within three months of the course start"), t("home.doc3", undefined, "Share code if your passport is not British"), t("home.doc4", undefined, "Duolingo English certificate"), t("home.doc5", undefined, "CV and qualification certificates, if available")].map((item) => <li key={item} className="flex items-start gap-3"><IconTick size={18} className="mt-0.5 shrink-0 text-teal" />{item}</li>)}
           </ul>
         </div>
       </motion.div>
     </Section>
-
-    <section className="mt-20 bg-primary py-16 sm:mt-24 sm:py-20">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-         <p className="text-xs font-semibold uppercase tracking-[.16em] text-gold">{t("home.afterEyebrow", undefined, "After you apply")}</p>
-         <h2 className="mt-2 max-w-2xl text-3xl font-bold italic text-primary-foreground sm:text-4xl">{t("home.afterTitle", undefined, "More than a confirmation screen")}</h2>
-        <p className="mt-3 max-w-2xl text-primary-foreground/75">You receive practical information you can keep, plus a clear route to a Momentum One advisor.</p>
-        <div className="mt-8"><WhatYouReceive /></div>
-      </div>
-    </section>
 
     <Section id="faq">
       <div className="grid gap-8 md:grid-cols-[.8fr_1.2fr]">
@@ -145,7 +128,7 @@ function Index() {
            <SectionHeading eyebrow={t("home.questions", undefined, "Questions")} title={t("home.before", undefined, "Before you sign up")} />
            <a href={WA} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary">{t("home.whatsapp", undefined, "Still unsure? Message us on WhatsApp")} <IconArrowRight size={16} /></a>
         </div>
-        <Accordion type="single" collapsible className="space-y-2">{FAQS.map(([q, a]) => <AccordionItem key={q} value={q} className="rounded-xl border border-border bg-card px-4 transition-colors data-[state=open]:border-primary/40"><AccordionTrigger className="font-sans text-base font-bold">{q}</AccordionTrigger><AccordionContent className="text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion>
+        <Accordion type="single" collapsible className="space-y-2">{faqs.map(([q, a], i) => <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border bg-card px-4 transition-colors data-[state=open]:border-primary/40"><AccordionTrigger className="font-sans text-base font-bold">{q}</AccordionTrigger><AccordionContent className="text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion>
       </div>
     </Section>
 
@@ -157,28 +140,52 @@ function Index() {
       </div>
     </section>
 
-    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · Company 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">{t("footer.privacy", undefined, "Privacy notice")}</a><a href="/cookies">{t("footer.cookies", undefined, "Cookie notice")}</a><a href="/terms">{t("footer.terms", undefined, "Website terms")}</a><a href="/disclaimer">{t("footer.disclaimer", undefined, "Application disclaimer")}</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">{t("footer.settings", undefined, "Cookie settings")}</button><a href="/auth">{t("footer.signin", undefined, "Account sign in")}</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">{t("footer.powered", undefined, "Powered by")}</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" className="h-8 w-auto object-contain" /></div></div></footer>
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a></div>
+    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">{t("footer.about", undefined, "Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.")}</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · {t("footer.company", undefined, "Company")} 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">{t("footer.privacy", undefined, "Privacy notice")}</a><a href="/cookies">{t("footer.cookies", undefined, "Cookie notice")}</a><a href="/terms">{t("footer.terms", undefined, "Website terms")}</a><a href="/disclaimer">{t("footer.disclaimer", undefined, "Application disclaimer")}</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">{t("footer.settings", undefined, "Cookie settings")}</button><a href="/auth">{t("footer.signin", undefined, "Account sign in")}</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">{t("footer.powered", undefined, "Powered by")}</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" className="h-8 w-auto object-contain" /></div></div></footer>
+    <StickyCta />
   </main>;
 }
 
 function AnnouncementBar() {
   const { t } = useI18n();
   const text = t("home.announcement", undefined, "January 2027 applications open · Personalised course options in one minute · Advisor support available · ");
-  return <div className="overflow-hidden bg-gold py-2 text-primary" aria-label="January 2027 applications open"><div className="animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]"><span>{text}</span><span aria-hidden>{text}</span></div></div>;
+  return <div className="overflow-hidden bg-gold py-2 text-primary"><div className="animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]"><span>{text}</span><span aria-hidden>{text}</span></div></div>;
 }
 
 function RotatingHeadline() {
   const { t } = useI18n();
   const phrases = [t("home.phrase1", undefined, "close to home."), t("home.phrase2", undefined, "built around life."), t("home.phrase3", undefined, "with a clear next step.")];
   const [index, setIndex] = useState(0);
+  const reduce = useReducedMotion();
   useEffect(() => { const timer = window.setInterval(() => setIndex((value) => (value + 1) % phrases.length), 3200); return () => window.clearInterval(timer); }, []);
-  return <h1 className="max-w-2xl text-[2.75rem] font-bold leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">{t("home.headline", undefined, "A UK degree,")}<span className="relative mt-1 block min-h-[1.08em] overflow-hidden text-gold"><motion.span key={phrases[index]} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -28 }} transition={{ duration: .5, ease }} className="block">{phrases[index]}</motion.span></span></h1>;
+  return <h1 className="max-w-2xl text-[2.125rem] font-bold leading-[1.05] text-primary-foreground sm:text-6xl sm:leading-[1.02] lg:text-[4.3rem]">{t("home.headline", undefined, "A UK degree,")}<span className="mt-1 grid overflow-hidden text-[clamp(1.5rem,7vw,2.125rem)] text-gold sm:text-[1em]">{phrases.map((phrase, i) => <motion.span key={i} aria-hidden={i !== index} initial={false} animate={{ opacity: i === index ? 1 : 0, y: i === index || reduce ? 0 : 20 }} transition={{ duration: .5, ease }} className="[grid-area:1/1]">{phrase}</motion.span>)}</span></h1>;
+}
+
+function HeroStats({ className }: { className?: string }) {
+  const { t } = useI18n();
+  return <div className={cn("grid grid-cols-2 gap-px overflow-hidden border border-primary-foreground/15 bg-primary-foreground/15", className)}>
+    <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.team", undefined, "10+ team")}</strong>{t("home.teamSub", undefined, "supporting applicants")}</p></div>
+    <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.students", undefined, "100+ students")}</strong>{t("home.studentsSub", undefined, "helped")}</p></div>
+  </div>;
+}
+
+/** Phone-only shortcut back to the funnel; stays out of the way while the funnel itself is on screen. */
+function StickyCta() {
+  const { t } = useI18n();
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const target = document.getElementById("signup");
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry ? !entry.isIntersecting : false));
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+  return <div inert={!visible} className={cn("fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur transition-transform duration-300 md:hidden", visible ? "translate-y-0" : "translate-y-full")}><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a></div>;
 }
 
 function UniversityRail() {
+  const { t } = useI18n();
   const names = ["University of Wolverhampton", "Arts University Bournemouth", "Health Sciences University"];
-  return <section className="overflow-hidden border-y border-border bg-card py-6" aria-label="Current awarding universities"><p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[.2em] text-muted-foreground">Courses awarded by</p><div className="animate-ticker flex w-max items-center whitespace-nowrap">{[...names, ...names].map((name, index) => <span key={`${name}-${index}`} className="flex items-center px-8 text-sm font-extrabold uppercase text-primary sm:px-14"><IconUniversity size={23} className="mr-3 text-teal" />{name}</span>)}</div></section>;
+  return <section className="overflow-hidden border-y border-border bg-card py-6" aria-labelledby="awarded-by"><p id="awarded-by" className="mb-4 text-center text-[10px] font-bold uppercase tracking-[.2em] text-muted-foreground">{t("home.awarded", undefined, "Courses awarded by")}</p><div className="animate-ticker flex w-max items-center whitespace-nowrap">{[...names, ...names].map((name, index) => <span key={`${name}-${index}`} aria-hidden={index >= names.length || undefined} className="flex items-center px-8 text-sm font-extrabold uppercase text-primary sm:px-14"><IconUniversity size={23} className="mr-3 text-teal" />{name}</span>)}</div></section>;
 }
 
 function Header() {
@@ -209,4 +216,3 @@ function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: 
     <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent" />
   </motion.div>;
 }
-function Stars() { return <div className="pointer-events-none absolute inset-0" aria-hidden>{[[8,28],[18,62],[32,22],[48,55],[65,25],[77,63],[89,32],[94,75]].map(([left, top], index) => <span key={left} className="absolute h-1 w-1 rounded-full bg-primary-foreground" style={{ left: `${left}%`, top: `${top}%`, animation: `star-twinkle ${2.5 + index * .18}s ease-in-out infinite` }} />)}</div>; }
