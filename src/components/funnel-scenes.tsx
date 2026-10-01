@@ -71,16 +71,95 @@ export function LiftOffScene() {
   );
 }
 
+const STAGE_LABELS = ["Launch pad and hull", "Side boosters", "Command capsule", "Nose cone", "Engine ignition"];
+
+/** Modular rocket: each funnel step docks one new piece from its own direction; completion ignites and lifts off. */
 export function RocketAssembly({ step, total = 5, complete = false }: { step: number; total?: number; complete?: boolean }) {
   const shown = complete ? total : step + 1;
-  const part = (n: number, children: React.ReactNode) => <motion.g initial={false} animate={{ opacity: shown >= n ? 1 : .12, scale: shown >= n ? 1 : .7 }} transition={{ type: "spring", stiffness: 240, damping: 20 }} style={{ transformOrigin: "100px 100px" }}>{children}</motion.g>;
-  return <motion.div className="mx-auto w-full max-w-[190px]" animate={{ scale: .7 + (shown / total) * .3 }} transition={{ type: "spring", stiffness: 180, damping: 22 }} aria-label={`Rocket ${shown} of ${total} parts assembled`} role="img">
-    <svg viewBox="0 0 200 210" className="h-32 w-full sm:h-40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      {part(1, <path d="M76 142V91c0-31 9-57 24-75 15 18 24 44 24 75v51Z" fill="var(--primary)" stroke="var(--teal)" />)}
-      {part(2, <><path d="M76 105 54 132v31l22-13Z" fill="var(--teal)" /><path d="m124 105 22 27v31l-22-13Z" fill="var(--teal)" /></>)}
-      {part(3, <circle cx="100" cy="76" r="15" fill="var(--gold)" stroke="var(--primary-foreground)" />)}
-      {part(4, <path d="M83 45c4-12 10-22 17-29 7 7 13 17 17 29Z" fill="var(--gold)" stroke="var(--teal)" />)}
-      {part(5, <><path d="M84 142h32v17H84Z" fill="var(--primary)" stroke="var(--teal)" />{complete ? <motion.path d="M90 160c0 19 10 36 10 36s10-17 10-36" fill="var(--gold)" stroke="var(--gold)" animate={{ scaleY: [1, 1.18, .92, 1] }} transition={{ repeat: Infinity, duration: .7 }} style={{ transformOrigin: "100px 160px" }} /> : <path d="M90 160c0 19 10 36 10 36s10-17 10-36" fill="var(--gold)" stroke="var(--gold)" />}</>)}
-    </svg>
-  </motion.div>;
+  const spring = { type: "spring" as const, stiffness: 260, damping: 19 };
+  const dock = (n: number, from: { x?: number; y?: number }, children: React.ReactNode) => (
+    <motion.g initial={false}
+      animate={shown >= n ? { opacity: 1, x: 0, y: 0, scale: 1 } : { opacity: 0.1, x: from.x ?? 0, y: from.y ?? 0, scale: 0.9 }}
+      transition={spring} style={{ transformOrigin: "100px 110px" }}>
+      {children}
+    </motion.g>
+  );
+  // Seam flash when a piece lands
+  const Flash = ({ n, y }: { n: number; y: number }) => shown === n && !complete ? (
+    <motion.rect key={`f${n}-${shown}`} x="66" y={y - 1.5} width="68" height="3" rx="1.5" fill="var(--gold)"
+      initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: [0, 1, 0], scaleX: [0, 1, 1] }} transition={{ duration: 0.7, delay: 0.25 }}
+      style={{ transformOrigin: "100px center" }} />
+  ) : null;
+
+  return (
+    <motion.div className="relative mx-auto w-full max-w-[210px]" role="img"
+      aria-label={`Rocket ${shown} of ${total} parts assembled${complete ? ", launching" : ""}`}
+      animate={{ scale: 0.68 + (shown / total) * 0.32 }} transition={{ type: "spring", stiffness: 160, damping: 22 }}>
+      <motion.svg viewBox="0 0 200 240" className="h-36 w-full overflow-visible sm:h-44" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        animate={complete ? { y: [0, 2, -2, 1, -60] } : { y: 0 }}
+        transition={complete ? { duration: 2.4, times: [0, .15, .3, .45, 1], ease: "easeIn", delay: 0.6 } : {}}>
+        {/* stars */}
+        {[[24, 30], [176, 46], [36, 120], [168, 140], [150, 18], [52, 70]].map(([x, y], i) => (
+          <motion.circle key={i} cx={x} cy={y} r="1.4" fill="var(--gold)" animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 2 + i * 0.4, delay: i * 0.3 }} />
+        ))}
+
+        {/* 1: hull */}
+        {dock(1, { y: -40 }, <>
+          <path d="M78 168V100c0-30 9-52 22-66 13 14 22 36 22 66v68Z" fill="var(--primary)" stroke="var(--teal)" />
+          <path d="M78 124h44M78 150h44" stroke="var(--teal)" strokeOpacity=".5" strokeWidth="1.4" />
+          <path d="M88 104v56" stroke="var(--primary-foreground)" strokeOpacity=".18" strokeWidth="4" />
+        </>)}
+        <Flash n={1} y={150} />
+
+        {/* 2: boosters */}
+        {dock(2, { x: -46 }, <>
+          <path d="M78 128 52 156v30l26-14Z" fill="var(--teal)" stroke="var(--teal)" />
+          <path d="M56 186h12v6H56Z" fill="var(--gold)" stroke="var(--gold)" />
+        </>)}
+        {dock(2, { x: 46 }, <>
+          <path d="m122 128 26 28v30l-26-14Z" fill="var(--teal)" stroke="var(--teal)" />
+          <path d="M132 186h12v6h-12Z" fill="var(--gold)" stroke="var(--gold)" />
+        </>)}
+
+        {/* 3: capsule porthole */}
+        {dock(3, { y: -30 }, <>
+          <circle cx="100" cy="92" r="15" fill="var(--paper, var(--card))" stroke="var(--gold)" strokeWidth="3" />
+          <motion.circle cx="100" cy="92" r="9" fill="var(--gold)" animate={shown >= 3 ? { opacity: [0.35, 0.9, 0.35] } : { opacity: 0.2 }} transition={{ repeat: Infinity, duration: 2.2 }} />
+          <circle cx="95" cy="87" r="3" fill="var(--primary-foreground)" opacity=".7" />
+        </>)}
+        <Flash n={3} y={77} />
+
+        {/* 4: nose cone + antenna */}
+        {dock(4, { y: -50 }, <>
+          <path d="M84 56c4-11 9-19 16-24 7 5 12 13 16 24Z" fill="var(--gold)" stroke="var(--gold)" />
+          <path d="M100 32V14" stroke="var(--gold)" />
+          <motion.circle cx="100" cy="12" r="3" fill="var(--teal)" animate={shown >= 4 ? { scale: [1, 1.6, 1] } : {}} transition={{ repeat: Infinity, duration: 1.4 }} />
+        </>)}
+        <Flash n={4} y={56} />
+
+        {/* 5: engine nozzle + flame */}
+        {dock(5, { y: 36 }, <>
+          <path d="M86 168h28l5 16H81Z" fill="var(--primary)" stroke="var(--teal)" />
+          <motion.g style={{ transformOrigin: "100px 184px" }}
+            animate={complete ? { scaleY: [1, 1.9, 1.5, 2.1], scaleX: [1, 1.1, .95, 1.1] } : { scaleY: [1, 1.15, .9, 1] }}
+            transition={{ repeat: Infinity, duration: complete ? .35 : .8 }}>
+            <path d="M84 186c0 20 16 40 16 40s16-20 16-40Z" fill="var(--teal)" opacity=".55" />
+            <path d="M90 186c0 14 10 28 10 28s10-14 10-28Z" fill="var(--gold)" />
+          </motion.g>
+        </>)}
+      </motion.svg>
+
+      {/* exhaust smoke on launch */}
+      {complete && [0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.span key={i} className="absolute bottom-0 left-1/2 h-6 w-6 rounded-full bg-muted"
+          initial={{ opacity: 0, x: 0, scale: .4 }}
+          animate={{ opacity: [0, .7, 0], x: (i % 2 ? 1 : -1) * (20 + i * 10), y: [0, 6], scale: [.4, 1.6] }}
+          transition={{ duration: 1.6, delay: 0.8 + i * 0.12, repeat: Infinity, repeatDelay: 0.6 }} />
+      ))}
+
+      <p className="mt-1 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {complete ? "Lift-off" : `Stage ${shown}/${total} · ${STAGE_LABELS[shown - 1]}`}
+      </p>
+    </motion.div>
+  );
 }
