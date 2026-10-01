@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_conversations ADD COLUMN IF NOT EXISTS flagged boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS flag_reason text;

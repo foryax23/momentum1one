@@ -192,6 +192,8 @@ export type Database = {
           bot_enabled: boolean
           created_at: string
           detected_language: string | null
+          flag_reason: string | null
+          flagged: boolean
           id: string
           last_inbound_at: string | null
           last_outbound_at: string | null
@@ -211,6 +213,8 @@ export type Database = {
           bot_enabled?: boolean
           created_at?: string
           detected_language?: string | null
+          flag_reason?: string | null
+          flagged?: boolean
           id?: string
           last_inbound_at?: string | null
           last_outbound_at?: string | null
@@ -230,6 +234,8 @@ export type Database = {
           bot_enabled?: boolean
           created_at?: string
           detected_language?: string | null
+          flag_reason?: string | null
+          flagged?: boolean
           id?: string
           last_inbound_at?: string | null
           last_outbound_at?: string | null
