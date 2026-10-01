@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      admission_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_size: number
+          id: string
+          lead_id: string
+          mime_type: string
+          original_filename: string | null
+          received_at: string
+          replacement_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          storage_path: string
+          updated_at: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_size: number
+          id?: string
+          lead_id: string
+          mime_type: string
+          original_filename?: string | null
+          received_at?: string
+          replacement_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_size?: number
+          id?: string
+          lead_id?: string
+          mime_type?: string
+          original_filename?: string | null
+          received_at?: string
+          replacement_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path?: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admission_documents_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_documents_whatsapp_message_id_fkey"
+            columns: ["whatsapp_message_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           campaign: string | null
@@ -118,10 +187,14 @@ export type Database = {
       }
       whatsapp_conversations: {
         Row: {
+          admissions_step: string
           created_at: string
+          detected_language: string | null
           id: string
           last_inbound_at: string | null
+          last_outbound_at: string | null
           lead_id: string | null
+          opted_out_at: string | null
           queued_at: string | null
           status: string
           summary: string | null
@@ -129,10 +202,14 @@ export type Database = {
           wa_phone: string
         }
         Insert: {
+          admissions_step?: string
           created_at?: string
+          detected_language?: string | null
           id?: string
           last_inbound_at?: string | null
+          last_outbound_at?: string | null
           lead_id?: string | null
+          opted_out_at?: string | null
           queued_at?: string | null
           status?: string
           summary?: string | null
@@ -140,10 +217,14 @@ export type Database = {
           wa_phone: string
         }
         Update: {
+          admissions_step?: string
           created_at?: string
+          detected_language?: string | null
           id?: string
           last_inbound_at?: string | null
+          last_outbound_at?: string | null
           lead_id?: string | null
+          opted_out_at?: string | null
           queued_at?: string | null
           status?: string
           summary?: string | null
@@ -168,6 +249,19 @@ export type Database = {
           direction: string
           error: string | null
           id: string
+          media_attempts: number
+          media_error: string | null
+          media_filename: string | null
+          media_id: string | null
+          media_mime_type: string | null
+          media_next_attempt_at: string | null
+          media_sha256: string | null
+          media_size: number | null
+          media_status: string | null
+          media_type: string | null
+          reply_attempts: number
+          reply_next_attempt_at: string | null
+          reply_started_at: string | null
           reply_status: string | null
           status: string
           wa_message_id: string | null
@@ -179,6 +273,19 @@ export type Database = {
           direction: string
           error?: string | null
           id?: string
+          media_attempts?: number
+          media_error?: string | null
+          media_filename?: string | null
+          media_id?: string | null
+          media_mime_type?: string | null
+          media_next_attempt_at?: string | null
+          media_sha256?: string | null
+          media_size?: number | null
+          media_status?: string | null
+          media_type?: string | null
+          reply_attempts?: number
+          reply_next_attempt_at?: string | null
+          reply_started_at?: string | null
           reply_status?: string | null
           status?: string
           wa_message_id?: string | null
@@ -190,6 +297,19 @@ export type Database = {
           direction?: string
           error?: string | null
           id?: string
+          media_attempts?: number
+          media_error?: string | null
+          media_filename?: string | null
+          media_id?: string | null
+          media_mime_type?: string | null
+          media_next_attempt_at?: string | null
+          media_sha256?: string | null
+          media_size?: number | null
+          media_status?: string | null
+          media_type?: string | null
+          reply_attempts?: number
+          reply_next_attempt_at?: string | null
+          reply_started_at?: string | null
           reply_status?: string | null
           status?: string
           wa_message_id?: string | null

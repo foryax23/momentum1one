@@ -25,14 +25,14 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const { data: row } = await supabaseAdmin.from("whatsapp_webhook_events").select("id, processed_at").eq("delivery_id", deliveryId).single();
         if (!row) return new Response("Store failed", { status: 500 });
 
-        let toAnswer: string[] = [];
-        if (!row.processed_at) {
-          try { toAnswer = await wa.processEvent(row.id); }
-          catch (e) { console.error("WhatsApp processing failed", e); return new Response("Processing failed", { status: 500 }); }
-        }
-        // Inbound messages are stored with a pending reply, so a timeout here is recovered on a later call.
-        try { toAnswer.push(...(await wa.recoverPending())); } catch (e) { console.error(e); }
-        for (const id of toAnswer) await wa.answerInbound(id);
+        const background = async () => {
+          let toAnswer: string[] = [];
+          if (!row.processed_at) toAnswer = await wa.processEvent(row.id);
+          await wa.processPendingWork(toAnswer);
+        };
+        const runtimeRequest = request as Request & { waitUntil?: (promise: Promise<unknown>) => void };
+        if (runtimeRequest.waitUntil) runtimeRequest.waitUntil(background().catch((e) => console.error("WhatsApp background processing failed", e)));
+        else void background().catch((e) => console.error("WhatsApp background processing failed", e));
         return new Response("ok");
       },
     },

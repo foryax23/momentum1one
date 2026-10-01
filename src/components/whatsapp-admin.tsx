@@ -4,19 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { resendWelcome } from "@/lib/whatsapp-admin.functions";
+import { Button } from "@/components/ui/button";
+import { getAdmissionDocumentUrl, getAdmissionPack, getWhatsAppTemplateHealth, queueAdmissionsReview, resendWelcome, updateAdmissionDocument } from "@/lib/whatsapp-admin.functions";
 
 const WELCOME: Record<string, string> = { pending: "Not sent yet", sending: "Sending", sent: "Sent", failed: "Failed", awaiting_template: "Waiting for Meta approval" };
 
 export function WhatsAppHealth() {
+  const templateHealth = useServerFn(getWhatsAppTemplateHealth);
   const q = useQuery({ queryKey: ["wa", "health"], refetchInterval: 30000, queryFn: async () => {
     const { data, count } = await supabase.from("whatsapp_webhook_events").select("received_at", { count: "exact" }).order("received_at", { ascending: false }).limit(1);
-    return { count: count ?? 0, last: data?.[0]?.received_at ?? null };
+    const template = await templateHealth();
+    return { count: count ?? 0, last: data?.[0]?.received_at ?? null, template };
   }});
   const ok = (q.data?.count ?? 0) > 0;
-  return <p className={cn("mt-3 rounded-xl border px-3 py-2 text-xs", ok ? "border-border text-muted-foreground" : "border-destructive/40 text-destructive")}>
-    {q.isLoading ? "Checking WhatsApp connection" : ok ? `WhatsApp is reaching this site. Last update ${new Date(q.data!.last!).toLocaleString("en-GB")}.` : "No WhatsApp updates have reached this site yet. Send a message to your business number to test. If nothing appears, choose this project under Connectors, WhatsApp, Incoming messages."}
-  </p>;
+  const template = q.data?.template.status;
+  return <div className={cn("mt-3 grid gap-1 rounded-xl border px-3 py-2 text-xs", ok ? "border-border text-muted-foreground" : "border-destructive/40 text-destructive")}>
+    <p>{q.isLoading ? "Checking WhatsApp connection" : ok ? `WhatsApp is reaching this site. Last update ${new Date(q.data?.last ?? 0).toLocaleString("en-GB")}.` : "No WhatsApp updates have reached this site yet. Send a message to your business number to test. If nothing appears, choose this project under Connectors, WhatsApp, Incoming messages."}</p>
+    {!q.isLoading && <p>Welcome message: <strong>{template === "APPROVED" ? "Approved" : template === "PENDING" ? "Waiting for Meta review" : template === "REJECTED" ? "Rejected by Meta" : "Not found"}</strong>.</p>}
+  </div>;
 }
 
 const LABEL: Record<string, string> = { bot: "Bot chatting", queued: "Waiting for agent", agent: "With agent", closed: "Closed" };
@@ -112,6 +117,73 @@ export function WhatsAppThread({ leadId, welcomeStatus }: { leadId: string; welc
           {t.conv.status !== "bot" && <button onClick={() => setStatus(t.conv.id, "bot", qc)} className="rounded-lg border border-border px-3 py-1.5 text-xs">Hand back to bot</button>}
         </div>
       </>}
+      <AdmissionsPack leadId={leadId} />
     </div>
   );
+}
+
+const CHECKLIST = [
+  ["identity", "Passport or ID"],
+  ["proof_of_address", "Proof of address"],
+  ["immigration_status", "Immigration or share code"],
+  ["qualifications", "Qualifications"],
+  ["english_evidence", "English evidence"],
+  ["cv", "CV"],
+] as const;
+
+function AdmissionsPack({ leadId }: { leadId: string }) {
+  const loadPack = useServerFn(getAdmissionPack);
+  const openDocument = useServerFn(getAdmissionDocumentUrl);
+  const updateDocument = useServerFn(updateAdmissionDocument);
+  const queueReview = useServerFn(queueAdmissionsReview);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState<string | null>(null);
+  const q = useQuery({ queryKey: ["wa", "admissions", leadId], queryFn: () => loadPack({ data: { leadId } }) });
+  const documents = q.data?.documents ?? [];
+
+  async function open(id: string) {
+    setBusy(id);
+    try { const { url } = await openDocument({ data: { documentId: id } }); window.open(url, "_blank", "noopener,noreferrer"); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Could not open document"); }
+    finally { setBusy(null); }
+  }
+
+  async function mark(id: string, action: "reviewed" | "replacement_requested") {
+    const reason = action === "replacement_requested" ? window.prompt("What should the student replace or improve?") : null;
+    if (action === "replacement_requested" && reason === null) return;
+    setBusy(id);
+    try { await updateDocument({ data: { documentId: id, action, reason } }); await qc.invalidateQueries({ queryKey: ["wa", "admissions", leadId] }); toast.success("Document updated"); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Could not update document"); }
+    finally { setBusy(null); }
+  }
+
+  async function ready() {
+    setBusy("review");
+    try { await queueReview({ data: { leadId } }); qc.invalidateQueries({ queryKey: ["wa"] }); toast.success("Added to advisor review"); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Could not queue review"); }
+    finally { setBusy(null); }
+  }
+
+  return <section className="mt-4 border-t border-border pt-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div><h3 className="text-sm font-bold">Admissions pack</h3><p className="text-xs text-muted-foreground">Language: {q.data?.conversation?.detected_language ?? "Detecting"} · Step: {(q.data?.conversation?.admissions_step ?? "not started").replaceAll("_", " ")}</p></div>
+      <Button size="sm" variant="outline" onClick={ready} disabled={busy === "review"}>Ready for review</Button>
+    </div>
+    <ul className="mt-3 space-y-2">
+      {CHECKLIST.map(([type, label]) => {
+        const files = documents.filter((document) => document.document_type === type && document.status !== "replaced");
+        return <li key={type} className="rounded-lg bg-secondary/50 p-2.5">
+          <div className="flex items-center justify-between gap-3 text-xs"><strong>{label}</strong><span className={files.length ? "text-primary" : "text-muted-foreground"}>{files.length ? `${files.length} received` : "Missing"}</span></div>
+          {files.map((document) => <div key={document.id} className="mt-2 grid gap-2 border-t border-border pt-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0"><p className="truncate">{document.original_filename ?? label}</p><p className="text-muted-foreground">{Math.ceil(document.file_size / 1024)} KB · {document.status.replaceAll("_", " ")}</p>{document.replacement_reason && <p className="text-destructive">{document.replacement_reason}</p>}</div>
+            <div className="flex flex-wrap gap-1.5">
+              <Button size="sm" variant="outline" disabled={busy === document.id} onClick={() => open(document.id)}>Open</Button>
+              {document.status !== "reviewed" && <Button size="sm" variant="outline" disabled={busy === document.id} onClick={() => mark(document.id, "reviewed")}>Reviewed</Button>}
+              <Button size="sm" variant="outline" disabled={busy === document.id} onClick={() => mark(document.id, "replacement_requested")}>Replace</Button>
+            </div>
+          </div>)}
+        </li>;
+      })}
+    </ul>
+  </section>;
 }
