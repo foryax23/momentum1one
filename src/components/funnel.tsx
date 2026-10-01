@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Download, Loader2, Mail, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { INTAKES, INTERESTS, UK_CITIES, type LeadResult } from "@/lib/funnel";
 import { submitLead } from "@/lib/leads.functions";
 import { cn } from "@/lib/utils";
+import {
+  IconArrowLeft, IconArrowRight, IconCare, IconCompass, IconDownload, IconGlobe, IconHanger, IconLedger, IconPhone, IconTick, Spinner,
+} from "./icons";
+import { UkMap } from "./uk-map";
+import { BookScene, CalendarScene, EnvelopeScene, LiftOffScene } from "./funnel-scenes";
 
 type Data = { full_name: string; city: string; interest: string; intake: string; email: string; phone: string; consent: boolean };
 const STEPS = 5;
+const LABELS = ["Name", "City", "Course", "Intake", "Contact"];
 const ease = [0.22, 1, 0.36, 1] as const;
+const ICONS: Record<string, ComponentType<{ size?: number }>> = { ledger: IconLedger, care: IconCare, globe: IconGlobe, hanger: IconHanger, compass: IconCompass };
 
 export function Funnel() {
   const [step, setStep] = useState(0);
@@ -22,7 +28,7 @@ export function Funnel() {
 
   const go = (n: number) => { setDir(n > step ? 1 : -1); setStep(n); };
   const set = <K extends keyof Data>(k: K, v: Data[K]) => setD((p) => ({ ...p, [k]: v }));
-  const pick = <K extends keyof Data>(k: K, v: Data[K]) => { set(k, v); setTimeout(() => go(step + 1), 220); };
+  const pick = <K extends keyof Data>(k: K, v: Data[K], delay = 650) => { set(k, v); setTimeout(() => go(step + 1), delay); };
 
   const first = d.full_name.trim().split(" ")[0];
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim());
@@ -55,82 +61,104 @@ export function Funnel() {
       await downloadOffer(result);
     } catch (e) {
       console.error(e);
-      toast.error("Couldn't create the PDF. Please try again.");
+      toast.error("We couldn't create the PDF. Please try again.");
     } finally {
       setDownloading(false);
     }
   }
 
   return (
-    <div className="glass relative w-full overflow-hidden rounded-3xl p-5 shadow-2xl sm:p-7">
+    <div className="relative w-full rounded-sm border-t-4 border-teal bg-stone p-5 shadow-paper sm:p-8">
       {step < STEPS && (
-        <div className="mb-6 flex items-center gap-3">
-          {step > 0 ? (
-            <button onClick={() => go(step - 1)} aria-label="Back" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground transition hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          ) : (
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-launch text-primary-foreground"><Rocket className="h-4 w-4" /></span>
-          )}
-          <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-            <motion.div className="absolute inset-y-0 left-0 rounded-full bg-launch glow" animate={{ width: `${((step + 1) / STEPS) * 100}%` }} transition={{ duration: 0.6, ease }} />
+        <div className="mb-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-bold sm:text-xl">Application onboarding</h2>
+            <span className="shrink-0 font-display text-[11px] font-bold tracking-[0.25em] text-muted-foreground">0{step + 1} / 0{STEPS}</span>
           </div>
-          <span className="shrink-0 font-display text-xs tabular-nums text-muted-foreground">{step + 1}/{STEPS}</span>
+          <div className="mt-3 flex gap-1.5">
+            {LABELS.map((l, i) => (
+              <div key={l} className="flex-1">
+                <div className="h-1 overflow-hidden rounded-full bg-ink/10">
+                  <motion.div className="h-full bg-teal" initial={false} animate={{ width: i <= step ? "100%" : "0%" }} transition={{ duration: 0.5, ease }} />
+                </div>
+                <span className={cn("mt-1 hidden text-[9px] font-bold uppercase tracking-widest sm:block", i <= step ? "text-teal" : "text-muted-foreground/60")}>{l}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.div
           key={step}
-          custom={dir}
-          initial={{ opacity: 0, x: dir * 40, filter: "blur(6px)" }}
-          animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, x: dir * -40, filter: "blur(6px)" }}
-          transition={{ duration: 0.4, ease }}
+          initial={{ opacity: 0, x: dir * 36, rotateY: dir * 8 }}
+          animate={{ opacity: 1, x: 0, rotateY: 0 }}
+          exit={{ opacity: 0, x: dir * -36, rotateY: dir * -8 }}
+          transition={{ duration: 0.45, ease }}
+          style={{ transformPerspective: 1200 }}
         >
           {step === 0 && (
             <form onSubmit={(e) => { e.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }}>
-              <Q title="First, what's your name?" sub="Takes 60 seconds. Your personalised offer is waiting at the end." />
-              <input
-                autoComplete="name" value={d.full_name} maxLength={100} onChange={(e) => set("full_name", e.target.value)}
-                placeholder="Full name" className="mt-5 w-full rounded-2xl border border-input bg-background/60 px-5 py-4 text-lg outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20"
-              />
-              <Next disabled={d.full_name.trim().length < 2} />
+              <BookScene name={d.full_name.trim()} />
+              <Q title="First, what's your name?" sub="It takes 60 seconds. Your personalised offer is waiting at the end." />
+              <Label>Full name</Label>
+              <input autoComplete="name" value={d.full_name} maxLength={100} onChange={(e) => set("full_name", e.target.value)} placeholder="e.g. Amira Khan" className={inputCls} />
+              <Primary disabled={d.full_name.trim().length < 2}>Continue <IconArrowRight size={20} /></Primary>
             </form>
           )}
 
           {step === 1 && (
             <div>
-              <Q title={`Nice to meet you, ${first}. Where are you closest to?`} sub="We'll match you with the nearest campus." />
-              <div className="mt-5 grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:max-h-80 sm:grid-cols-3">
-                {UK_CITIES.map((c, i) => (
-                  <motion.button
-                    key={c} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                    onClick={() => pick("city", c)}
-                    className={cn("rounded-xl border px-3 py-3 text-left text-sm font-medium transition active:scale-95", d.city === c ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-foreground")}
-                  >{c}</motion.button>
-                ))}
+              <Back onClick={() => go(0)} />
+              <Q title={`Nice to meet you, ${first}. Which city are you closest to?`} sub="We'll match you with your nearest campus." />
+              <div className="mt-4 grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
+                <UkMap selected={d.city} className="h-full max-h-56 w-full" />
+                <div className="grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto pr-1">
+                  {UK_CITIES.map((c) => (
+                    <button key={c} onClick={() => pick("city", c, 900)}
+                      className={cn("rounded-sm border px-2.5 py-2 text-left text-[13px] font-semibold transition active:scale-95", d.city === c ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {step === 2 && (
             <div>
-              <Q title="What would you love to study?" sub="Pick the closest match — you can change it later." />
-              <div className="mt-5 space-y-2">
-                {INTERESTS.map((o) => (
-                  <Option key={o.value} active={d.interest === o.value} onClick={() => pick("interest", o.value)} icon={o.emoji} label={o.value} hint={o.hint} />
-                ))}
+              <Back onClick={() => go(1)} />
+              <Q title="What would you love to study?" sub="Pick the closest match. You can change it later." />
+              <div className="mt-4 grid grid-cols-2 gap-2" style={{ perspective: 800 }}>
+                {INTERESTS.map((o, i) => {
+                  const I = ICONS[o.icon];
+                  const on = d.interest === o.value;
+                  return (
+                    <motion.button key={o.value} onClick={() => pick("interest", o.value)}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, rotateY: on ? 360 : 0 }} transition={{ delay: on ? 0 : i * 0.05, duration: on ? 0.6 : 0.4, ease }}
+                      className={cn("flex flex-col items-start gap-2 rounded-sm border p-3 text-left transition", i === 4 && "col-span-2", on ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
+                      <span className={on ? "text-accent-foreground" : "text-teal"}><I size={28} /></span>
+                      <span className="text-sm font-bold leading-tight">{o.value}</span>
+                      <span className={cn("text-[11px] leading-snug", on ? "text-accent-foreground/80" : "text-muted-foreground")}>{o.hint}</span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {step === 3 && (
             <div>
+              <Back onClick={() => go(2)} />
+              <CalendarScene intake={d.intake} />
               <Q title="When would you like to start?" sub="January 2027 applications are open right now." />
-              <div className="mt-5 space-y-2">
+              <div className="mt-4 space-y-2">
                 {INTAKES.map((o) => (
-                  <Option key={o.value} active={d.intake === o.value} onClick={() => pick("intake", o.value)} icon="◷" label={o.value} hint={o.hint} />
+                  <button key={o.value} onClick={() => pick("intake", o.value, 800)}
+                    className={cn("flex w-full items-center justify-between gap-3 rounded-sm border px-4 py-3.5 text-left transition active:scale-[0.98]", d.intake === o.value ? "border-teal bg-teal text-accent-foreground" : "border-ink/15 bg-card hover:border-teal")}>
+                    <span><span className="block font-bold">{o.value}</span><span className={cn("block text-xs", d.intake === o.value ? "text-accent-foreground/80" : "text-muted-foreground")}>{o.hint}</span></span>
+                    {d.intake === o.value ? <IconTick size={20} /> : <IconArrowRight size={18} className="text-muted-foreground" />}
+                  </button>
                 ))}
               </div>
             </div>
@@ -138,84 +166,93 @@ export function Funnel() {
 
           {step === 4 && (
             <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
-              <Q title="Where should we send your offer?" sub="Your certificate is generated instantly and emailed to you." />
-              <div className="mt-5 space-y-3">
-                <Field type="email" autoComplete="email" placeholder="Email address" value={d.email} onChange={(v) => set("email", v)} ok={emailOk} />
-                <Field type="tel" autoComplete="tel" placeholder="UK mobile (07…)" value={d.phone} onChange={(v) => set("phone", v)} ok={phoneOk} />
-                <label className="flex cursor-pointer items-start gap-3 pt-1 text-xs leading-relaxed text-muted-foreground">
-                  <input type="checkbox" checked={d.consent} onChange={(e) => set("consent", e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--primary)]" />
-                  I agree that Momentum One may contact me by phone, email or WhatsApp about university options.
-                </label>
-              </div>
-              <button
-                disabled={!emailOk || !phoneOk || !d.consent || loading}
-                className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-launch px-6 py-4 font-display font-semibold text-primary-foreground glow transition active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
-              >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Rocket className="h-5 w-5 transition group-hover:-translate-y-1" />}
-                {loading ? "Preparing launch…" : "Get my offer"}
-              </button>
+              <Back onClick={() => go(3)} />
+              <EnvelopeScene sealed={emailOk && phoneOk} />
+              <Q title="Where should we send your offer?" sub="Your certificate is generated instantly." />
+              <Label>Email address</Label>
+              <Field type="email" autoComplete="email" placeholder="you@example.com" value={d.email} onChange={(v) => set("email", v)} ok={emailOk} />
+              <Label>UK mobile</Label>
+              <Field type="tel" autoComplete="tel" placeholder="07700 900123" value={d.phone} onChange={(v) => set("phone", v)} ok={phoneOk} />
+              <label className="mt-4 flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-muted-foreground">
+                <input type="checkbox" checked={d.consent} onChange={(e) => set("consent", e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--teal)]" />
+                I agree that Momentum One may contact me by phone, email or WhatsApp about university options.
+              </label>
+              <Primary disabled={!emailOk || !phoneOk || !d.consent || loading}>
+                {loading ? <Spinner /> : null}
+                {loading ? "Preparing your offer" : "Get my offer"}
+                {!loading && <IconArrowRight size={20} />}
+              </Primary>
             </form>
           )}
 
           {step === STEPS && result && (
             <div className="text-center">
-              <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: [40, -10, 0], opacity: 1 }} transition={{ duration: 1.1, ease }} className="relative mx-auto grid h-20 w-20 place-items-center rounded-full bg-launch glow">
-                <Rocket className="h-9 w-9 -rotate-45 text-primary-foreground" />
-                <motion.span className="absolute inset-0 rounded-full border-2 border-primary" initial={{ scale: 1, opacity: 0.8 }} animate={{ scale: 2.2, opacity: 0 }} transition={{ duration: 1.6, repeat: Infinity }} />
-              </motion.div>
-              <h3 className="mt-6 text-2xl font-bold sm:text-3xl">Lift-off, {first}!</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Your Certificate of Pre-Approved Pathway is ready.</p>
+              <LiftOffScene />
+              <h3 className="mt-3 text-2xl font-bold sm:text-3xl">Lift off, {first}.</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Your Certificate of Pre-Approved Pathway is ready.</p>
 
-              <motion.div initial={{ rotateX: 30, opacity: 0, y: 20 }} animate={{ rotateX: 0, opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease }} style={{ perspective: 800 }}
-                className="mx-auto mt-6 rounded-xl border-2 border-gold/70 bg-foreground p-1.5 text-left shadow-2xl">
-                <div className="rounded-lg border border-accent/40 px-4 py-5 text-center text-background">
-                  <p className="text-[9px] tracking-[0.3em] text-gold">CERTIFICATE OF PRE-APPROVED PATHWAY</p>
-                  <p className="mt-3 font-serif text-3xl italic font-semibold">{result.full_name}</p>
+              <motion.div initial={{ y: 40, opacity: 0, rotateX: 25 }} animate={{ y: 0, opacity: 1, rotateX: 0 }} transition={{ delay: 0.6, duration: 0.9, ease }} style={{ transformPerspective: 900 }}
+                className="relative mx-auto mt-5 border-2 border-gold bg-card p-1.5 shadow-paper">
+                <div className="border border-teal/50 px-4 py-5">
+                  <p className="text-[9px] font-bold tracking-[0.3em] text-gold">CERTIFICATE OF PRE-APPROVED PATHWAY</p>
+                  <p className="mt-3 font-serif text-3xl font-semibold italic">{result.full_name}</p>
                   <div className="mx-auto mt-2 h-px w-40 bg-gold" />
-                  <p className="mt-3 text-xs opacity-70">{result.interest ?? "University pathway"} · {result.intake ?? "January 2027"} · {result.city}</p>
-                  <p className="mt-2 font-display text-[10px] tracking-widest opacity-60">{result.ref_code}</p>
+                  <p className="mt-3 text-xs text-muted-foreground">{result.interest ?? "University pathway"} · {result.intake ?? "January 2027"} · {result.city}</p>
+                  <p className="mt-2 font-display text-[10px] font-bold tracking-widest text-teal">{result.ref_code}</p>
                 </div>
+                <motion.div initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 1.3, type: "spring", stiffness: 300, damping: 12 }}
+                  className="absolute -bottom-5 -right-4 grid h-14 w-14 place-items-center rounded-full border-2 border-gold bg-paper font-display text-[8px] font-bold leading-tight text-gold shadow-paper">
+                  M1<br />2027
+                </motion.div>
               </motion.div>
 
-              <button onClick={download} disabled={downloading} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-launch px-6 py-4 font-display font-semibold text-primary-foreground glow transition active:scale-[0.98] disabled:opacity-60">
-                {downloading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+              <Primary type="button" onClick={download} disabled={downloading}>
+                {downloading ? <Spinner /> : <IconDownload size={20} />}
                 Download your offer (PDF)
-              </button>
-              <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground"><Mail className="h-3.5 w-3.5" /> An advisor will call you within 24 hours.</p>
+              </Primary>
+              <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground"><IconPhone size={16} /> An advisor will call you within 24 hours.</p>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
+
+      {step < STEPS && (
+        <svg width="60" height="60" viewBox="0 0 60 60" className="pointer-events-none absolute -bottom-6 -right-6 text-gold" aria-hidden>
+          <circle cx="30" cy="30" r="25" fill="var(--paper)" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 2" />
+          <path d="M22 30l5 5 11-11" stroke="currentColor" strokeWidth="2.5" fill="none" />
+        </svg>
+      )}
     </div>
   );
+}
+
+const inputCls = "w-full rounded border border-ink/15 bg-card px-4 py-3.5 text-base outline-none transition focus:border-transparent focus:ring-2 focus:ring-teal";
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <label className="mb-1 mt-4 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{children}</label>;
 }
 
 function Q({ title, sub }: { title: string; sub: string }) {
   return (
-    <div>
-      <h3 className="text-2xl font-bold leading-tight sm:text-[1.75rem]">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{sub}</p>
+    <div className="mt-1">
+      <h3 className="text-xl font-bold leading-tight sm:text-2xl">{title}</h3>
+      <p className="mt-1.5 text-sm text-muted-foreground">{sub}</p>
     </div>
   );
 }
 
-function Next({ disabled }: { disabled: boolean }) {
+function Back({ onClick }: { onClick: () => void }) {
   return (
-    <button disabled={disabled} className="group mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-launch px-6 py-4 font-display font-semibold text-primary-foreground glow transition active:scale-[0.98] disabled:opacity-40 disabled:shadow-none">
-      Continue <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+    <button type="button" onClick={onClick} className="mb-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition hover:text-ink">
+      <IconArrowLeft size={16} /> Back
     </button>
   );
 }
 
-function Option({ active, onClick, icon, label, hint }: { active: boolean; onClick: () => void; icon: string; label: string; hint: string }) {
+function Primary({ children, ...p }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button onClick={onClick} className={cn("flex w-full items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition active:scale-[0.98]", active ? "border-primary bg-primary/15" : "border-border bg-background/40 hover:border-primary/60")}>
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary text-lg">{icon}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-semibold">{label}</span>
-        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
-      </span>
-      {active ? <Check className="h-5 w-5 shrink-0 text-primary" /> : <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+    <button {...p} className="group mt-6 flex w-full items-center justify-center gap-3 rounded bg-ink px-6 py-4 font-display font-bold text-primary-foreground transition-all hover:bg-teal active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-ink">
+      {children}
     </button>
   );
 }
@@ -223,8 +260,8 @@ function Option({ active, onClick, icon, label, hint }: { active: boolean; onCli
 function Field({ ok, onChange, ...p }: { ok: boolean; onChange: (v: string) => void; value: string; type: string; placeholder: string; autoComplete: string }) {
   return (
     <div className="relative">
-      <input {...p} maxLength={255} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border border-input bg-background/60 px-5 py-4 pr-12 text-base outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20" />
-      {ok && <Check className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />}
+      <input {...p} maxLength={255} onChange={(e) => onChange(e.target.value)} className={cn(inputCls, "pr-12")} />
+      {ok && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-teal" />}
     </div>
   );
 }
