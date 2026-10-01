@@ -5,7 +5,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
     handlers: {
       POST: async ({ request }) => {
         const { verifyWebhookRequest } = await import("@lovable.dev/webhooks-js");
-        const secret = process.env.WHATSAPP_API_KEY;
+        const secret = process.env['WHATSAPP_API_KEY'];
         if (!secret) return new Response("Not configured", { status: 500 });
         let payload: unknown;
         try {

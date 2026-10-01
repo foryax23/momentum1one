@@ -17,8 +17,8 @@ export function waDigits(phone: string) {
 }
 
 async function gateway(path: string, body: unknown) {
-  const lovable = process.env.LOVABLE_API_KEY;
-  const wa = process.env.WHATSAPP_API_KEY;
+  const lovable = process.env['LOVABLE_API_KEY'];
+  const wa = process.env['WHATSAPP_API_KEY'];
   if (!lovable || !wa) throw new Error("WhatsApp is not configured");
   const res = await fetch(`${GATEWAY_URL}${path}`, {
     method: "POST",
@@ -118,7 +118,7 @@ Student finance may be available for eligible students; an advisor confirms elig
 
 Call handover_to_agent when the student asks for a person, wants to book a call, is ready to apply, has a complaint, asks about their personal eligibility, finance, immigration or anything you cannot answer from the facts. After calling it, tell them an advisor will reply here soon.`;
 
-  const lovable = process.env.LOVABLE_API_KEY;
+  const lovable = process.env['LOVABLE_API_KEY'];
   if (!lovable) throw new Error("LOVABLE_API_KEY is not configured");
   let runId: string | undefined;
   const provider = createOpenAI({
