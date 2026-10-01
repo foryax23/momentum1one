@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdvisorRouteImport } from './routes/_authenticated/advisor'
+import { Route as AuthenticatedStudentRouteImport } from './routes/_authenticated/student'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
@@ -30,9 +33,24 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdvisorRoute = AuthenticatedAdvisorRouteImport.update({
+  id: '/advisor',
+  path: '/advisor',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStudentRoute = AuthenticatedStudentRouteImport.update({
+  id: '/student',
+  path: '/student',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -50,14 +68,20 @@ const ApiPublicWhatsappWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/advisor': typeof AuthenticatedAdvisorRoute
+  '/student': typeof AuthenticatedStudentRoute
   '/offer/$token': typeof OfferTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/advisor': typeof AuthenticatedAdvisorRoute
+  '/student': typeof AuthenticatedStudentRoute
   '/offer/$token': typeof OfferTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
@@ -66,23 +90,43 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/advisor': typeof AuthenticatedAdvisorRoute
+  '/_authenticated/student': typeof AuthenticatedStudentRoute
   '/offer/$token': typeof OfferTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/admin' | '/offer/$token' | '/api/public/whatsapp/webhook'
+    | '/'
+    | '/auth'
+    | '/account'
+    | '/admin'
+    | '/advisor'
+    | '/student'
+    | '/offer/$token'
+    | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/auth' | '/admin' | '/offer/$token' | '/api/public/whatsapp/webhook'
+    | '/'
+    | '/auth'
+    | '/account'
+    | '/admin'
+    | '/advisor'
+    | '/student'
+    | '/offer/$token'
+    | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/account'
     | '/_authenticated/admin'
+    | '/_authenticated/advisor'
+    | '/_authenticated/student'
     | '/offer/$token'
     | '/api/public/whatsapp/webhook'
   fileRoutesById: FileRoutesById
@@ -118,11 +162,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/advisor': {
+      id: '/_authenticated/advisor'
+      path: '/advisor'
+      fullPath: '/advisor'
+      preLoaderRoute: typeof AuthenticatedAdvisorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student': {
+      id: '/_authenticated/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof AuthenticatedStudentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/offer/$token': {
@@ -143,11 +208,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdvisorRoute: typeof AuthenticatedAdvisorRoute
+  AuthenticatedStudentRoute: typeof AuthenticatedStudentRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdvisorRoute: AuthenticatedAdvisorRoute,
+  AuthenticatedStudentRoute: AuthenticatedStudentRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

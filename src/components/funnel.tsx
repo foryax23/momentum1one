@@ -198,6 +198,7 @@ export function Funnel() {
                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}Download your personalised offer</Primary>
                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">Open your secure offer link</a>
                 <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} />
+                <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">Create my student account</a>
                 <p className="text-xs text-muted-foreground">Reference: {result.ref_code}</p>
               </div>
             )}

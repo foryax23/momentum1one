@@ -229,12 +229,13 @@ export function CourseComparison() {
 
 export function WhatYouReceive() {
   const items = [
-    ["01", "A five-page offer", "Your selected degree, entry route, campus and current study pattern in one document."],
-    ["02", "A document checklist", "The identity, address and study documents to prepare before assessment."],
-    ["03", "Advisor guidance", "A person checks your route, answers questions and supports the application."],
-    ["04", "WhatsApp follow-up", "Continue the conversation from your phone and ask for an advisor when needed."],
+    ["01", "Personalised information", "A five-page pack with your selected degree, entry route, campus and current study pattern."],
+    ["02", "A clear reference", "Keep one application reference and see the stage your application has reached."],
+    ["03", "Your choice of contact", "Continue on WhatsApp or ask for an advisor to call before sharing further information."],
+    ["04", "Preparation guidance", "See the details, relevant documents and PFF Day steps that may be needed next."],
+    ["05", "Optional student account", "Create an account after applying to see your course choice, stage and next expected action."],
   ];
-  return <div className="grid gap-px overflow-hidden rounded-2xl border border-primary-foreground/15 bg-primary-foreground/15 md:grid-cols-4">{items.map(([n, title, text]) => <div key={n} className="bg-primary/90 p-6"><span className="font-display text-sm font-bold text-gold">{n}</span><h3 className="mt-8 text-lg font-bold text-primary-foreground">{title}</h3><p className="mt-2 text-sm leading-relaxed text-primary-foreground/70">{text}</p></div>)}</div>;
+  return <div className="grid gap-3 md:grid-cols-6">{items.map(([n, title, text], index) => <motion.article key={n} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * .08 }} className={cn("relative overflow-hidden rounded-xl border border-primary-foreground/15 bg-primary-foreground/[.06] p-6", index < 2 ? "md:col-span-3" : "md:col-span-2")}><span className="text-sm font-bold text-gold">{n}</span><h3 className="mt-8 text-lg font-bold text-primary-foreground">{title}</h3><p className="mt-2 text-sm leading-relaxed text-primary-foreground/70">{text}</p><span className="absolute -bottom-4 -right-1 text-7xl font-bold text-primary-foreground/[.04]">{n}</span></motion.article>)}</div>;
 }
 
 const AUDIENCE = [
@@ -282,14 +283,17 @@ export function ScrollTimeline({ steps }: { steps: { title: string; text: string
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 55%"] });
   const height = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   return (
-    <ol ref={ref} className="relative mt-10 grid max-w-3xl gap-8 pl-14">
-      <span className="absolute bottom-2 left-5 top-2 w-0.5 bg-border" />
-      <motion.span style={{ height }} className="absolute left-5 top-2 w-0.5 bg-teal" />
+    <ol ref={ref} className="relative mt-10 grid gap-6 pl-13 lg:grid-cols-5 lg:gap-3 lg:pl-0 lg:pt-14">
+      <span className="absolute bottom-4 left-4 top-4 w-0.5 bg-border lg:bottom-auto lg:left-0 lg:right-0 lg:top-5 lg:h-0.5 lg:w-auto" />
+      <motion.span style={{ height }} className="absolute left-4 top-4 w-0.5 bg-teal lg:hidden" />
+      <motion.span style={{ scaleX: scrollYProgress, transformOrigin: "left" }} className="absolute left-0 right-0 top-5 hidden h-0.5 bg-teal lg:block" />
       {steps.map((s, i) => (
-        <motion.li key={s.title} initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-80px" }} transition={{ duration: .6, ease }} className="relative">
-          <span className="absolute -left-14 top-0 grid h-10 w-10 place-items-center rounded-full bg-primary font-display font-bold italic text-primary-foreground">{i + 1}</span>
-          <h3 className="font-sans text-lg font-bold text-foreground">{s.title}</h3>
-          <p className="mt-1 text-muted-foreground">{s.text}</p>
+        <motion.li key={s.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: .6, delay: i * .06, ease }} className="relative rounded-xl border border-border bg-card p-5 shadow-sm lg:min-h-56 lg:pt-7">
+          <span className="absolute -left-13 top-0 grid h-9 w-9 place-items-center rounded-full bg-primary font-bold text-primary-foreground lg:-top-16 lg:left-0">{i + 1}</span>
+          <p className="text-[11px] font-bold uppercase tracking-[.14em] text-teal">Stage {i + 1}</p>
+          <h3 className="mt-4 text-lg font-bold text-foreground">{s.title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+          <p className="mt-5 border-t border-border pt-4 text-xs font-semibold text-primary">{i === 0 ? "You: answer five quick questions" : i === 1 ? "You: choose WhatsApp or a phone call" : i === 2 ? "Together: confirm what is relevant" : i === 3 ? "You: prepare and attend" : "Momentum One: confirms the next step"}</p>
         </motion.li>
       ))}
     </ol>

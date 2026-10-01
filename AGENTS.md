@@ -19,3 +19,4 @@
 - Admission files are downloaded server-side immediately from WhatsApp into the private admissions-documents bucket; browser access is limited to short-lived admin URLs.
 - The PDF renderer is loaded only via loadOfferPdf(), gated on import.meta.env.SSR, because bundling it into the server worker crashed every page.
 - The homepage hero video is a silent, reduced-motion-aware CDN asset; factual text and application controls stay as semantic foreground content.
+- Account roles stay in `user_roles`; student application ownership and advisor assignment live on leads, with role-specific protected dashboards and server-validated privileged actions.

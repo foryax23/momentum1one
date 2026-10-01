@@ -19,3 +19,9 @@
 - [x] Friendlier admissions chat: details first, then only needed documents, skip and later supported
 - [ ] Test one real conversation after publishing
 - [x] Require an explicit WhatsApp or advisor-call choice before collecting any admission details
+- [x] Add the supplied promotional video as a muted looping editorial feature
+- [x] Upgrade the application journey and post-application sections
+- [x] Add secure student ownership and advisor assignment fields
+- [ ] Verify student account creation and role routing with confirmed email
+- [ ] Verify advisor invitation, assignment and dashboard access
+- [ ] Complete mobile and desktop visual regression checks for the upgraded public experience
