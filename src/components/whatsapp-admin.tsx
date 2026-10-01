@@ -169,6 +169,14 @@ function AdmissionsPack({ leadId }: { leadId: string }) {
       <div><h3 className="text-sm font-bold">Admissions pack</h3><p className="text-xs text-muted-foreground">Language: {q.data?.conversation?.detected_language ?? "Detecting"} · Step: {(q.data?.conversation?.admissions_step ?? "not started").replaceAll("_", " ")}</p></div>
       <Button size="sm" variant="outline" onClick={ready} disabled={busy === "review"}>Ready for review</Button>
     </div>
+    <p className="mt-2 text-xs text-muted-foreground">Bot: {q.data?.conversation?.bot_enabled ? `on (${q.data.conversation.activated_via === "ref_code" ? "reference code" : "welcome message"})` : "off, not from website"}</p>
+    {(() => {
+      const profile = (q.data?.conversation?.profile ?? {}) as Record<string, string>;
+      const rows = Object.entries(profile).filter(([, v]) => v);
+      return rows.length ? <dl className="mt-2 grid gap-1 rounded-lg bg-secondary/50 p-2.5 text-xs sm:grid-cols-2">
+        {rows.map(([k, v]) => <div key={k}><dt className="text-muted-foreground">{k.replaceAll("_", " ")}</dt><dd className="font-medium">{v}</dd></div>)}
+      </dl> : null;
+    })()}
     <ul className="mt-3 space-y-2">
       {CHECKLIST.map(([type, label]) => {
         const files = documents.filter((document) => document.document_type === type && document.status !== "replaced");
