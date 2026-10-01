@@ -100,12 +100,16 @@ function Index() {
       <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-10 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">Funding and eligibility</p>
-          <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">Worried about cost?</h2>
-          <p className="mt-3 text-muted-foreground">Many students qualify for student finance to cover tuition and help with living costs. You do not pay anything to check your options, and an advisor confirms your eligibility before you commit.</p>
+          <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">Know what to prepare</h2>
+          <p className="mt-3 text-muted-foreground">Foundation Year can be a route for applicants without the usual A-level profile. Year 1 is available for selected courses and campuses. Admission and student finance depend on your circumstances, so an advisor confirms both before you commit.</p>
+          <div className="mt-5 flex flex-wrap gap-2">{["Foundation routes", "Selected Year 1 routes", "Day, evening and weekend patterns"].map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div>
         </div>
-        <ul className="grid gap-3">
-          {["Free, no-obligation advice", "Eligibility checked by an advisor", "Help with every form and document"].map((t) => <li key={t} className="flex items-center gap-3 rounded-xl bg-card p-4 font-semibold text-primary"><IconTick size={18} className="text-teal" />{t}</li>)}
-        </ul>
+        <div className="rounded-2xl bg-card p-5">
+          <h3 className="font-sans text-lg font-bold text-primary">Documents commonly requested</h3>
+          <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
+            {["Proof of identity", "Proof of address dated within three months of the course start", "Share code if your passport is not British", "Duolingo English certificate", "CV and qualification certificates, if available"].map((t) => <li key={t} className="flex items-start gap-3"><IconTick size={18} className="mt-0.5 shrink-0 text-teal" />{t}</li>)}
+          </ul>
+        </div>
       </motion.div>
     </Section>
 
