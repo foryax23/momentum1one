@@ -12,3 +12,5 @@
 - Leads are inserted only via the `submitLead` server function (admin client, zod-validated); RLS grants anon no access to `leads`.
 - Admin access is checked via `user_roles` + `has_role()`; the first account to sign up is auto-granted admin by a DB trigger.
 - The offer PDF is rendered client-side with @react-pdf/renderer, dynamically imported so it stays out of SSR.
+- Campus course choices, offer content, and study patterns use one typed catalogue so student, admin, and PDF views stay consistent.
+- Public offer links use expiring random tokens stored only as SHA-256 hashes so lead data is not enumerable.

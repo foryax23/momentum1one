@@ -27,6 +27,7 @@ type Lead = {
   id: string; ref_code: string; full_name: string; email: string; phone: string; city: string;
   interest: string | null; intake: string | null; status: string; notes: string | null; created_at: string;
   whatsapp: boolean; nearest_campus: string | null; distance_miles: number | null; source: string | null; campaign: string | null; page: string | null;
+  selected_course: string | null; study_route: string | null; offer_email_status: string;
 };
 
 function Admin() {
@@ -86,7 +87,7 @@ function Admin() {
   }
 
   function exportCsv() {
-    const head = ["ref_code", "full_name", "email", "phone", "whatsapp", "city", "nearest_campus", "distance_miles", "interest", "intake", "source", "campaign", "status", "created_at"] as const;
+    const head = ["ref_code", "full_name", "email", "phone", "whatsapp", "city", "nearest_campus", "distance_miles", "selected_course", "study_route", "offer_email_status", "intake", "source", "campaign", "status", "created_at"] as const;
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csv = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
     const a = document.createElement("a");
@@ -147,7 +148,7 @@ function Admin() {
                 <td className="p-3"><div className="font-semibold">{l.full_name}</div><div className="text-xs text-muted-foreground">{l.ref_code}</div></td>
                 <td className="p-3"><div>{l.email}</div><div className="text-xs text-muted-foreground">{l.phone}</div></td>
                 <td className="p-3">{l.city}</td>
-                <td className="p-3"><div>{l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
+                 <td className="p-3"><div>{l.selected_course ?? l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.study_route ?? l.intake ?? ""}</div></td>
                 <td className="p-3"><Badge s={l.status} /></td>
                 <td className="p-3 text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}</td>
               </tr>
@@ -186,7 +187,8 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
           <Row k="Phone" v={<a href={`tel:${lead.phone}`} className="text-primary">{lead.phone}</a>} />
            <Row k="WhatsApp" v={lead.whatsapp ? "Yes" : "No"} /><Row k="City" v={lead.city} />
            <Row k="Nearest campus" v={lead.nearest_campus ?? "-"} /><Row k="Distance" v={lead.distance_miles == null ? "-" : `About ${lead.distance_miles} miles`} />
-           <Row k="Interest" v={lead.interest ?? "To discuss"} /><Row k="Intake" v={lead.intake ?? "-"} />
+            <Row k="Course" v={lead.selected_course ?? "To discuss"} /><Row k="Route" v={lead.study_route ?? "-"} />
+            <Row k="Offer email" v={lead.offer_email_status.replace("_", " ")} /><Row k="Intake" v={lead.intake ?? "-"} />
            <Row k="Source" v={lead.source ?? "Direct"} /><Row k="Campaign" v={lead.campaign ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
         </dl>
