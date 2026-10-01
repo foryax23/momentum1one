@@ -192,7 +192,7 @@ function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: str
 function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: { kind: "courses" | "campuses" | "journey"; eyebrow: string; title: string; intro?: string; align?: "left" | "right" }) {
   const right = align === "right";
   return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
-    <SectionVideo kind={kind} immersive className={cn("absolute inset-0", right && "[&>img]:scale-x-[-1] [&>video]:scale-x-[-1]")} />
+    <SectionVideo kind={kind} immersive className="absolute inset-0" />
     <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary via-primary/85 to-primary/20" : "bg-gradient-to-r from-primary via-primary/85 to-primary/20")} />
     <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-primary/35" />
     <div className={cn("relative flex min-h-80 max-w-3xl flex-col justify-end px-5 pb-12 pt-24 text-primary-foreground sm:min-h-96 sm:px-10 sm:pb-16", right && "ml-auto text-right sm:items-end")}>
