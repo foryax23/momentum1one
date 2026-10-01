@@ -24,4 +24,8 @@
 - [x] Add secure student ownership and advisor assignment fields
 - [ ] Verify student account creation and role routing with confirmed email
 - [ ] Verify advisor invitation, assignment and dashboard access
-- [ ] Complete mobile and desktop visual regression checks for the upgraded public experience
+- [x] Complete mobile and desktop visual regression checks for the upgraded public experience
+- [ ] Confirm evidence for the public agent, campus, university and student counts
+- [ ] Supply approved official university logo assets
+- [ ] Confirm ICO registration, retention schedule and final legal review
+- [ ] Verify password recovery email and expired-link handling after publishing

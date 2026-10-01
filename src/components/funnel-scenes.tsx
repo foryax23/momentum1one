@@ -70,3 +70,17 @@ export function LiftOffScene() {
     </div>
   );
 }
+
+export function RocketAssembly({ step, total = 5, complete = false }: { step: number; total?: number; complete?: boolean }) {
+  const shown = complete ? total : step + 1;
+  const part = (n: number, children: React.ReactNode) => <motion.g initial={false} animate={{ opacity: shown >= n ? 1 : .12, scale: shown >= n ? 1 : .7 }} transition={{ type: "spring", stiffness: 240, damping: 20 }} style={{ transformOrigin: "100px 100px" }}>{children}</motion.g>;
+  return <motion.div className="mx-auto w-full max-w-[190px]" animate={{ scale: .7 + (shown / total) * .3 }} transition={{ type: "spring", stiffness: 180, damping: 22 }} aria-label={`Rocket ${shown} of ${total} parts assembled`} role="img">
+    <svg viewBox="0 0 200 210" className="h-32 w-full sm:h-40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      {part(1, <path d="M76 142V91c0-31 9-57 24-75 15 18 24 44 24 75v51Z" fill="var(--primary)" stroke="var(--teal)" />)}
+      {part(2, <><path d="M76 105 54 132v31l22-13Z" fill="var(--teal)" /><path d="m124 105 22 27v31l-22-13Z" fill="var(--teal)" /></>)}
+      {part(3, <circle cx="100" cy="76" r="15" fill="var(--gold)" stroke="var(--primary-foreground)" />)}
+      {part(4, <path d="M83 45c4-12 10-22 17-29 7 7 13 17 17 29Z" fill="var(--gold)" stroke="var(--teal)" />)}
+      {part(5, <><path d="M84 142h32v17H84Z" fill="var(--primary)" stroke="var(--teal)" />{complete ? <motion.path d="M90 160c0 19 10 36 10 36s10-17 10-36" fill="var(--gold)" stroke="var(--gold)" animate={{ scaleY: [1, 1.18, .92, 1] }} transition={{ repeat: Infinity, duration: .7 }} style={{ transformOrigin: "100px 160px" }} /> : <path d="M90 160c0 19 10 36 10 36s10-17 10-36" fill="var(--gold)" stroke="var(--gold)" />}</>)}
+    </svg>
+  </motion.div>;
+}

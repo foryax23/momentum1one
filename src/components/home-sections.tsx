@@ -2,30 +2,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { CAMPUS_COURSES } from "@/lib/offer-catalog";
 import { CAMPUSES } from "@/lib/funnel";
-import { IconArrowRight } from "@/components/icons";
+import { IconAgents, IconArrowRight, IconClock, IconPin, IconUniversity } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import business from "@/assets/courses/business.jpg";
-import marketing from "@/assets/courses/marketing.jpg";
-import care from "@/assets/courses/care.jpg";
-import publicHealth from "@/assets/courses/public-health.jpg";
-import psychology from "@/assets/courses/psychology.jpg";
-import fashion from "@/assets/courses/fashion.jpg";
-import events from "@/assets/courses/events.jpg";
+import { CourseArt } from "@/components/course-art";
 import manchester from "@/assets/campuses/manchester.jpg";
 import sunderland from "@/assets/campuses/sunderland.jpg";
 import derby from "@/assets/campuses/derby.jpg";
 import newcastle from "@/assets/campuses/newcastle.jpg";
 import luton from "@/assets/campuses/luton.jpg";
-import career from "@/assets/audience/career.jpg";
-import parent from "@/assets/audience/parent.jpg";
-import noAlevels from "@/assets/audience/no-alevels.jpg";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-const IMAGES: Record<string, string> = { business, marketing, care, "public-health": publicHealth, psychology, fashion, events };
 const CAMPUS_IMAGES: Record<string, string> = { Manchester: manchester, Sunderland: sunderland, Derby: derby, Newcastle: newcastle, Luton: luton };
 
-type DeckCourse = { key: string; award: string; name: string; title: string; university: string; campuses: string[]; routes: string[]; image: string };
+type DeckCourse = { key: string; award: string; name: string; title: string; university: string; campuses: string[]; routes: string[] };
 
 function buildDeck(): DeckCourse[] {
   const map = new Map<string, DeckCourse>();
@@ -38,7 +28,7 @@ function buildDeck(): DeckCourse[] {
         if (!existing.routes.includes(c.route)) existing.routes.push(c.route);
       } else {
         const [award, ...rest] = c.title.split(" ");
-        map.set(key, { key, award: `${award} ${rest.shift()}`, name: rest.join(" "), title: c.title, university: c.university, campuses: [campus], routes: [c.route], image: IMAGES[key] ?? business });
+        map.set(key, { key, award: `${award} ${rest.shift()}`, name: rest.join(" "), title: c.title, university: c.university, campuses: [campus], routes: [c.route] });
       }
     }
   }
@@ -102,9 +92,9 @@ export function CourseDeck() {
           return (
             <motion.article key={c.key} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: Math.min(i * .07, .35), duration: .7, ease }}
               onClick={() => setActive(open ? null : c.key)} data-open={open}
-              className="group relative aspect-[4/5] w-[78%] shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl bg-primary shadow-lg transition-[transform,box-shadow] duration-500 hover:-translate-y-2 hover:shadow-2xl data-[open=true]:-translate-y-2 sm:w-[46%] lg:w-[31%]">
-              <img src={c.image} alt={c.name} width={960} height={1200} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110 group-data-[open=true]:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/40 to-transparent" />
+              className="group relative aspect-[4/5] w-[78%] shrink-0 cursor-pointer snap-start overflow-hidden border border-primary-foreground/10 bg-primary shadow-lg transition-[transform,box-shadow] duration-500 hover:-translate-y-2 hover:shadow-2xl data-[open=true]:-translate-y-2 sm:w-[46%] lg:w-[31%]">
+              <CourseArt subject={c.key} className="absolute inset-0" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/15 to-transparent" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
                 {c.routes.map((r) => <span key={r} className="rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-bold text-primary backdrop-blur">{r}</span>)}
               </div>
@@ -185,8 +175,7 @@ export function CourseComparison() {
           return <button key={item.key} role="tab" aria-selected={active} type="button" onClick={() => setSelected(item.key)}
             className={cn("group relative w-40 shrink-0 snap-start overflow-hidden rounded-2xl border bg-card text-left transition sm:w-auto", active ? "border-primary shadow-md" : "border-border hover:border-primary/50")}>
             <div className="relative h-20 overflow-hidden">
-              <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/70 to-transparent" />
+              <CourseArt subject={item.key} className="h-full w-full" />
             </div>
             <div className="p-3">
               <p className="line-clamp-2 text-sm font-bold leading-tight text-primary">{item.name}</p>
@@ -200,7 +189,7 @@ export function CourseComparison() {
         <motion.div key={course.key} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }} transition={{ duration: .4, ease }}
           className="mt-5 grid overflow-hidden rounded-3xl border border-border bg-card lg:grid-cols-[.9fr_1.1fr]">
           <div className="relative min-h-56 overflow-hidden">
-            <motion.img src={course.image} alt={course.title} initial={reduce ? false : { scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 1.2, ease }} className="absolute inset-0 h-full w-full object-cover" />
+            <motion.div initial={reduce ? false : { scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 1.2, ease }} className="absolute inset-0"><CourseArt subject={course.key} className="h-full w-full" /></motion.div>
             <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/40 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
               <h4 className="text-2xl font-bold italic text-primary-foreground">{course.title}</h4>
@@ -239,9 +228,9 @@ export function WhatYouReceive() {
 }
 
 const AUDIENCE = [
-  { img: career, title: "Changing career", text: "Study on evenings or set days around the job you already have." },
-  { img: parent, title: "Returning to learning", text: "A Foundation Year eases you back in, with support before you start." },
-  { img: noAlevels, title: "No A-levels", text: "Foundation routes are built for people without the usual grades." },
+  { n: "01", title: "Changing career", text: "Study on evenings or set days around the job you already have." },
+  { n: "02", title: "Returning to learning", text: "A Foundation Year eases you back in, with support before you start." },
+  { n: "03", title: "No A-levels", text: "Foundation routes are built for people without the usual grades." },
 ];
 
 export function AudienceStrip() {
@@ -249,8 +238,8 @@ export function AudienceStrip() {
     <div className="mt-8 grid gap-4 md:grid-cols-3">
       {AUDIENCE.map((a, i) => (
         <motion.article key={a.title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * .1, duration: .6, ease }} className="group overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="aspect-[4/3] overflow-hidden"><img src={a.img} alt={a.title} width={800} height={1000} loading="lazy" className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110" /></div>
-          <div className="p-5"><h3 className="font-sans text-lg font-bold text-primary">{a.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a.text}</p></div>
+           <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-primary"><span className="font-display text-7xl font-bold text-primary-foreground/10 transition-transform duration-700 group-hover:scale-125">{a.n}</span><div className="absolute h-24 w-24 rotate-45 border border-gold/40 transition-transform duration-700 group-hover:rotate-90" /></div>
+           <div className="p-5"><h3 className="font-sans text-lg font-bold text-primary">{a.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a.text}</p></div>
         </motion.article>
       ))}
     </div>
@@ -270,10 +259,10 @@ function CountUp({ to }: { to: number }) {
 }
 
 export function StatsBand() {
-  const stats: [number, string][] = [[7, "degree courses"], [5, "UK campuses"], [3, "awarding universities"], [1, "minute to check your options"]];
+  const stats: [number, string, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: number }>][] = [[10, "agents", IconAgents], [20, "UK campuses", IconPin], [10, "awarding universities", IconUniversity], [1, "minute to check options", IconClock]];
   return (
     <div className="grid grid-cols-2 gap-y-8 lg:grid-cols-4">
-      {stats.map(([n, label]) => <div key={label} className="border-l border-primary-foreground/20 pl-5"><p className="font-display text-5xl font-bold italic text-primary-foreground sm:text-6xl"><CountUp to={n} /></p><p className="mt-1 text-sm text-primary-foreground/75">{label}</p></div>)}
+      {stats.map(([n, label, Icon]) => <div key={label} className="group border-l border-primary-foreground/20 pl-5"><Icon size={28} className="mb-6 text-gold transition-transform duration-500 group-hover:-translate-y-1" /><p className="font-display text-5xl font-bold text-primary-foreground sm:text-6xl"><CountUp to={n} />{n > 1 ? "+" : ""}</p><p className="mt-1 text-sm uppercase tracking-[.12em] text-primary-foreground/65">{label}</p></div>)}
     </div>
   );
 }

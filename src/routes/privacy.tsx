@@ -1,0 +1,18 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { LegalPage, LegalSection } from "@/components/legal-page";
+
+export const Route = createFileRoute("/privacy")({ head: () => ({ meta: [
+  { title: "Privacy notice | Momentum One" }, { name: "description", content: "How Momentum One uses and protects student and applicant information." },
+  { property: "og:title", content: "Privacy notice | Momentum One" }, { property: "og:description", content: "How Momentum One uses and protects student and applicant information." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+] }), component: Privacy });
+
+function Privacy() { return <LegalPage eyebrow="Privacy" title="Privacy notice" intro="This notice explains how Momentum One handles information when you explore courses, request guidance, create an account, or continue an application.">
+  <LegalSection title="Who controls your information"><p>MOMENTUM ONE LTD is the data controller. Contact us at info@momentumone.co.uk or at our registered office with a privacy question or rights request.</p></LegalSection>
+  <LegalSection title="Information we use"><p>We may use your contact details, location, course interests, account details, application progress, advisor notes, WhatsApp messages, and admissions information or documents you choose to provide.</p></LegalSection>
+  <LegalSection title="Why we use it"><p>We use information to answer your request, match course and campus options, support an application, maintain your account, provide secure offers, prevent misuse, and meet legal obligations. Optional marketing is based on the channel choices you make and can be stopped at any time.</p></LegalSection>
+  <LegalSection title="Documents and sensitive information"><p>Admissions documents may reveal nationality, immigration status, health, disability, religion, or other sensitive information. We request only information relevant to the application. Documents are stored privately and are reviewed by authorised staff. Our automated WhatsApp assistant collects information but does not decide admission, funding, visa, or eligibility outcomes.</p></LegalSection>
+  <LegalSection title="Sharing and international transfers"><p>Information may be shared with relevant education providers and trusted service providers needed for hosting, communications, security, and application support. WhatsApp is operated by Meta and may involve international processing. Appropriate contractual and transfer safeguards should be confirmed in our internal records before final publication.</p></LegalSection>
+  <LegalSection title="Retention"><p>We keep information only for the period needed for the enquiry, application, legal duties, and dispute handling. Admissions documents and unsuccessful applications should follow a documented retention schedule and be securely deleted when no longer required.</p></LegalSection>
+  <LegalSection title="Your rights"><p>You may ask for access, correction, deletion, restriction, portability, or object to certain uses. You can withdraw marketing consent at any time. You may also complain to the Information Commissioner’s Office.</p></LegalSection>
+  <LegalSection title="Before this notice is final"><p>This notice is a transparent working draft, not legal advice. Momentum One should confirm its ICO registration, lawful bases, special-category conditions, retention schedule, processors, transfer safeguards, under-18 approach, and impact assessment with a qualified UK professional.</p></LegalSection>
+</LegalPage>; }

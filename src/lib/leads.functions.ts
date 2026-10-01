@@ -16,6 +16,9 @@ const leadSchema = z.object({
   intake: z.string().trim().max(60).nullable(),
   consent: z.literal(true),
   whatsapp: z.boolean(),
+  email_marketing: z.boolean(),
+  phone_marketing: z.boolean(),
+  whatsapp_marketing: z.boolean(),
   nearest_campus: z.enum(CAMPUSES.map((campus) => campus.full) as [string, ...string[]]),
   distance_miles: z.number().int().min(0).max(1000),
   source: z.string().trim().max(100).nullable(),
@@ -41,7 +44,7 @@ export const submitLead = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("leads")
-      .insert({ ...lead, offer_token_hash, offer_expires_at, offer_email_status: "domain_pending" })
+      .insert({ ...lead, privacy_acknowledged_at: new Date().toISOString(), offer_token_hash, offer_expires_at, offer_email_status: "domain_pending" })
       .select("id, phone, ref_code, full_name, city, interest, intake, nearest_campus, distance_miles, created_at, selected_course, study_route")
       .single();
     if (error) {
