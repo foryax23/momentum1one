@@ -22,3 +22,4 @@
 - Homepage section videos load and play only near the viewport, pause when hidden, and fall back to posters for reduced motion or data saving.
 - Account roles stay in `user_roles`; student application ownership and advisor assignment live on leads, with role-specific protected dashboards and server-validated privileged actions.
 - Privacy acknowledgement and each optional marketing channel are stored separately on a lead so service contact is never bundled with marketing consent.
+- Public student-facing copy uses the shared EN/RO/ES language provider; admin and advisor workspaces remain English.
