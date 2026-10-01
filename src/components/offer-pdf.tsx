@@ -14,10 +14,10 @@ const s = StyleSheet.create({
   layer: { position: "absolute", top: 0, left: 0 },
   content: { position: "absolute", top: 46, left: 70, right: 70, bottom: 46 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  logo: { width: 96, height: 82, objectFit: "contain" },
+  logo: { width: 78, height: 67, objectFit: "contain" },
   refLabel: { fontSize: 7, letterSpacing: 2, color: TEAL, textAlign: "right" },
   refValue: { fontFamily: "Helvetica-Bold", fontSize: 12, textAlign: "right", marginTop: 2 },
-  eyebrow: { fontSize: 8.5, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: -30 },
+  eyebrow: { fontSize: 8.5, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: -6 },
   title: { fontFamily: "Times-Bold", fontSize: 32, textAlign: "center", marginTop: 6, letterSpacing: 0.5 },
   presented: { fontFamily: "Times-Italic", fontSize: 12, textAlign: "center", marginTop: 10, color: TEAL },
   name: { fontFamily: "Times-BoldItalic", fontSize: 40, textAlign: "center", marginTop: 2 },
@@ -49,7 +49,8 @@ function Frame() {
     </G>
   );
   return (
-    <Svg width={W} height={H} style={s.layer}>
+    <View style={[s.layer, { width: W, height: H }]} fixed>
+    <Svg width={W} height={H}>
       <Rect x={18} y={18} width={W - 36} height={H - 36} stroke={GOLD} strokeWidth={2.2} fill="none" />
       <Rect x={25} y={25} width={W - 50} height={H - 50} stroke={GOLD} strokeWidth={0.6} fill="none" />
       <Rect x={32} y={32} width={W - 64} height={H - 64} stroke={TEAL} strokeWidth={0.5} fill="none" strokeDasharray="1 3" />
@@ -65,6 +66,7 @@ function Frame() {
         </G>
       ))}
     </Svg>
+    </View>
   );
 }
 
@@ -112,9 +114,9 @@ export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: stri
   const issued = new Date(lead.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   return (
     <Document title={`Momentum One Offer, ${lead.full_name}`} author="Momentum One">
-      <Page size="A4" orientation="landscape" style={s.page}>
+      <Page size="A4" orientation="landscape" style={s.page} wrap={false}>
         <Frame />
-        <Image src={`${origin}/logo-mark.png`} style={{ position: "absolute", top: 150, left: W / 2 - 150, width: 300, height: 250, opacity: 0.05 }} />
+        <Image src={`${origin}/logo-mark.png`} style={{ position: "absolute", top: 150, left: W / 2 - 150, width: 300, height: 250, opacity: 0.04 }} />
         <View style={s.content}>
           <View style={s.header}>
             <Image src={`${origin}/logo.png`} style={s.logo} />

@@ -12,7 +12,7 @@ export function BookScene({ name }: { name: string }) {
         <path d="M160 26c-26-12-62-14-104-6v74c42-8 78-6 104 6Z" fill="var(--card)" stroke="var(--ink)" strokeWidth="1.4" />
         <path d="M160 26c26-12 62-14 104-6v74c-42-8-78-6-104 6Z" fill="var(--card)" stroke="var(--ink)" strokeWidth="1.4" />
         <path d="M160 26v74" stroke="var(--ink)" strokeOpacity=".4" />
-        {[44, 56, 68, 80].map((y) => <path key={y} d={`M72 ${y - 6}c26-4 52-3 76 3`} stroke="var(--teal)" strokeOpacity=".25" />)}
+        {[44, 56, 68, 80].map((y) => <path key={y} d={`M72 ${y - 6}c26-4 52-3 76 3`} stroke="var(--teal)" strokeOpacity=".35" fill="none" />)}
       </motion.g>
       <text x="212" y="66" textAnchor="middle" fontFamily="Cormorant Garamond, serif" fontStyle="italic" fontWeight="600" fontSize={name.length > 14 ? 15 : 20} fill="var(--ink)">
         {name || "Your name"}
