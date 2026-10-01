@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IconArrowRight, IconBook, IconCalendar, IconCampus, IconMortarboard, IconPassport, IconPin, IconSeal, IconTick } from "@/components/icons";
 import { CAMPUSES } from "@/lib/funnel";
+import type { ComponentType } from "react";
 
 const TITLE = "Launch your UK degree | Momentum One";
 const DESC = "Explore Foundation Year degrees in Manchester, Sunderland, Derby, Newcastle and Luton. Check your nearest campus in under a minute.";
@@ -20,7 +21,8 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const COURSES = [
+type Course = { award: string; name: string; university: string; campuses: readonly string[]; yearOne?: boolean };
+const COURSES: readonly Course[] = [
   { award: "BA (Hons)", name: "Business Management", university: "University of Wolverhampton", campuses: ["Manchester", "Sunderland", "Derby", "Newcastle"], yearOne: true },
   { award: "BA (Hons)", name: "Digital Marketing Management", university: "University of Wolverhampton", campuses: ["Manchester", "Sunderland", "Derby", "Newcastle"], yearOne: true },
   { award: "BA (Hons)", name: "Health and Social Care", university: "University of Wolverhampton", campuses: ["Manchester", "Sunderland", "Derby"] },
@@ -29,6 +31,21 @@ const COURSES = [
   { award: "BSc (Hons)", name: "Fashion Management and Strategy", university: "Arts University Bournemouth", campuses: ["Manchester", "Sunderland", "Derby"] },
   { award: "BA (Hons)", name: "Events Management", university: "Arts University Bournemouth", campuses: ["Manchester", "Sunderland", "Derby"] },
 ] as const;
+
+const JOURNEY: { Icon: ComponentType<{ size?: number; className?: string }>; title: string; text: string }[] = [
+  { Icon: IconMortarboard, title: "Check your options", text: "Answer four quick questions." },
+  { Icon: IconCampus, title: "Talk to an advisor", text: "Choose a course, campus and study pattern." },
+  { Icon: IconPassport, title: "Prepare documents", text: "Get help with ID, address evidence and certificates." },
+  { Icon: IconCalendar, title: "Attend PFF Day", text: "Complete the short pre-task and campus assessment." },
+  { Icon: IconSeal, title: "Start your course", text: "Enrol after your application and assessment are approved." },
+];
+
+const FAQS: [string, string][] = [
+  ["Do I need A-levels?", "Foundation Year routes do not require the usual grade profile to apply. Admission still depends on application review and passing the PFF assessment day."],
+  ["Can I study while I work?", "Selected groups run during the day, evening or weekend. An advisor will confirm which patterns are available for your course and campus."],
+  ["What documents will I need?", "Usually photo ID, proof of address, a share code where relevant, and any CV or certificates you have."],
+  ["What is the PFF Day?", "Prepare for Foundation Day is a one-day campus assessment. You will receive guidance and a short written pre-task before attending."],
+];
 
 function Index() {
   return <main className="overflow-x-hidden bg-background">
@@ -72,23 +89,12 @@ function Index() {
 
     <Section id="journey"><SectionHeading eyebrow="How it works" title="From sign-up to your first class" />
       <ol className="mt-9 grid gap-5 lg:grid-cols-5 lg:gap-0">
-        {[
-          [IconMortarboard, "Check your options", "Answer four quick questions."],
-          [IconCampus, "Talk to an advisor", "Choose a course, campus and study pattern."],
-          [IconPassport, "Prepare documents", "Get help with ID, address evidence and certificates."],
-          [IconCalendar, "Attend PFF Day", "Complete the short pre-task and campus assessment."],
-          [IconSeal, "Start your course", "Enrol after your application and assessment are approved."],
-        ].map(([Icon, title, text], index) => <motion.li key={title as string} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * .08 }} className="relative grid grid-cols-[42px_1fr] gap-x-3 lg:block lg:pr-5"><span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-primary font-display font-bold italic text-primary-foreground">{index + 1}</span>{index < 4 && <span className="absolute bottom-[-20px] left-5 top-10 w-0.5 bg-border lg:bottom-auto lg:left-10 lg:right-0 lg:top-5 lg:h-0.5 lg:w-auto" />}<div className="text-teal lg:mt-5"><Icon size={26} /></div><h3 className="mt-1 font-sans font-bold text-foreground lg:mt-3">{title as string}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text as string}</p></motion.li>)}
+        {JOURNEY.map(({ Icon, title, text }, index) => <motion.li key={title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * .08 }} className="relative grid grid-cols-[42px_1fr] gap-x-3 lg:block lg:pr-5"><span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-primary font-display font-bold italic text-primary-foreground">{index + 1}</span>{index < 4 && <span className="absolute bottom-[-20px] left-5 top-10 w-0.5 bg-border lg:bottom-auto lg:left-10 lg:right-0 lg:top-5 lg:h-0.5 lg:w-auto" />}<div className="text-teal lg:mt-5"><Icon size={26} /></div><h3 className="mt-1 font-sans font-bold text-foreground lg:mt-3">{title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p></motion.li>)}
       </ol>
     </Section>
 
     <Section id="faq"><SectionHeading eyebrow="Questions" title="Before you sign up" />
-      <Accordion type="single" collapsible className="mt-8 max-w-3xl space-y-2">{[
-        ["Do I need A-levels?", "Foundation Year routes do not require the usual grade profile to apply. Admission still depends on application review and passing the PFF assessment day."],
-        ["Can I study while I work?", "Selected groups run during the day, evening or weekend. An advisor will confirm which patterns are available for your course and campus."],
-        ["What documents will I need?", "Usually photo ID, proof of address, a share code where relevant, and any CV or certificates you have."],
-        ["What is the PFF Day?", "Prepare for Foundation Day is a one-day campus assessment. You will receive guidance and a short written pre-task before attending."],
-      ].map(([question, answer]) => <AccordionItem key={question} value={question} className="rounded-xl border border-border bg-card px-4"><AccordionTrigger className="font-sans text-base font-bold">{question}</AccordionTrigger><AccordionContent className="max-w-2xl text-muted-foreground">{answer}</AccordionContent></AccordionItem>)}</Accordion>
+      <Accordion type="single" collapsible className="mt-8 max-w-3xl space-y-2">{FAQS.map(([question, answer]) => <AccordionItem key={question} value={question} className="rounded-xl border border-border bg-card px-4"><AccordionTrigger className="font-sans text-base font-bold">{question}</AccordionTrigger><AccordionContent className="max-w-2xl text-muted-foreground">{answer}</AccordionContent></AccordionItem>)}</Accordion>
     </Section>
 
     <section className="mt-20 border-y border-border bg-secondary"><div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 px-5 py-12 sm:flex-row sm:items-center sm:px-8"><div><h2 className="text-3xl font-bold italic text-primary">Ready to start?</h2><p className="mt-1 text-muted-foreground">Four questions. Less than a minute.</p></div><Button asChild className="h-14 rounded-xl px-7 text-base font-bold"><a href="#signup">Check my options <IconArrowRight /></a></Button></div></section>

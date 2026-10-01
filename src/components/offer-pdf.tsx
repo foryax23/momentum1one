@@ -1,10 +1,10 @@
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Path, Circle, Rect, G, pdf } from "@react-pdf/renderer";
 import type { LeadResult } from "@/lib/funnel";
 
-const INK = "#0c2340";
-const TEAL = "#2a7f9e";
-const GOLD = "#b8923a";
-const CREAM = "#fbf8f0";
+const INK = "#063A55";
+const TEAL = "#1F6A8C";
+const GOLD = "#FFB547";
+const CREAM = "#F3F8FB";
 
 const W = 841;
 const H = 594;
@@ -21,9 +21,9 @@ const s = StyleSheet.create({
   title: { fontFamily: "Times-Bold", fontSize: 32, textAlign: "center", marginTop: 6, letterSpacing: 0.5 },
   presented: { fontFamily: "Times-Italic", fontSize: 12, textAlign: "center", marginTop: 10, color: TEAL },
   name: { fontFamily: "Times-BoldItalic", fontSize: 40, textAlign: "center", marginTop: 2 },
-  body: { fontSize: 10, textAlign: "center", lineHeight: 1.6, marginTop: 10, paddingHorizontal: 70, color: "#3a4a60" },
+  body: { fontSize: 10, textAlign: "center", lineHeight: 1.6, marginTop: 10, paddingHorizontal: 70, color: "#425D6C" },
   facts: { flexDirection: "row", justifyContent: "center", marginTop: 14, borderTopWidth: 0.6, borderBottomWidth: 0.6, borderColor: GOLD, paddingVertical: 8, marginHorizontal: 40 },
-  fact: { flex: 1, alignItems: "center", borderRightWidth: 0.4, borderColor: "#d8cba8" },
+  fact: { flex: 1, alignItems: "center", borderRightWidth: 0.4, borderColor: "#D4E2EA" },
   factLabel: { fontSize: 6.5, letterSpacing: 2, color: TEAL },
   factValue: { fontFamily: "Helvetica-Bold", fontSize: 10.5, marginTop: 3, textAlign: "center" },
   steps: { flexDirection: "row", justifyContent: "center", marginTop: 12 },
@@ -80,7 +80,7 @@ function SealSvg() {
         const x2 = 50 + Math.cos(a) * 48, y2 = 50 + Math.sin(a) * 48;
         return <Path key={i} d={`M${x1} ${y1} L${x2} ${y2}`} stroke={GOLD} strokeWidth={2.4} />;
       })}
-      <Circle cx={50} cy={50} r={40} fill="#efe0b6" stroke={GOLD} strokeWidth={1.4} />
+      <Circle cx={50} cy={50} r={40} fill="#FFF0CF" stroke={GOLD} strokeWidth={1.4} />
       <Circle cx={50} cy={50} r={33} fill="none" stroke={GOLD} strokeWidth={0.6} strokeDasharray="2 2" />
       <Circle cx={50} cy={50} r={26} fill="none" stroke={GOLD} strokeWidth={0.8} />
       <Path d="M50 30 L53 40 L64 40 L55 46 L58 57 L50 50 L42 57 L45 46 L36 40 L47 40 Z" fill={GOLD} />
@@ -158,7 +158,7 @@ export function OfferDocument({ lead, origin }: { lead: LeadResult; origin: stri
               <View style={{ marginLeft: 8, width: 130 }}>
                 <Text style={{ fontSize: 6.5, letterSpacing: 1.5, color: TEAL }}>VERIFICATION</Text>
                 <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", marginTop: 2 }}>{lead.ref_code}</Text>
-                 <Text style={{ fontSize: 6.5, color: "#5b6b80", marginTop: 3, lineHeight: 1.4 }}>This pathway is not an admission offer. Eligibility is confirmed after application review and assessment.</Text>
+                 <Text style={{ fontSize: 6.5, color: "#526B78", marginTop: 3, lineHeight: 1.4 }}>This pathway is not an admission offer. Eligibility is confirmed after application review and assessment.</Text>
               </View>
             </View>
             <SealSvg />
