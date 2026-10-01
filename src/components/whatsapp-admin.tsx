@@ -2,6 +2,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { resendWelcome } from "@/lib/whatsapp-admin.functions";
+
+const WELCOME: Record<string, string> = { pending: "Not sent yet", sending: "Sending", sent: "Sent", failed: "Failed", awaiting_template: "Waiting for Meta approval" };
+
+export function WhatsAppHealth() {
+  const q = useQuery({ queryKey: ["wa", "health"], refetchInterval: 30000, queryFn: async () => {
+    const { data, count } = await supabase.from("whatsapp_webhook_events").select("received_at", { count: "exact" }).order("received_at", { ascending: false }).limit(1);
+    return { count: count ?? 0, last: data?.[0]?.received_at ?? null };
+  }});
+  const ok = (q.data?.count ?? 0) > 0;
+  return <p className={cn("mt-3 rounded-xl border px-3 py-2 text-xs", ok ? "border-border text-muted-foreground" : "border-destructive/40 text-destructive")}>
+    {q.isLoading ? "Checking WhatsApp connection" : ok ? `WhatsApp is reaching this site. Last update ${new Date(q.data!.last!).toLocaleString("en-GB")}.` : "No WhatsApp updates have reached this site yet. Send a message to your business number to test. If nothing appears, choose this project under Connectors, WhatsApp, Incoming messages."}
+  </p>;
+}
 
 const LABEL: Record<string, string> = { bot: "Bot chatting", queued: "Waiting for agent", agent: "With agent", closed: "Closed" };
 
@@ -68,12 +84,21 @@ export function WhatsAppThread({ leadId, welcomeStatus }: { leadId: string; welc
     },
   });
   const t = q.data;
+  const resend = useServerFn(resendWelcome);
+  const [busy, setBusy] = useState(false);
+  async function doResend() {
+    setBusy(true);
+    try { const r = await resend({ data: { leadId } }); toast.success(`Welcome: ${WELCOME[r.status] ?? r.status}`); qc.invalidateQueries(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Could not resend"); }
+    finally { setBusy(false); }
+  }
   return (
     <div className="mt-4 rounded-xl border border-border p-3">
       <div className="flex items-center justify-between gap-2 text-sm">
         <strong>WhatsApp</strong>
-        <span className="text-xs text-muted-foreground">Welcome: {welcomeStatus}{t ? ` · ${LABEL[t.conv.status]}` : ""}</span>
+        <span className="text-xs text-muted-foreground">Welcome: {WELCOME[welcomeStatus] ?? welcomeStatus}{t ? ` · ${LABEL[t.conv.status]}` : ""}</span>
       </div>
+      {welcomeStatus !== "sent" && welcomeStatus !== "sending" && <button onClick={doResend} disabled={busy} className="mt-2 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold disabled:opacity-60">{busy ? "Sending" : "Resend welcome"}</button>}
       {t && <>
         <div className="mt-2 max-h-56 space-y-1.5 overflow-y-auto">
           {t.msgs.map((m) => <div key={m.id} className={cn("max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs", m.direction === "in" ? "bg-secondary" : "ml-auto bg-primary/10")}>
