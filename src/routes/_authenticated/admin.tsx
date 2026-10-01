@@ -11,9 +11,9 @@ import logo from "@/assets/logo.png";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Leads dashboard — Momentum One" },
+      { title: "Leads dashboard | Momentum One" },
       { name: "description", content: "Momentum One admin leads dashboard." },
-      { property: "og:title", content: "Leads dashboard — Momentum One" },
+      { property: "og:title", content: "Leads dashboard | Momentum One" },
       { property: "og:description", content: "Momentum One admin leads dashboard." },
       { name: "robots", content: "noindex" },
     ],
@@ -68,7 +68,7 @@ function Admin() {
     const counts: Record<string, number> = {};
     all.forEach((l) => (counts[l.city] = (counts[l.city] ?? 0) + 1));
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => `${c} (${n})`).join(", ");
-    return { total: all.length, week, top: top || "—" };
+    return { total: all.length, week, top: top || "-" };
   }, [leads.data]);
 
   async function update(id: string, patch: Partial<Lead>) {
@@ -146,7 +146,7 @@ function Admin() {
                 <td className="p-3"><div className="font-semibold">{l.full_name}</div><div className="text-xs text-muted-foreground">{l.ref_code}</div></td>
                 <td className="p-3"><div>{l.email}</div><div className="text-xs text-muted-foreground">{l.phone}</div></td>
                 <td className="p-3">{l.city}</td>
-                <td className="p-3"><div>{l.interest ?? "—"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
+                <td className="p-3"><div>{l.interest ?? "-"}</div><div className="text-xs text-muted-foreground">{l.intake ?? ""}</div></td>
                 <td className="p-3"><Badge s={l.status} /></td>
                 <td className="p-3 text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}</td>
               </tr>
@@ -183,7 +183,7 @@ function Detail({ lead, onClose, onSave }: { lead: Lead; onClose: () => void; on
         <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
           <Row k="Email" v={<a href={`mailto:${lead.email}`} className="text-primary">{lead.email}</a>} />
           <Row k="Phone" v={<a href={`tel:${lead.phone}`} className="text-primary">{lead.phone}</a>} />
-          <Row k="City" v={lead.city} /><Row k="Interest" v={lead.interest ?? "—"} /><Row k="Intake" v={lead.intake ?? "—"} />
+          <Row k="City" v={lead.city} /><Row k="Interest" v={lead.interest ?? "-"} /><Row k="Intake" v={lead.intake ?? "-"} />
           <Row k="Created" v={new Date(lead.created_at).toLocaleString("en-GB")} />
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
