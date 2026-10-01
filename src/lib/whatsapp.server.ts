@@ -106,6 +106,7 @@ export async function sendWelcome(lead: { id: string; full_name: string; phone: 
       });
       await supabaseAdmin.from("whatsapp_messages").insert({ conversation_id: conv.id, direction: "system", body, wa_message_id: id, status: "accepted" });
       await supabaseAdmin.from("leads").update({ whatsapp_status: "sent" }).eq("id", lead.id);
+      await supabaseAdmin.from("whatsapp_conversations").update({ bot_enabled: true, activated_via: "welcome", lead_id: lead.id, updated_at: new Date().toISOString() }).eq("id", conv.id);
       await reconcileStatus(id);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
