@@ -176,7 +176,7 @@ export function Funnel() {
                    <span><strong className="block text-sm">{t("funnel.whatsappOk", undefined, "WhatsApp is okay")}</strong><span className="text-xs text-muted-foreground">{t("funnel.whatsappFast", undefined, "Usually the quickest way to reach you")}</span></span>
                   <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
                 </label>
-                  <Primary disabled={!phoneOk} onClick={() => phoneOk && go(4)}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
+                  <Primary disabled={!phoneOk}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
                  {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">{cc === "44" ? t("funnel.invalidUk", undefined, "Enter a valid UK mobile number.") : t("funnel.invalid", undefined, "Enter a valid mobile number.")}</p>}
               </form>
             )}
