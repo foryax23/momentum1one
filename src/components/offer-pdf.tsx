@@ -17,7 +17,7 @@ const s = StyleSheet.create({
   logo: { width: 78, height: 67, objectFit: "contain" },
   refLabel: { fontSize: 7, letterSpacing: 2, color: TEAL, textAlign: "right" },
   refValue: { fontFamily: "Helvetica-Bold", fontSize: 12, textAlign: "right", marginTop: 2 },
-  eyebrow: { fontSize: 8.5, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: -6 },
+  eyebrow: { fontSize: 8.5, letterSpacing: 4, color: GOLD, textAlign: "center", marginTop: 2 },
   title: { fontFamily: "Times-Bold", fontSize: 32, textAlign: "center", marginTop: 6, letterSpacing: 0.5 },
   presented: { fontFamily: "Times-Italic", fontSize: 12, textAlign: "center", marginTop: 10, color: TEAL },
   name: { fontFamily: "Times-BoldItalic", fontSize: 40, textAlign: "center", marginTop: 2 },
