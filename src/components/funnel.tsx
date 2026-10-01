@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -145,7 +145,7 @@ export function Funnel() {
 
           {step === 2 && (
             <form onSubmit={(e) => { e.preventDefault(); if (phoneOk) go(3); }}>
-              <Back onClick={() => go(2)} />
+               <Back onClick={() => go(1)} />
               <div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-full border border-teal/30 bg-teal/10 text-teal"><IconPhone size={36} /></div>
               <Q title="What is the best number to reach you on?" sub="A course advisor will use this to discuss your options." />
               <Label>UK mobile</Label>
@@ -201,7 +201,7 @@ export function Funnel() {
 
               <Primary type="button" onClick={download} disabled={downloading}>
                 {downloading ? <Spinner /> : <IconDownload size={20} />}
-                Download your offer (PDF)
+                 Download your pathway (PDF)
               </Primary>
               <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground"><IconPhone size={16} /> An advisor will call you within 24 hours.</p>
             </div>

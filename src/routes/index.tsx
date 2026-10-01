@@ -155,14 +155,18 @@ function Index() {
       <Slide id="courses" n="04" kicker="Featured courses" className="bg-ruled">
         <Title>Courses that <span className="text-teal">open doors.</span></Title>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            { t: "BSc (Hons) Public Health with Foundation Year", m: "Luton campus", d: "4 years · Full time", i: IconBook },
-            { t: "BA (Hons) Business Management", m: "Manchester, Derby, Birmingham", d: "Flexible weekly timetable", i: IconCampus },
-            { t: "Health and Social Care", m: "Manchester and Salford", d: "Day, evening and weekend groups", i: IconPin },
-          ].map((c, k) => (
+            {[
+             { t: "BA (Hons) Business Management", m: "Manchester, Sunderland, Derby, Newcastle", d: "University of Wolverhampton", i: IconCampus },
+             { t: "BA (Hons) Digital Marketing Management", m: "Manchester, Sunderland, Derby, Newcastle", d: "University of Wolverhampton", i: IconBook },
+             { t: "BA (Hons) Health and Social Care", m: "Manchester, Sunderland, Derby", d: "University of Wolverhampton", i: IconPin },
+             { t: "BSc (Hons) Public Health", m: "Luton", d: "University of Wolverhampton", i: IconBook },
+             { t: "BSc (Hons) Psychology", m: "Manchester, Sunderland, Derby", d: "Health Sciences University", i: IconCampus },
+             { t: "BSc (Hons) Fashion Management and Strategy", m: "Manchester, Sunderland, Derby", d: "Arts University Bournemouth", i: IconPin },
+             { t: "BA (Hons) Events Management", m: "Manchester, Sunderland, Derby", d: "Arts University Bournemouth", i: IconBook },
+           ].map((c, k) => (
             <motion.article key={c.t} initial={{ opacity: 0, rotateY: -25, x: -20 }} whileInView={{ opacity: 1, rotateY: 0, x: 0 }} viewport={{ once: true, amount: 0.4 }}
               transition={{ delay: k * 0.15, duration: 0.9, ease }} style={{ transformPerspective: 1200, transformOrigin: "left center" }}
-              className="relative flex flex-col rounded-sm border border-ink/15 bg-card p-7 shadow-paper">
+             className={cn("relative flex flex-col rounded-sm border border-ink/15 bg-card p-7 shadow-paper", k === 6 && "md:col-span-3 md:mx-auto md:w-[calc((100%-2.5rem)/3)]")}>
               <span className="absolute right-5 top-5 font-display text-[10px] font-bold tracking-[0.3em] text-muted-foreground">P. {12 + k * 8}</span>
               <span className="text-teal"><c.i size={36} /></span>
               <h3 className="mt-6 text-lg font-bold leading-snug">{c.t}</h3>
