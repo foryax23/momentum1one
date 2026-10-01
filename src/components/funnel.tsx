@@ -163,7 +163,7 @@ export function Funnel() {
                 <Rocket className="h-9 w-9 -rotate-45 text-primary-foreground" />
                 <motion.span className="absolute inset-0 rounded-full border-2 border-primary" initial={{ scale: 1, opacity: 0.8 }} animate={{ scale: 2.2, opacity: 0 }} transition={{ duration: 1.6, repeat: Infinity }} />
               </motion.div>
-              <h3 className="mt-6 text-2xl font-bold sm:text-3xl">Lift-off, {first}! 🚀</h3>
+              <h3 className="mt-6 text-2xl font-bold sm:text-3xl">Lift-off, {first}!</h3>
               <p className="mt-2 text-sm text-muted-foreground">Your Certificate of Pre-Approved Pathway is ready.</p>
 
               <motion.div initial={{ rotateX: 30, opacity: 0, y: 20 }} animate={{ rotateX: 0, opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease }} style={{ perspective: 800 }}
