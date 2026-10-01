@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { IconArrowLeft, IconArrowRight, IconDownload, IconPin, IconTick, Spinner } from "./icons";
 import { RocketAssembly } from "./funnel-scenes";
+import { useI18n } from "@/lib/i18n";
 
 type Data = { full_name: string; city: string; selected_course: string; study_route: "Foundation Year" | "Year 1" | ""; email: string; phone: string; whatsapp: boolean; consent: boolean; email_marketing: boolean; phone_marketing: boolean; whatsapp_marketing: boolean; website: string };
 const STEPS = 5;
@@ -20,6 +21,7 @@ const DRAFT_KEY = "momentum-one-application";
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Funnel() {
+  const { t, locale } = useI18n();
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
   const [d, setD] = useState<Data>({ full_name: "", city: "", selected_course: "", study_route: "", email: "", phone: "", whatsapp: true, consent: false, email_marketing: false, phone_marketing: false, whatsapp_marketing: false, website: "" });
@@ -104,7 +106,7 @@ export function Funnel() {
     setDownloading(true);
     try {
       const { downloadOffer } = await loadOfferPdf();
-      await downloadOffer(result);
+      await downloadOffer(result, locale);
     } catch (error) {
       console.error(error);
       toast.error("We couldn't create the PDF. Please try again.");
@@ -122,17 +124,17 @@ export function Funnel() {
             transition={{ duration: 0.42, ease }}>
             {step === 0 && (
               <form onSubmit={(event) => { event.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }} className="space-y-4">
-                <Question title="What's your name?" hint="So we know what to call you." />
-                <FieldLabel>Full name</FieldLabel>
+                 <Question title={t("funnel.nameQuestion", undefined, "What's your name?")} hint={t("funnel.nameHint", undefined, "So we know what to call you.")} />
+                 <FieldLabel>{t("funnel.fullName", undefined, "Full name")}</FieldLabel>
                 <input autoFocus autoComplete="name" value={d.full_name} maxLength={100} onChange={(event) => set("full_name", event.target.value)} placeholder="e.g. Amira Khan" className={inputClass} />
-                <Primary disabled={d.full_name.trim().length < 2}>Next question <IconArrowRight size={20} /></Primary>
-                <p className="text-center text-xs text-muted-foreground">Four quick questions. No long application.</p>
+                 <Primary disabled={d.full_name.trim().length < 2}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
+                 <p className="text-center text-xs text-muted-foreground">{t("funnel.quick", undefined, "Four quick questions. No long application.")}</p>
               </form>
             )}
 
             {step === 1 && (
               <div className="space-y-4">
-                <Question title={`Hi ${first}, where in the UK do you live?`} hint="Choose the nearest major city and we will match your campus." />
+                 <Question title={t("funnel.cityQuestion", { name: first ?? "" }, `Hi ${first}, where in the UK do you live?`)} hint={t("funnel.cityHint", undefined, "Choose the nearest major city and we will match your campus.")} />
                 <div className="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto pr-1">
                   {UK_CITIES.map((city) => (
                     <Button key={city} type="button" variant="outline" onClick={() => set("city", city)}
@@ -142,16 +144,16 @@ export function Funnel() {
                 {campus && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><IconPin size={18} /></span>
-                    <p className="text-sm"><strong className="block text-primary">Nearest campus: {campus.name}</strong><span className="text-muted-foreground">About {campus.miles} miles from {d.city}</span></p>
+                     <p className="text-sm"><strong className="block text-primary">{t("funnel.nearest", { campus: campus.name }, `Nearest campus: ${campus.name}`)}</strong><span className="text-muted-foreground">{t("funnel.distance", { miles: campus.miles, city: d.city }, `About ${campus.miles} miles from ${d.city}`)}</span></p>
                   </motion.div>
                 )}
-                <Primary type="button" disabled={!d.city} onClick={() => go(2)}>Choose my course <IconArrowRight size={20} /></Primary>
+                 <Primary type="button" disabled={!d.city} onClick={() => go(2)}>{t("funnel.chooseCourse", undefined, "Choose my course")} <IconArrowRight size={20} /></Primary>
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-4">
-                <Question title={`What would you like to study in ${campus?.name}?`} hint="Choose a course and entry route for your personalised offer." />
+                 <Question title={t("funnel.studyQuestion", { campus: campus?.name ?? "" }, `What would you like to study in ${campus?.name}?`)} hint={t("funnel.studyHint", undefined, "Choose a course and entry route for your personalised offer.")} />
                 <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
                   {courses.map((course) => {
                     const selected = d.selected_course === course.title && d.study_route === course.route;
@@ -161,28 +163,28 @@ export function Funnel() {
                     </Button>;
                   })}
                 </div>
-                <Primary type="button" disabled={!d.selected_course} onClick={() => go(3)}>Use this course <IconArrowRight size={20} /></Primary>
+                 <Primary type="button" disabled={!d.selected_course} onClick={() => go(3)}>{t("funnel.useCourse", undefined, "Use this course")} <IconArrowRight size={20} /></Primary>
               </div>
             )}
 
             {step === 3 && (
               <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(4); }} className="space-y-4">
-                <Question title="What's the best number to reach you?" hint="A course advisor will use it to discuss your options." />
-                <FieldLabel>Mobile number</FieldLabel>
+                 <Question title={t("funnel.phoneQuestion", undefined, "What's the best number to reach you?")} hint={t("funnel.phoneHint", undefined, "A course advisor will use it to discuss your options.")} />
+                 <FieldLabel>{t("funnel.mobile", undefined, "Mobile number")}</FieldLabel>
                 <div className="flex gap-2"><select aria-label="Country code" value={cc} onChange={(event) => setCc(event.target.value)} className="h-14 w-28 shrink-0 rounded-xl border border-border bg-secondary px-2 font-bold text-primary outline-none focus:border-teal">{COUNTRY_CODES.map(([code, name]) => <option key={name} value={code}>{name} +{code}</option>)}</select><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder={cc === "44" ? "7700 900123" : "Mobile number without the country code"} className={cn(inputClass, "min-w-0 flex-1")} /></div>
                 <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
-                  <span><strong className="block text-sm">WhatsApp is okay</strong><span className="text-xs text-muted-foreground">Usually the quickest way to reach you</span></span>
+                   <span><strong className="block text-sm">{t("funnel.whatsappOk", undefined, "WhatsApp is okay")}</strong><span className="text-xs text-muted-foreground">{t("funnel.whatsappFast", undefined, "Usually the quickest way to reach you")}</span></span>
                   <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
                 </label>
-                 <Primary disabled={!phoneOk} onClick={() => phoneOk && go(4)}>Next question <IconArrowRight size={20} /></Primary>
-                {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">{cc === "44" ? "Enter a valid UK mobile number." : "Enter a valid mobile number."}</p>}
+                  <Primary disabled={!phoneOk} onClick={() => phoneOk && go(4)}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
+                 {d.phone && !phoneOk && <p className="text-sm font-medium text-destructive">{cc === "44" ? t("funnel.invalidUk", undefined, "Enter a valid UK mobile number.") : t("funnel.invalid", undefined, "Enter a valid mobile number.")}</p>}
               </form>
             )}
 
             {step === 4 && (
               <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="space-y-4">
-                 <Question title="Where should we send your offer?" hint="We will prepare your personalised five-page course offer." />
-                <FieldLabel>Email address</FieldLabel>
+                  <Question title={t("funnel.offerQuestion", undefined, "Where should we send your offer?")} hint={t("funnel.offerHint", undefined, "We will prepare your personalised five-page course offer.")} />
+                 <FieldLabel>{t("funnel.emailAddress", undefined, "Email address")}</FieldLabel>
                 <div className="relative"><input type="email" autoFocus autoComplete="email" value={d.email} maxLength={255} onChange={(event) => set("email", event.target.value)} placeholder="you@example.com" className={inputClass} />{emailOk && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-chart-4" />}</div>
                 <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(event) => set("website", event.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
                  <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={d.consent} onChange={(event) => set("consent", event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--primary)]" /><span>I have read the <a href="/privacy" target="_blank" className="font-bold text-primary underline">privacy notice</a> and understand how my enquiry will be handled.</span></label>
@@ -191,20 +193,20 @@ export function Funnel() {
                    <ConsentChoice checked={d.email_marketing} onChange={(v) => set("email_marketing", v)}>Email updates</ConsentChoice>
                    <ConsentChoice checked={d.phone_marketing} onChange={(v) => set("phone_marketing", v)}>Phone updates</ConsentChoice>
                  </fieldset>
-                <Primary disabled={!emailOk || !d.consent || loading}>{loading ? <Spinner /> : null}{loading ? "Preparing your options" : "Show my course options"}{!loading && <IconArrowRight size={20} />}</Primary>
+                 <Primary disabled={!emailOk || !d.consent || loading}>{loading ? <Spinner /> : null}{loading ? t("funnel.preparing", undefined, "Preparing your options") : t("funnel.show", undefined, "Show my course options")}{!loading && <IconArrowRight size={20} />}</Primary>
               </form>
             )}
 
             {step === STEPS && result && (
               <div className="grid justify-items-center gap-3 text-center">
                  <RocketAssembly step={STEPS - 1} complete />
-                 <Question title={`Your offer is ready, ${first}.`} hint={`${result.selected_course} at ${result.nearest_campus}.`} centered />
+                  <Question title={t("funnel.ready", { name: first ?? "" }, `Your offer is ready, ${first}.`)} hint={`${result.selected_course} at ${result.nearest_campus}.`} centered />
                 <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
-                 <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}Download your personalised offer</Primary>
-                 <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">Open your secure offer link</a>
-                <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} />
-                <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">Create my student account</a>
-                <p className="text-xs text-muted-foreground">Reference: {result.ref_code}</p>
+                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
+                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your secure offer link")}</a>
+                 <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} />
+                 <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">{t("funnel.create", undefined, "Create my student account")}</a>
+                 <p className="text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")}: {result.ref_code}</p>
               </div>
             )}
           </motion.div>
@@ -215,12 +217,14 @@ export function Funnel() {
 }
 
 function Progress({ step, onBack }: { step: number; onBack: () => void }) {
+  const { t } = useI18n();
+  const labels = [t("funnel.name", undefined, "Name"), t("funnel.location", undefined, "Location"), t("funnel.course", undefined, "Course"), t("funnel.phone", undefined, "Phone"), t("funnel.email", undefined, "Email")];
   return <div className="px-4 pt-4">
-    <div className="flex min-h-8 items-center justify-between"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", step === 0 && "invisible")}><IconArrowLeft size={16} />Back</Button><span className="text-xs font-semibold tabular-nums text-muted-foreground">{step + 1} of {STEPS}</span></div>
+    <div className="flex min-h-8 items-center justify-between"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", step === 0 && "invisible")}><IconArrowLeft size={16} />{t("funnel.back", undefined, "Back")}</Button><span className="text-xs font-semibold tabular-nums text-muted-foreground">{step + 1} {t("funnel.of", undefined, "of")} {STEPS}</span></div>
     <div className="relative mx-3 mt-2 h-5"><div className="absolute left-[10%] right-[10%] top-2 h-0.5 bg-secondary" /><motion.div className="absolute left-[10%] top-2 h-0.5 bg-teal" animate={{ width: `${step * 20}%` }} transition={{ duration: .55, ease }} />
-      {LABELS.map((label, index) => <span key={label} className={cn("absolute top-[11px] h-3 w-3 -translate-x-1/2 rounded-full border-2", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${10 + index * 20}%` }} />)}
+      {labels.map((label, index) => <span key={label} className={cn("absolute top-[11px] h-3 w-3 -translate-x-1/2 rounded-full border-2", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${10 + index * 20}%` }} />)}
     </div>
-    <div className="flex justify-between px-1">{LABELS.map((label, index) => <span key={label} className={cn("w-1/5 text-center text-[9px] font-semibold uppercase tracking-wider", index <= step ? "text-primary" : "text-muted-foreground")}>{label}</span>)}</div>
+    <div className="flex justify-between px-1">{labels.map((label, index) => <span key={label} className={cn("w-1/5 text-center text-[9px] font-semibold uppercase tracking-wider", index <= step ? "text-primary" : "text-muted-foreground")}>{label}</span>)}</div>
   </div>;
 }
 
@@ -231,6 +235,7 @@ function Primary({ children, className, ...props }: React.ComponentProps<typeof 
 function ConsentChoice({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) { return <label className="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-[var(--primary)]" /><span>{children}</span></label>; }
 
 function WhatsAppRedirect({ name, reference }: { name: string; reference: string }) {
+  const { t } = useI18n();
   const [left, setLeft] = useState(6);
   const [cancelled, setCancelled] = useState(false);
   const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi Momentum One, I'm ${name}. My reference is ${reference}.`)}`;
@@ -244,7 +249,7 @@ function WhatsAppRedirect({ name, reference }: { name: string; reference: string
     return () => window.clearTimeout(t);
   }, [left, cancelled, url]);
   return <div className="grid w-full gap-1">
-    <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-14 w-full place-items-center rounded-xl bg-chart-4 px-5 text-base font-bold text-primary-foreground transition-transform active:scale-[.985]">Connect with us on WhatsApp</a>
-    {!cancelled && left > 0 && <p className="text-xs text-muted-foreground">Opening WhatsApp in {left}s. <button type="button" onClick={() => setCancelled(true)} className="font-semibold underline">Stay here</button></p>}
+    <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-14 w-full place-items-center rounded-xl bg-chart-4 px-5 text-base font-bold text-primary-foreground transition-transform active:scale-[.985]">{t("funnel.whatsapp", undefined, "Connect with us on WhatsApp")}</a>
+    {!cancelled && left > 0 && <p className="text-xs text-muted-foreground">{t("funnel.opening", { seconds: left }, `Opening WhatsApp in ${left}s.`)} <button type="button" onClick={() => setCancelled(true)} className="font-semibold underline">{t("funnel.stay", undefined, "Stay here")}</button></p>}
   </div>;
 }

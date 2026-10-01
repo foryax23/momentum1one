@@ -1,8 +1,11 @@
 import logo from "@/assets/logo.png";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/lib/i18n";
 
 export function LegalPage({ eyebrow, title, intro, children }: { eyebrow: string; title: string; intro: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return <main className="min-h-screen bg-background">
-    <header className="border-b border-border bg-card"><div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4"><a href="/" aria-label="Momentum One home"><img src={logo} alt="Momentum One" className="h-10 w-auto" /></a><a href="/" className="text-sm font-bold text-primary">Back home</a></div></header>
+    <header className="border-b border-border bg-card"><div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-5 py-4"><a href="/" aria-label="Momentum One home"><img src={logo} alt="Momentum One" className="h-10 w-auto" /></a><div className="flex items-center gap-3"><LanguageSwitcher compact /><a href="/" className="text-sm font-bold text-primary">{t("legal.back", undefined, "Back home")}</a></div></div></header>
     <article className="mx-auto max-w-4xl px-5 py-14 sm:py-20">
       <p className="text-xs font-bold uppercase tracking-[.16em] text-teal">{eyebrow}</p>
       <h1 className="mt-3 text-4xl font-bold text-primary sm:text-6xl">{title}</h1>

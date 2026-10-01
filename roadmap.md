@@ -30,3 +30,5 @@
 - [ ] Confirm ICO registration, retention schedule and final legal review
 - [ ] Verify password recovery email and expired-link handling after publishing
 - [x] Place the new landscape, courses, campuses and journey films in their matching homepage sections
+- [x] Blend section videos into the page while keeping their content clearly visible
+- [x] Add persisted EN/RO/ES selection across the public homepage, application, account entry, offers, cookies and key legal notices

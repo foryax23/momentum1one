@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { openCookieSettings } from "@/components/cookie-consent";
 import { IconAgents, IconUniversity } from "@/components/icons";
 import vortexHubAsset from "@/assets/partners/vortex-hub.webp.asset.json";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/lib/i18n";
 
 const TITLE = "Launch your UK degree | Momentum One";
 const DESC = "Foundation Year and Year 1 degrees in Manchester, Sunderland, Derby, Newcastle and Luton. Check your options in under a minute.";
@@ -47,6 +49,7 @@ const FAQS: [string, string][] = [
 ];
 
 function Index() {
+  const { t } = useI18n();
   return <main id="top" className="overflow-x-hidden bg-background">
     <AnnouncementBar />
     <Header />
@@ -54,12 +57,12 @@ function Index() {
       <HeroVideo />
       <div className="relative mx-auto grid max-w-6xl items-start gap-8 px-5 py-9 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14 lg:py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease }} className="grid gap-5">
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">Your next move starts here</p>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">{t("home.eyebrow", undefined, "Your next move starts here")}</p>
           <RotatingHeadline />
-          <p className="max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80">Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.</p>
+          <p className="max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80">{t("home.intro", undefined, "Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.")}</p>
           <div className="grid grid-cols-2 gap-px overflow-hidden border border-primary-foreground/15 bg-primary-foreground/15">
-            <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">10+ team</strong>supporting applicants</p></div>
-            <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">100+ students</strong>helped</p></div>
+             <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.team", undefined, "10+ team")}</strong>{t("home.teamSub", undefined, "supporting applicants")}</p></div>
+             <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.students", undefined, "100+ students")}</strong>{t("home.studentsSub", undefined, "helped")}</p></div>
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .2, duration: .9, ease }}><Funnel /></motion.div>
@@ -72,10 +75,10 @@ function Index() {
           <SectionVideo kind="start" className="w-full" />
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">Your application, made clearer</p>
-          <h2 className="mt-3 text-3xl font-bold italic sm:text-4xl">Start your university journey with a plan.</h2>
-          <p className="mt-4 leading-relaxed text-primary-foreground/75">Check your course and campus options, receive personalised information, then continue with an advisor.</p>
-          <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "mt-6 h-12 rounded-lg px-5 font-bold")}>Check my options <IconArrowRight size={18} /></a>
+           <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">{t("home.videoEyebrow", undefined, "Your application, made clearer")}</p>
+           <h2 className="mt-3 text-3xl font-bold italic sm:text-4xl">{t("home.videoTitle", undefined, "Start your university journey with a plan.")}</h2>
+           <p className="mt-4 leading-relaxed text-primary-foreground/75">{t("home.videoText", undefined, "Check your course and campus options, receive personalised information, then continue with an advisor.")}</p>
+           <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "mt-6 h-12 rounded-lg px-5 font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight size={18} /></a>
         </motion.div>
       </div>
     </section>
@@ -83,13 +86,13 @@ function Index() {
     <UniversityRail />
 
     <Section id="courses">
-      <ImmersiveSectionIntro kind="courses" eyebrow="Courses" title="Seven degrees. Pick the one that fits." intro="Hover or tap a course to see where it runs, then check your options in one click." />
+      <ImmersiveSectionIntro kind="courses" eyebrow={t("home.coursesEyebrow", undefined, "Courses")} title={t("home.coursesTitle", undefined, "Seven degrees. Pick the one that fits.")} intro={t("home.coursesIntro", undefined, "Hover or tap a course to see where it runs, then check your options in one click.")} />
       <div className="mt-6"><CourseDeck /></div>
       <CourseComparison />
     </Section>
 
     <Section id="for-you">
-      <SectionHeading eyebrow="Who it's for" title="Built for real lives" />
+      <SectionHeading eyebrow={t("home.forYou", undefined, "Who it's for")} title={t("home.realLives", undefined, "Built for real lives")} />
       <AudienceStrip />
     </Section>
 
@@ -101,20 +104,20 @@ function Index() {
     </section>
 
     <Section id="campuses">
-      <ImmersiveSectionIntro kind="campuses" eyebrow="Campuses" title="Study close to home" intro="We match you to your nearest campus automatically when you sign up." align="right" />
+      <ImmersiveSectionIntro kind="campuses" eyebrow={t("home.campusesEyebrow", undefined, "Campuses")} title={t("home.campusesTitle", undefined, "Study close to home")} intro={t("home.campusesIntro", undefined, "We match you to your nearest campus automatically when you sign up.")} align="right" />
       <CampusCards />
     </Section>
 
     <Section id="journey">
-      <ImmersiveSectionIntro kind="journey" eyebrow="How it works" title="From sign-up to your first class" intro="Five clear stages, with a Momentum One advisor alongside you when you need support." />
+      <ImmersiveSectionIntro kind="journey" eyebrow={t("home.journeyEyebrow", undefined, "How it works")} title={t("home.journeyTitle", undefined, "From sign-up to your first class")} intro={t("home.journeyIntro", undefined, "Five clear stages, with a Momentum One advisor alongside you when you need support.")} />
       <ScrollTimeline steps={JOURNEY} />
     </Section>
 
     <Section id="finance">
       <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-10 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">Funding and eligibility</p>
-          <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">Know what to prepare</h2>
+           <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{t("home.financeEyebrow", undefined, "Funding and eligibility")}</p>
+           <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{t("home.financeTitle", undefined, "Know what to prepare")}</h2>
           <p className="mt-3 text-muted-foreground">Foundation Year can be a route for applicants without the usual A-level profile. Year 1 is available for selected courses and campuses. Admission and student finance depend on your circumstances, so an advisor confirms both before you commit.</p>
           <div className="mt-5 flex flex-wrap gap-2">{["Foundation routes", "Selected Year 1 routes", "Day, evening and weekend patterns"].map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div>
         </div>
@@ -129,8 +132,8 @@ function Index() {
 
     <section className="mt-20 bg-primary py-16 sm:mt-24 sm:py-20">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[.16em] text-gold">After you apply</p>
-        <h2 className="mt-2 max-w-2xl text-3xl font-bold italic text-primary-foreground sm:text-4xl">More than a confirmation screen</h2>
+         <p className="text-xs font-semibold uppercase tracking-[.16em] text-gold">{t("home.afterEyebrow", undefined, "After you apply")}</p>
+         <h2 className="mt-2 max-w-2xl text-3xl font-bold italic text-primary-foreground sm:text-4xl">{t("home.afterTitle", undefined, "More than a confirmation screen")}</h2>
         <p className="mt-3 max-w-2xl text-primary-foreground/75">You receive practical information you can keep, plus a clear route to a Momentum One advisor.</p>
         <div className="mt-8"><WhatYouReceive /></div>
       </div>
@@ -139,8 +142,8 @@ function Index() {
     <Section id="faq">
       <div className="grid gap-8 md:grid-cols-[.8fr_1.2fr]">
         <div>
-          <SectionHeading eyebrow="Questions" title="Before you sign up" />
-          <a href={WA} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary">Still unsure? Message us on WhatsApp <IconArrowRight size={16} /></a>
+           <SectionHeading eyebrow={t("home.questions", undefined, "Questions")} title={t("home.before", undefined, "Before you sign up")} />
+           <a href={WA} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary">{t("home.whatsapp", undefined, "Still unsure? Message us on WhatsApp")} <IconArrowRight size={16} /></a>
         </div>
         <Accordion type="single" collapsible className="space-y-2">{FAQS.map(([q, a]) => <AccordionItem key={q} value={q} className="rounded-xl border border-border bg-card px-4 transition-colors data-[state=open]:border-primary/40"><AccordionTrigger className="font-sans text-base font-bold">{q}</AccordionTrigger><AccordionContent className="text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion>
       </div>
@@ -149,26 +152,28 @@ function Index() {
     <section className="relative mt-20 overflow-hidden bg-primary sm:mt-24">
       <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(var(--gold)_1px,transparent_1px),linear-gradient(90deg,var(--gold)_1px,transparent_1px)] [background-size:64px_64px]" />
       <div className="relative mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-16 sm:flex-row sm:items-center sm:px-8">
-        <div><h2 className="text-3xl font-bold italic text-primary-foreground sm:text-4xl">Your degree starts with one minute.</h2><p className="mt-2 text-primary-foreground/80">Answer a few questions and download your personalised offer today.</p></div>
-        <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "h-14 rounded-xl px-7 text-base font-bold active:scale-[.98]")}>Check my options <IconArrowRight /></a>
+         <div><h2 className="text-3xl font-bold italic text-primary-foreground sm:text-4xl">{t("home.finalTitle", undefined, "Your degree starts with one minute.")}</h2><p className="mt-2 text-primary-foreground/80">{t("home.finalText", undefined, "Answer a few questions and download your personalised offer today.")}</p></div>
+         <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "h-14 rounded-xl px-7 text-base font-bold active:scale-[.98]")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a>
       </div>
     </section>
 
-    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · Company 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">Privacy notice</a><a href="/cookies">Cookie notice</a><a href="/terms">Website terms</a><a href="/disclaimer">Application disclaimer</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">Cookie settings</button><a href="/auth">Account sign in</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">Powered by</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" className="h-8 w-auto object-contain" /></div></div></footer>
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>Check my options <IconArrowRight /></a></div>
+    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · Company 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">{t("footer.privacy", undefined, "Privacy notice")}</a><a href="/cookies">{t("footer.cookies", undefined, "Cookie notice")}</a><a href="/terms">{t("footer.terms", undefined, "Website terms")}</a><a href="/disclaimer">{t("footer.disclaimer", undefined, "Application disclaimer")}</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">{t("footer.settings", undefined, "Cookie settings")}</button><a href="/auth">{t("footer.signin", undefined, "Account sign in")}</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">{t("footer.powered", undefined, "Powered by")}</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" className="h-8 w-auto object-contain" /></div></div></footer>
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a></div>
   </main>;
 }
 
 function AnnouncementBar() {
-  const text = "January 2027 applications open · Personalised course options in one minute · Advisor support available · ";
+  const { t } = useI18n();
+  const text = t("home.announcement", undefined, "January 2027 applications open · Personalised course options in one minute · Advisor support available · ");
   return <div className="overflow-hidden bg-gold py-2 text-primary" aria-label="January 2027 applications open"><div className="animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]"><span>{text}</span><span aria-hidden>{text}</span></div></div>;
 }
 
 function RotatingHeadline() {
-  const phrases = ["close to home.", "built around life.", "with a clear next step."];
+  const { t } = useI18n();
+  const phrases = [t("home.phrase1", undefined, "close to home."), t("home.phrase2", undefined, "built around life."), t("home.phrase3", undefined, "with a clear next step.")];
   const [index, setIndex] = useState(0);
   useEffect(() => { const timer = window.setInterval(() => setIndex((value) => (value + 1) % phrases.length), 3200); return () => window.clearInterval(timer); }, []);
-  return <h1 className="max-w-2xl text-[2.75rem] font-bold leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">A UK degree,<span className="relative mt-1 block min-h-[1.08em] overflow-hidden text-gold"><motion.span key={phrases[index]} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -28 }} transition={{ duration: .5, ease }} className="block">{phrases[index]}</motion.span></span></h1>;
+  return <h1 className="max-w-2xl text-[2.75rem] font-bold leading-[1.02] text-primary-foreground sm:text-6xl lg:text-[4.3rem]">{t("home.headline", undefined, "A UK degree,")}<span className="relative mt-1 block min-h-[1.08em] overflow-hidden text-gold"><motion.span key={phrases[index]} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -28 }} transition={{ duration: .5, ease }} className="block">{phrases[index]}</motion.span></span></h1>;
 }
 
 function UniversityRail() {
@@ -177,13 +182,14 @@ function UniversityRail() {
 }
 
 function Header() {
+  const { t } = useI18n();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => { const on = () => setScrolled(window.scrollY > 24); on(); window.addEventListener("scroll", on, { passive: true }); return () => window.removeEventListener("scroll", on); }, []);
   return <header className={cn("sticky top-0 z-40 border-b bg-card/90 backdrop-blur-xl transition-all duration-300", scrolled ? "border-border shadow-sm" : "border-transparent")}>
     <div className={cn("mx-auto flex max-w-6xl items-center justify-between px-5 transition-all duration-300 sm:px-8", scrolled ? "py-2" : "py-3")}>
       <a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className={cn("w-auto transition-all duration-300", scrolled ? "h-8" : "h-10")} /></a>
-      <nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">Courses</a><a href="#campuses">Campuses</a><a href="#journey">How it works</a><a href="#finance">Funding</a></nav>
-      <div className="flex items-center gap-2"><a href="/auth" className="hidden text-sm font-semibold text-primary hover:text-teal sm:block">My account</a><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground")}>Start here</a></div>
+      <nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">{t("nav.courses", undefined, "Courses")}</a><a href="#campuses">{t("nav.campuses", undefined, "Campuses")}</a><a href="#journey">{t("nav.journey", undefined, "How it works")}</a><a href="#finance">{t("nav.funding", undefined, "Funding")}</a></nav>
+      <div className="flex items-center gap-2"><LanguageSwitcher compact /><a href="/auth" className="hidden text-sm font-semibold text-primary hover:text-teal sm:block">{t("nav.account", undefined, "My account")}</a><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "hidden rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground sm:inline-flex")}>{t("nav.start", undefined, "Start here")}</a></div>
     </div>
   </header>;
 }
@@ -193,8 +199,8 @@ function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: 
   const right = align === "right";
   return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
     <SectionVideo kind={kind} immersive className="absolute inset-0" />
-    <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary via-primary/85 to-primary/20" : "bg-gradient-to-r from-primary via-primary/85 to-primary/20")} />
-    <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-primary/35" />
+    <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary/90 via-primary/40 to-transparent" : "bg-gradient-to-r from-primary/90 via-primary/40 to-transparent")} />
+    <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-primary/70 to-transparent" />
     <div className={cn("relative flex min-h-80 max-w-3xl flex-col justify-end px-5 pb-12 pt-24 text-primary-foreground sm:min-h-96 sm:px-10 sm:pb-16", right && "ml-auto text-right sm:items-end")}>
       <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">{eyebrow}</p>
       <h2 className="mt-3 text-3xl font-bold italic sm:text-5xl">{title}</h2>
