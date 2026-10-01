@@ -16,3 +16,4 @@
 - Public offer links use expiring random tokens stored only as SHA-256 hashes so lead data is not enumerable.
 - WhatsApp: inbound webhook stores every delivery in whatsapp_webhook_events before processing; bot replies are claimed per inbound message (reply_status) so retries never double-send.
 - The PDF renderer is loaded only via loadOfferPdf(), gated on import.meta.env.SSR, because bundling it into the server worker crashed every page.
+- The homepage hero video is a silent, reduced-motion-aware CDN asset; factual text and application controls stay as semantic foreground content.
