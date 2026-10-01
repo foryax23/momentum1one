@@ -101,7 +101,7 @@ export function Funnel() {
     } finally { setLoading(false); }
   }
 
-  async function download() {
+  async function downloadOfferDocument() {
     if (!result) return;
     setDownloading(true);
     try {
@@ -202,8 +202,8 @@ export function Funnel() {
                  <RocketAssembly step={STEPS - 1} complete />
                   <Question title={t("funnel.ready", { name: first ?? "" }, `Your offer is ready, ${first}.`)} hint={`${result.selected_course} at ${result.nearest_campus}.`} centered />
                 <div className="w-full rounded-xl bg-secondary p-4 text-left"><h3 className="font-sans text-sm font-bold">What happens next</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>We call or message you about the right course.</li><li>We check your documents and entry route.</li><li>We help you prepare for the PFF Day.</li></ol></div>
-                  <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
-                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your secure offer link")}</a>
+                  <Primary type="button" onClick={downloadOfferDocument} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
+                  <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your private document centre")}</a>
                  <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} />
                  <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">{t("funnel.create", undefined, "Create my student account")}</a>
                  <p className="text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")}: {result.ref_code}</p>
