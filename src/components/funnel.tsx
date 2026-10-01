@@ -131,7 +131,7 @@ export function Funnel() {
             )}
 
             {step === 3 && (
-              <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(3); }} className="space-y-4">
+              <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(4); }} className="space-y-4">
                 <Question title="What's the best number to reach you?" hint="A course advisor will use it to discuss your options." />
                 <FieldLabel>UK mobile</FieldLabel>
                 <div className="flex gap-2"><span className="grid h-14 place-items-center rounded-xl border border-border bg-secondary px-3 font-bold text-primary">+44</span><input type="tel" autoFocus autoComplete="tel" value={d.phone} maxLength={20} onChange={(event) => set("phone", event.target.value)} placeholder="7700 900123" className={cn(inputClass, "min-w-0 flex-1")} /></div>
