@@ -16,6 +16,16 @@ const STEP_ORDER = ["identity", "proof_of_address", "immigration_status", "quali
 type AdmissionsStep = "welcome" | "details" | "details_confirm" | "docs_consent" | typeof STEP_ORDER[number] | "final_reminder" | "ready_review";
 type DocumentType = typeof STEP_ORDER[number] | "unclassified";
 
+class EmptyAiError extends Error { constructor() { super("AI returned no reply"); } }
+
+/** Makes text safe for a WhatsApp text message: no control chars, no markdown fences, within the 4096 limit, never blank. */
+export function cleanOutbound(body: string) {
+  const t = body.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").replace(/```/g, "").replace(/\n{3,}/g, "\n\n").trim();
+  return t.length > 4000 ? `${t.slice(0, 3990).trimEnd()}...` : t;
+}
+
+const HOLD_MESSAGE = "Thanks, give me a moment, one of our advisors will reply to you here shortly.";
+
 class ProviderError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -121,7 +131,7 @@ export async function sendWelcome(lead: { id: string; full_name: string; phone: 
     try {
       const id = await gateway("/messages", {
         messaging_product: "whatsapp", to: phone, type: "template",
-        template: { name: WELCOME_TEMPLATE, language: { code: "en_GB" }, components: [{ type: "body", parameters: [first, course, campus, lead.ref_code].map((text) => ({ type: "text", text })) }] },
+        template: { name: WELCOME_TEMPLATE, language: { code: template.language ?? "en_GB" }, components: [{ type: "body", parameters: [first, course, campus, lead.ref_code].map((text) => ({ type: "text", text })) }] },
       });
       await supabaseAdmin.from("whatsapp_messages").insert({ conversation_id: conv.id, direction: "system", body, wa_message_id: id, status: "accepted" });
       await supabaseAdmin.from("leads").update({ whatsapp_status: "sent" }).eq("id", lead.id);
@@ -399,13 +409,24 @@ Return ONLY a JSON object, no other text:
     headers: { "Lovable-API-Key": lovable, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     fetch: runIdFetch.fetch,
   });
-  const result = streamText({
-    model: provider.responses("openai/gpt-6-astra"),
-    system,
-    messages,
-    providerOptions: { openai: { store: false, forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] } },
-  });
-  const raw = (await result.text).trim();
+  const ask = async () => {
+    try {
+      const result = streamText({
+        model: provider.responses("openai/gpt-6-astra"),
+        system,
+        messages,
+        maxRetries: 0,
+        providerOptions: { openai: { store: false, forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] } },
+      });
+      return (await result.text).trim();
+    } catch (e) {
+      if ((e as { name?: string })?.name === "AI_NoOutputGeneratedError") return "";
+      throw e;
+    }
+  };
+  let raw = await ask();
+  if (!raw) { await new Promise((r) => setTimeout(r, 1500)); raw = await ask(); }
+  if (!raw) throw new EmptyAiError();
   let parsed: Partial<AiResult> = {};
   try { parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)); } catch { parsed = { reply: raw }; }
   const cleanProfile: Profile = {};
@@ -414,7 +435,7 @@ Return ONLY a JSON object, no other text:
     if (typeof v === "string" && v.trim()) cleanProfile[f] = v.trim().slice(0, 300);
   }
   const reply = typeof parsed.reply === "string" ? parsed.reply.trim() : "";
-  if (!reply) return null;
+  if (!reply) throw new EmptyAiError();
   return { language: typeof parsed.language === "string" ? parsed.language.slice(0, 20) : null, intent: String(parsed.intent ?? "answer"), profile: cleanProfile, reply };
 }
 
@@ -438,8 +459,10 @@ async function applyResult(conversationId: string, result: AiResult, hadMedia: b
   await setStep(conversationId, next, { profile, reminders, ...(result.language ? { detected_language: result.language } : {}) });
 }
 
-async function sendText(conversationId: string, to: string, body: string) {
-  const id = await gateway("/messages", { messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4000) } });
+async function sendText(conversationId: string, to: string, raw: string) {
+  const body = cleanOutbound(raw);
+  if (!body) throw new EmptyAiError();
+  const id = await gateway("/messages", { messaging_product: "whatsapp", to, type: "text", text: { body, preview_url: false } });
   await supabaseAdmin.from("whatsapp_messages").insert({ conversation_id: conversationId, direction: "bot", body, wa_message_id: id, status: "accepted" });
   await supabaseAdmin.from("whatsapp_conversations").update({ last_outbound_at: new Date().toISOString() }).eq("id", conversationId);
 }
@@ -497,6 +520,14 @@ async function answerInbound(messageRowId: string) {
     await markReply("sent");
   } catch (error) {
     console.error("WhatsApp bot reply failed", error);
+    const terminal = error instanceof EmptyAiError || (error instanceof ProviderError && error.status >= 400 && error.status < 500 && error.status !== 429);
+    if (terminal) {
+      // Never leave the student unanswered: one hold message, then a person takes over.
+      const at = new Date().toISOString();
+      await supabaseAdmin.from("whatsapp_conversations").update({ status: "queued", queued_at: at, flagged: true, flag_reason: error instanceof EmptyAiError ? "Assistant could not reply" : "WhatsApp rejected the reply", updated_at: at }).eq("id", claimed.conversation_id);
+      const { data: c } = await supabaseAdmin.from("whatsapp_conversations").select("wa_phone").eq("id", claimed.conversation_id).single();
+      if (c && error instanceof EmptyAiError) await sendText(claimed.conversation_id, c.wa_phone, HOLD_MESSAGE).catch((e) => console.error("Hold message failed", e));
+    }
     const current = await supabaseAdmin.from("whatsapp_messages").select("reply_attempts").eq("id", messageRowId).single();
     const attempts = current.data?.reply_attempts ?? 1;
     const retryable = error instanceof ProviderError && (error.status === 429 || error.status >= 500);
@@ -646,3 +677,34 @@ export async function processPendingWork(preferredIds: string[] = []) {
 }
 
 export { answerInbound };
+
+/** Sends the welcome to every consenting lead still waiting, one at a time. Returns counts. */
+export async function sendWaitingWelcomes() {
+  const template = await getWelcomeTemplateStatus();
+  if (template.status !== "APPROVED") return { status: template.status, sent: 0, failed: 0, total: 0 };
+  const { data: leads } = await supabaseAdmin.from("leads").select("id, full_name, phone, selected_course, nearest_campus, ref_code, whatsapp")
+    .eq("whatsapp", true).in("whatsapp_status", ["awaiting_template", "pending"]).order("created_at").limit(100);
+  let sent = 0, failed = 0;
+  for (const lead of leads ?? []) {
+    await sendWelcome(lead);
+    const { data } = await supabaseAdmin.from("leads").select("whatsapp_status").eq("id", lead.id).single();
+    if (data?.whatsapp_status === "sent") sent++; else failed++;
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  return { status: template.status, sent, failed, total: leads?.length ?? 0 };
+}
+
+/** Last-24h bot reply health for the admin panel. */
+export async function replyHealth() {
+  const since = new Date(Date.now() - 864e5).toISOString();
+  const { data } = await supabaseAdmin.from("whatsapp_messages").select("id, reply_status, error, created_at, conversation_id").eq("direction", "in").gte("created_at", since);
+  const rows = data ?? [];
+  const count = (s: string) => rows.filter((r) => r.reply_status === s).length;
+  return { sent: count("sent"), failed: count("failed"), waiting: count("pending") + count("sending"),
+    failedList: rows.filter((r) => r.reply_status === "failed").map((r) => ({ id: r.id, at: r.created_at, error: (r.error ?? "").slice(0, 140) })) };
+}
+
+export async function retryReply(messageId: string) {
+  await supabaseAdmin.from("whatsapp_messages").update({ reply_status: "pending", reply_attempts: 0, reply_next_attempt_at: new Date().toISOString(), error: null }).eq("id", messageId).eq("reply_status", "failed");
+  await processPendingWork([messageId]);
+}
