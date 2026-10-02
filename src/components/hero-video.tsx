@@ -12,10 +12,11 @@ export function HeroVideo() {
     <div ref={frame} className="absolute inset-0 overflow-hidden bg-primary" aria-hidden>
       <img src={heroPoster} alt="" width={1280} height={720} fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
       {mount && (
-        <video ref={video} muted loop playsInline preload="metadata" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}>
-          {/* codecs lets a browser without VP9 skip straight to the MP4 instead of downloading a file it cannot decode */}
-          <source src={heroWebm.url} type='video/webm; codecs="vp9"' />
+        <video ref={video} muted loop playsInline preload="none" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}>
+          {/* MP4 first: Chromium reads this WebM's header and then fails to decode it, so listing it first cost every Chrome visitor a wasted download before the MP4 started.
+              It stays as the fallback the hook tries if the MP4 fails; put it back in front once it is re-encoded (8-bit 4:2:0, limited range) and plays in desktop and Android Chrome. */}
           <source src={heroMp4.url} type="video/mp4" />
+          <source src={heroWebm.url} type='video/webm; codecs="vp9"' />
         </video>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/88 to-primary/55" />

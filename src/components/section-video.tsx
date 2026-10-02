@@ -38,7 +38,7 @@ export function SectionVideo({ kind, className, immersive = false }: SectionVide
     >
       <img src={item.poster} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
       {mount && (
-        <video ref={video} muted loop playsInline preload="metadata" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}>
+        <video ref={video} muted loop playsInline preload="none" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}>
           <source src={item.video} type="video/mp4" />
         </video>
       )}

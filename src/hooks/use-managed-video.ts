@@ -67,13 +67,14 @@ function start(el: HTMLVideoElement, retry: () => void) {
 /**
  * One policy for every decorative background video:
  * - nothing is rendered on the server, for reduced motion or for Data Saver: the poster image under the video is the whole experience;
- * - the <video> is created (and starts buffering) only once its frame is within `margin` of the viewport, and is then kept so a later visit resumes instantly;
+ * - the <video> is created only once its frame is within `margin` of the viewport, and is then kept so a later visit resumes instantly;
+ * - it downloads nothing until it is first played (`preload="none"`: with "metadata" Chromium buffered half of a clip that was still below the fold, competing with the hero on first load);
  * - it plays only while the frame is on screen and the tab is visible, so off-screen videos never decode;
  * - if the browser refuses autoplay the poster stays and playback is retried from the visitor's next tap or click;
  * - if a source fails to decode the poster comes back and the next <source> is tried.
  * The element gets `data-playing` once frames are really showing; `managedVideoClass` keeps it transparent until then, so a refused or slow video never shows a black frame or the iOS play badge.
  *
- * Usage: put `frame` on the box the video fills and render `{mount && <video ref={video} muted loop playsInline preload="metadata" className={managedVideoClass}>…</video>}` over the poster <img>.
+ * Usage: put `frame` on the box the video fills and render `{mount && <video ref={video} muted loop playsInline preload="none" className={managedVideoClass}>…</video>}` over the poster <img>.
  */
 export function useManagedVideo<F extends HTMLElement = HTMLDivElement>({ margin = "200px 0px" }: { margin?: string } = {}) {
   const frame = useRef<F>(null);

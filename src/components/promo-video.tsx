@@ -21,7 +21,7 @@ export function PromoVideoFeature() {
           <div className="absolute -inset-5 rounded-[2.2rem] border border-primary-foreground/15 bg-primary-foreground/5" />
           <div ref={frame} className="relative aspect-[9/16] overflow-hidden rounded-[1.65rem] border border-primary-foreground/20 bg-primary shadow-2xl">
             <img src={poster.url} alt="Momentum One student experience" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
-            {mount && <video ref={video} muted loop playsInline preload="metadata" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}><source src={promo.url} type="video/mp4" /></video>}
+            {mount && <video ref={video} muted loop playsInline preload="none" className={cn("absolute inset-0 h-full w-full object-cover", managedVideoClass)}><source src={promo.url} type="video/mp4" /></video>}
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, transform: "translateX(24px)" }} whileInView={{ opacity: 1, transform: "translateX(0px)" }} viewport={IN_VIEW} transition={reveal} className="max-w-xl">

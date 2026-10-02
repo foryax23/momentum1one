@@ -65,6 +65,8 @@ export function CourseShowcase() {
   const courses = useMemo(buildCourses, []);
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  // The row cannot scroll further: where several cards fit, that happens before the last one is the current one.
+  const [atEnd, setAtEnd] = useState(false);
   const [openKey, setOpenKey] = useState<string | null>(null);
   // Width / height of the pressed card; 0 means "just fade" (reduced motion).
   const [ratio, setRatio] = useState(0);
@@ -74,22 +76,30 @@ export function CourseShowcase() {
   const openCourse = (key: string, from: HTMLElement) => { opener.current = from; const { width, height } = from.getBoundingClientRect(); setRatio(reduce || !height ? 0 : width / height); setOpenKey(key); };
   const open = courses.find((course) => course.key === openKey) ?? null;
 
-  // The current slide is whichever one crosses a zero-width line down the middle of the row. No scroll listener: swiping stays native, and React only hears about it when the slide really changes.
+  // The current slide is the first one that is mostly inside the row: the centred card on phones, the leading card where two or three fit.
+  // No scroll listener: swiping stays native, and React only hears about it when the slide really changes.
   useEffect(() => {
     const el = track.current;
     if (!el) return;
     const slides = Array.from(el.children);
+    const shown = new Set<number>();
     const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) if (entry.isIntersecting) setIndex(slides.indexOf(entry.target));
-    }, { root: el, rootMargin: "0px -50% 0px -50%" });
+      for (const entry of entries) { const i = slides.indexOf(entry.target); if (entry.intersectionRatio >= 0.6) shown.add(i); else shown.delete(i); }
+      // Mid-swipe no slide may qualify: keep the last answer.
+      if (!shown.size) return;
+      setIndex(Math.min(...shown));
+      setAtEnd(shown.has(slides.length - 1));
+    }, { root: el, threshold: 0.6 });
     slides.forEach((slide) => observer.observe(slide));
     return () => observer.disconnect();
   }, []);
 
   const go = (i: number) => {
     const el = track.current;
+    const first = el?.firstElementChild as HTMLElement | null | undefined;
     const slide = el?.children[Math.max(0, Math.min(courses.length - 1, i))] as HTMLElement | undefined;
-    if (el && slide) el.scrollTo({ left: slide.offsetLeft - el.offsetLeft - (el.clientWidth - slide.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    // The first slide rests on its snap point when the row is at 0 (centred on phones, leading from sm up), so the distance between two slides is the scroll position that snaps to the other one.
+    if (el && first && slide) el.scrollTo({ left: slide.offsetLeft - first.offsetLeft, behavior: reduce ? "auto" : "smooth" });
   };
   const choose = (detail: CoursePick) => { pending.current = detail; setOpenKey(null); };
   // Wait until the dialog has really unmounted and released its scroll lock; scrolling to the funnel any earlier is undone by the unlock.
@@ -105,7 +115,7 @@ export function CourseShowcase() {
         <p className="text-sm tabular-nums text-muted-foreground"><span className="font-display text-2xl font-bold italic text-primary">{String(index + 1).padStart(2, "0")}</span> / {String(courses.length).padStart(2, "0")}</p>
         <div className="flex gap-2">
           <SlideButton label={t("deck.prev", undefined, "Previous course")} onClick={() => go(index - 1)} disabled={index === 0} flip />
-          <SlideButton label={t("deck.next", undefined, "Next course")} onClick={() => go(index + 1)} disabled={index === courses.length - 1} />
+          <SlideButton label={t("deck.next", undefined, "Next course")} onClick={() => go(index + 1)} disabled={atEnd} />
         </div>
       </div>
 
