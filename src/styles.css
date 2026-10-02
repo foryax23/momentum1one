@@ -7,6 +7,10 @@
 @custom-variant hover-fine (@media (hover: hover) and (pointer: fine));
 
 @theme inline {
+  /* Motion tokens: one set of curves for the whole site (mirrored in src/lib/motion.ts for motion/react). */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Sora", ui-sans-serif, system-ui, sans-serif;
@@ -161,24 +165,40 @@
   color: var(--primary-foreground);
   &::before { content: ""; position: absolute; inset: 12%; border: 1px solid color-mix(in oklab, var(--primary-foreground) 18%, transparent); transform: rotate(12deg); }
   &::after { content: ""; position: absolute; inset: 25%; border: 1px solid color-mix(in oklab, var(--gold) 35%, transparent); transform: rotate(45deg); }
-  & svg { position: relative; z-index: 1; width: 52%; height: 52%; transition: transform .7s cubic-bezier(.22,1,.36,1); }
-  &:hover svg { transform: scale(1.12) rotate(-3deg); }
+  & svg { position: relative; z-index: 1; width: 52%; height: 52%; transition: transform .2s ease; }
+  /* a tap on a touch screen leaves :hover stuck on, so the zoom is for real pointers only */
+  @media (hover: hover) and (pointer: fine) { &:hover svg { transform: scale(1.12) rotate(-3deg); } }
 }
 
 .legal-copy ul { list-style: disc; padding-left: 1.25rem; }
 
+/* Reduced motion means gentler, not none: fades and colour changes keep their timing, anything that moves or resizes changes at once. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  /* One near-instant pass, then stop: without the iteration cap, infinite animations (stars, spinner, skeletons) loop every 0.01ms and strobe.
-     Entrance animations (tw-animate-css "enter" has only a from-keyframe) still finish on the element's own visible style. */
   *, *::before, *::after {
+    /* Transitions: only properties that move nothing keep animating; transform, translate, scale and sizes are left out, so they jump. */
+    transition-property: opacity, color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, box-shadow !important;
+    /* Keyframes: one near-instant pass, then stop. Without the iteration cap, infinite animations (the stars) loop every 0.01ms and strobe. */
     animation-duration: 0.01ms !important;
     animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
+  /* tw-animate-css entrances and exits (dialogs, menus, the hero, the cookie banner): keep a short fade, lose the slide, zoom and spin. */
+  [class*="animate-in"], [class*="animate-out"] {
+    animation-duration: 200ms !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-exit-rotate: 0 !important;
+  }
+  /* Loading feedback is information, not decoration: the spinner and the skeleton pulse keep running. */
+  .animate-spin { animation-duration: 1s !important; animation-iteration-count: infinite !important; }
+  .animate-pulse { animation-duration: 2s !important; animation-iteration-count: infinite !important; }
   .animate-ticker { animation: none; transform: none; }
 }
 

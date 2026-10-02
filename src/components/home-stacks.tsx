@@ -7,16 +7,16 @@ import { CardStack } from "@/components/card-stack";
 import { RocketAssembly } from "@/components/funnel-scenes";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
-import manchester from "@/assets/campuses/manchester.jpg";
-import sunderland from "@/assets/campuses/sunderland.jpg";
-import derby from "@/assets/campuses/derby.jpg";
-import newcastle from "@/assets/campuses/newcastle.jpg";
-import luton from "@/assets/campuses/luton.jpg";
-import careerPhoto from "@/assets/audience/career.jpg";
-import returningPhoto from "@/assets/audience/parent.jpg";
-import noAlevelsPhoto from "@/assets/audience/no-alevels.jpg";
+import { easeOut } from "@/lib/motion";
+import manchester from "@/assets/campuses/manchester.webp";
+import sunderland from "@/assets/campuses/sunderland.webp";
+import derby from "@/assets/campuses/derby.webp";
+import newcastle from "@/assets/campuses/newcastle.webp";
+import luton from "@/assets/campuses/luton.webp";
+import careerPhoto from "@/assets/audience/career.webp";
+import returningPhoto from "@/assets/audience/parent.webp";
+import noAlevelsPhoto from "@/assets/audience/no-alevels.webp";
 
-const ease = [0.23, 1, 0.32, 1] as const;
 const CAMPUS_IMAGES: Record<string, string> = { Manchester: manchester, Sunderland: sunderland, Derby: derby, Newcastle: newcastle, Luton: luton };
 const STACK_PEEK = 52;
 // Counts come from the catalogue itself, so these figures can never disagree with the cards below them.
@@ -43,7 +43,7 @@ export function CampusStack() {
           const titles = [...new Set(courses.map((c) => c.title.replace(/^\S+ \S+ /, "")))];
           return (
             <article key={campus.name} className="group relative h-72 overflow-hidden rounded-2xl bg-primary shadow-[0_-12px_28px_-16px_rgb(0_0_0/.55)]">
-              <img src={CAMPUS_IMAGES[campus.name]} alt={t("campus.photoAlt", { name: campus.name }, `${campus.name} city`)} width={960} height={720} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1400ms] ease-out hover-fine:group-hover:scale-105" />
+              <img src={CAMPUS_IMAGES[campus.name]} alt={t("campus.photoAlt", { name: campus.name }, `${campus.name} city`)} width={800} height={600} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-250 ease-out-strong hover-fine:group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/80 to-primary/25" />
               {/* the top strip is what stays visible once the next card has slid over this one */}
               <header className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 bg-gradient-to-b from-primary/90 to-transparent px-5 text-primary-foreground" style={{ height: STACK_PEEK + 12 }}>
@@ -89,7 +89,7 @@ export function JourneyStack({ steps }: { steps: { title: string; text: string }
             </header>
             <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 px-4 pb-5 sm:px-6 lg:grid-cols-[1fr_1.1fr_auto] lg:gap-x-10">
               <p className="text-sm leading-relaxed text-muted-foreground lg:pt-1">{step.text}</p>
-              <RocketAssembly step={Math.min(i, 4)} className="row-span-2 mx-0 self-center lg:order-last lg:row-span-1" sizeClassName="h-24 lg:h-28" labelClassName="hidden" />
+              <RocketAssembly still step={Math.min(i, 4)} className="row-span-2 mx-0 self-center lg:order-last lg:row-span-1" sizeClassName="h-24 lg:h-28" labelClassName="hidden" />
               {more && <div>
                 <p className="text-[11px] font-bold uppercase tracking-[.14em] text-teal">{more.label}</p>
                 <ul className="mt-2 grid gap-1.5 text-sm text-foreground">{more.items.map((item) => <li key={item} className="flex items-start gap-2"><IconTick size={16} className="mt-0.5 shrink-0 text-teal" />{item}</li>)}</ul>
@@ -116,10 +116,10 @@ export function AudienceCards() {
       {audience.map((a) => (
         <article key={a.title} className="w-[84%] shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-card md:w-auto">
           <div className="relative h-64 overflow-hidden bg-primary">
-            <motion.img src={a.photo} alt="" width={800} height={1008} loading="lazy" className="absolute inset-0 h-full w-full object-cover object-[50%_22%]"
+            <motion.img src={a.photo} alt="" width={640} height={806} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_22%]"
               initial={{ transform: "scale(1)" }} whileInView={{ transform: reduce ? "scale(1)" : "scale(1.07)" }} viewport={{ once: true, amount: 0.4 }} transition={{ duration: 7, ease: "linear" }} />
             <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-primary/85 to-transparent" />
-            <div className="absolute inset-x-3 bottom-3 rounded-xl border border-primary-foreground/20 bg-primary/75 p-3 text-primary-foreground backdrop-blur-md">{a.figure}</div>
+            <div className="absolute inset-x-3 bottom-3 rounded-xl border border-primary-foreground/20 bg-primary/90 p-3 text-primary-foreground">{a.figure}</div>
           </div>
           <div className="p-5"><h3 className="font-sans text-lg font-bold text-primary">{a.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a.text}</p></div>
         </article>
@@ -131,7 +131,10 @@ export function AudienceCards() {
 const reveal = { hidden: { opacity: 0, transform: "translateY(6px) scale(0.96)" }, shown: { opacity: 1, transform: "translateY(0px) scale(1)" } };
 // Parent variants only orchestrate: children share the labels and enter one after another.
 const group = (stagger: number) => ({ hidden: {}, shown: { transition: { staggerChildren: stagger, delayChildren: 0.15 } } });
-const figureProps = { whileInView: "shown", viewport: { once: true, amount: 0.8 } } as const;
+const figureProps = { initial: "hidden", whileInView: "shown", viewport: { once: true, amount: 0.8 } } as const;
+// Every figure starts hidden on the server and the client alike. Reduced motion keeps the fade and drops the travel:
+// the transform jumps to its resting place while the item is still invisible.
+const enter = (reduce: boolean | null) => (reduce ? { duration: 0.4, ease: easeOut, transform: { duration: 0 } } : { duration: 0.4, ease: easeOut });
 
 /** A week at a glance: the job fills the weekdays, study lands on two evenings. */
 function WeekFigure() {
@@ -139,13 +142,13 @@ function WeekFigure() {
   const reduce = useReducedMotion();
   const days = t("figure.days", undefined, "M T W T F S S").split(" ");
   return (
-    <motion.div {...figureProps} variants={group(0.12)} initial={reduce ? "shown" : "hidden"} aria-hidden>
+    <motion.div {...figureProps} variants={group(0.08)} aria-hidden>
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day, i) => (
           <div key={i} className="grid gap-1">
             <span className="text-center text-[10px] font-bold text-primary-foreground/70">{day}</span>
             <span className={cn("h-3.5 rounded-sm", i < 5 ? "bg-primary-foreground/30" : "bg-primary-foreground/10")} />
-            {i < 2 ? <motion.span variants={reveal} transition={{ duration: 0.4, ease }} className="h-3.5 rounded-sm bg-gold" /> : <span className="h-3.5 rounded-sm bg-primary-foreground/10" />}
+            {i < 2 ? <motion.span variants={reveal} transition={enter(reduce)} className="h-3.5 rounded-sm bg-gold" /> : <span className="h-3.5 rounded-sm bg-primary-foreground/10" />}
           </div>
         ))}
       </div>
@@ -163,10 +166,10 @@ function PathFigure() {
   const reduce = useReducedMotion();
   const stops = ["Foundation Year", "Year 1", t("figure.degree", undefined, "Your degree")];
   return (
-    <motion.div {...figureProps} variants={group(0.22)} initial={reduce ? "shown" : "hidden"} aria-hidden className="relative grid grid-cols-3">
+    <motion.div {...figureProps} variants={group(0.08)} aria-hidden className="relative grid grid-cols-3">
       <span className="absolute left-[16.6%] right-[16.6%] top-[7px] h-0.5 bg-primary-foreground/25" />
       {stops.map((stop, i) => (
-        <motion.div key={stop} variants={reveal} transition={{ duration: 0.4, ease }} className="relative grid justify-items-center gap-1.5">
+        <motion.div key={stop} variants={reveal} transition={enter(reduce)} className="relative grid justify-items-center gap-1.5">
           <span className={cn("h-4 w-4 rounded-full border-2", i === 0 ? "border-gold bg-gold" : "border-gold bg-primary")} />
           <span className="text-center text-[11px] font-semibold leading-tight">{stop}</span>
         </motion.div>
@@ -181,9 +184,9 @@ function EntryFigure() {
   const reduce = useReducedMotion();
   const checks = [t("figure.application", undefined, "Your application"), t("figure.assessment", undefined, "An assessment day")];
   return (
-    <motion.ul {...figureProps} variants={group(0.18)} initial={reduce ? "shown" : "hidden"} aria-hidden className="grid gap-1.5 text-xs font-semibold">
-      <motion.li variants={reveal} transition={{ duration: 0.4, ease }} className="flex items-center justify-between gap-3 text-primary-foreground/60"><span className="line-through">A-levels</span><span className="rounded-full border border-primary-foreground/30 px-2 py-0.5 text-[10px] uppercase tracking-wider">{t("figure.notNeeded", undefined, "Not needed to apply")}</span></motion.li>
-      {checks.map((check) => <motion.li key={check} variants={reveal} transition={{ duration: 0.4, ease }} className="flex items-center gap-2"><span className="grid h-4 w-4 place-items-center rounded-full bg-gold text-primary"><IconTick size={11} /></span>{check}</motion.li>)}
+    <motion.ul {...figureProps} variants={group(0.08)} aria-hidden className="grid gap-1.5 text-xs font-semibold">
+      <motion.li variants={reveal} transition={enter(reduce)} className="flex items-center justify-between gap-3 text-primary-foreground/60"><span className="line-through">A-levels</span><span className="rounded-full border border-primary-foreground/30 px-2 py-0.5 text-[10px] uppercase tracking-wider">{t("figure.notNeeded", undefined, "Not needed to apply")}</span></motion.li>
+      {checks.map((check) => <motion.li key={check} variants={reveal} transition={enter(reduce)} className="flex items-center gap-2"><span className="grid h-4 w-4 place-items-center rounded-full bg-gold text-primary"><IconTick size={11} /></span>{check}</motion.li>)}
     </motion.ul>
   );
 }

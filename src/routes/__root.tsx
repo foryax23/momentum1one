@@ -8,6 +8,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
+import { MotionConfig } from "motion/react";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -124,10 +125,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster theme="light" position="top-center" />
-        <CookieConsent />
+        {/* Every motion component follows the system "reduce motion" setting: x / y / scale style values and layout animation jump, opacity and colour still animate.
+            A full `transform` string is not covered by this, so components that animate one branch on reduced motion themselves. */}
+        <MotionConfig reducedMotion="user">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <Toaster theme="light" position="top-center" />
+          <CookieConsent />
+        </MotionConfig>
       </LanguageProvider>
     </QueryClientProvider>
   );

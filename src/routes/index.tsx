@@ -1,26 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
-import logo from "@/assets/logo.png";
+import { useEffect, useRef, useState } from "react";
+import logo from "@/assets/logo.webp";
 import { Funnel } from "@/components/funnel";
 import { buttonVariants } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IconArrowRight, IconTick } from "@/components/icons";
 import { CourseShowcase } from "@/components/course-showcase";
+import { HeroProof } from "@/components/hero-proof";
 import { AudienceCards, CampusStack, JourneyStack } from "@/components/home-stacks";
 import { HeroVideo } from "@/components/hero-video";
 import { PromoVideoFeature } from "@/components/promo-video";
 import { SectionVideo } from "@/components/section-video";
 import { cn } from "@/lib/utils";
 import { openCookieSettings } from "@/components/cookie-consent";
-import { IconAgents, IconUniversity } from "@/components/icons";
+import { IconUniversity } from "@/components/icons";
 import vortexHubAsset from "@/assets/partners/vortex-hub.webp.asset.json";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { LanguageMenu, LanguageSwitcher } from "@/components/language-switcher";
+import { MobileMenu } from "@/components/mobile-menu";
+import { SectionBlend } from "@/components/section-blend";
 import { useI18n } from "@/lib/i18n";
+import { easeOut } from "@/lib/motion";
 
 const TITLE = "Launch your UK degree | Momentum One";
 const DESC = "Foundation Year and Year 1 degrees in Manchester, Sunderland, Derby, Newcastle and Luton. Check your options in under a minute.";
-const ease = [0.22, 1, 0.36, 1] as const;
+const IN_VIEW = { once: true, amount: 0.15 } as const;
 const WA = "https://wa.me/447593855452?text=" + encodeURIComponent("Hi Momentum One, I have a question about studying.");
 
 export const Route = createFileRoute("/")({
@@ -55,32 +59,33 @@ function Index() {
     <section className="relative min-h-[720px] overflow-hidden bg-primary">
       <HeroVideo />
       <div className="relative mx-auto grid max-w-6xl items-start gap-5 px-5 pb-9 pt-5 sm:gap-8 sm:px-8 sm:py-14 lg:min-h-[720px] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14 lg:py-16">
-        <div className="grid gap-3 duration-700 animate-in fade-in slide-in-from-bottom-4 sm:gap-5">
+        <div className="grid gap-3 duration-500 ease-out-strong animate-in fade-in slide-in-from-bottom-4 sm:gap-5">
           <p className="hidden text-xs font-bold uppercase tracking-[.18em] text-gold sm:block">{t("home.eyebrow", undefined, "Your next move starts here")}</p>
           <RotatingHeadline />
           <p className="text-[15px] leading-snug text-primary-foreground/80 sm:hidden">{t("home.introShort", undefined, "Get your personalised course offer in under a minute.")}</p>
           <p className="hidden max-w-[40ch] text-lg leading-relaxed text-primary-foreground/80 sm:block">{t("home.intro", undefined, "Find a course, match with your nearest campus and receive a personalised five-page offer in under a minute.")}</p>
-          <HeroStats className="hidden lg:grid" />
+          <HeroProof className="hidden lg:grid" />
         </div>
-        <div className="duration-700 animate-in fade-in slide-in-from-bottom-6"><Funnel /></div>
-        <HeroStats className="lg:hidden" />
+        <div className="duration-500 ease-out-strong animate-in fade-in slide-in-from-bottom-6"><Funnel /></div>
+        <HeroProof className="lg:hidden" />
       </div>
     </section>
 
     <section className="bg-primary py-10 text-primary-foreground sm:py-14">
       <div className="mx-auto grid max-w-6xl items-center gap-7 px-5 sm:px-8 lg:grid-cols-[1.35fr_.65fr] lg:gap-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="overflow-hidden">
+        <Reveal by={20} duration={0.6} className="overflow-hidden">
           <SectionVideo kind="start" className="w-full" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, x: 18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+        </Reveal>
+        <Reveal axis="X" by={18} duration={0.6}>
            <p className="text-xs font-bold uppercase tracking-[.16em] text-gold">{t("home.videoEyebrow", undefined, "Your application, made clearer")}</p>
            <h2 className="mt-3 text-3xl font-bold italic sm:text-4xl">{t("home.videoTitle", undefined, "Start your university journey with a plan.")}</h2>
            <p className="mt-4 leading-relaxed text-primary-foreground/75">{t("home.videoText", undefined, "Check your course and campus options, receive personalised information, then continue with an advisor.")}</p>
            <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "mt-6 h-12 rounded-lg px-5 font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight size={18} /></a>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
 
+    <SectionBlend from="navy" to="white" />
     <UniversityRail />
 
     <Section id="courses">
@@ -93,7 +98,9 @@ function Index() {
       <AudienceCards />
     </Section>
 
-    <div className="mt-20 sm:mt-24"><PromoVideoFeature /></div>
+    <SectionBlend from="white" to="navy" className="mt-12 sm:mt-16" />
+    <PromoVideoFeature />
+    <SectionBlend from="navy" to="white" className="-mb-10 sm:-mb-12" />
 
     <Section id="campuses">
       <ImmersiveSectionIntro kind="campuses" eyebrow={t("home.campusesEyebrow", undefined, "Campuses")} title={t("home.campusesTitle", undefined, "Study close to home")} intro={t("home.campusesIntro", undefined, "We match you to your nearest campus automatically when you sign up.")} align="right" />
@@ -106,7 +113,7 @@ function Index() {
     </Section>
 
     <Section id="finance">
-      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-10 md:grid-cols-[1.1fr_1fr] md:items-center">
+      <Reveal by={20} duration={0.6} className="grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-10 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
            <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{t("home.financeEyebrow", undefined, "Funding and eligibility")}</p>
            <h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{t("home.financeTitle", undefined, "Know what to prepare")}</h2>
@@ -119,53 +126,78 @@ function Index() {
             {[t("home.doc1", undefined, "Proof of identity"), t("home.doc2", undefined, "Proof of address dated within three months of the course start"), t("home.doc3", undefined, "Share code if your passport is not British"), t("home.doc4", undefined, "Duolingo English certificate"), t("home.doc5", undefined, "CV and qualification certificates, if available")].map((item) => <li key={item} className="flex items-start gap-3"><IconTick size={18} className="mt-0.5 shrink-0 text-teal" />{item}</li>)}
           </ul>
         </div>
-      </motion.div>
+      </Reveal>
     </Section>
 
     <Section id="faq">
       <div className="grid gap-8 md:grid-cols-[.8fr_1.2fr]">
         <div>
            <SectionHeading eyebrow={t("home.questions", undefined, "Questions")} title={t("home.before", undefined, "Before you sign up")} />
-           <a href={WA} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary">{t("home.whatsapp", undefined, "Still unsure? Message us on WhatsApp")} <IconArrowRight size={16} /></a>
+           <a href={WA} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary transition-colors hover:border-primary">{t("home.whatsapp", undefined, "Still unsure? Message us on WhatsApp")} <IconArrowRight size={16} /></a>
         </div>
         <Accordion type="single" collapsible className="space-y-2">{faqs.map(([q, a], i) => <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border bg-card px-4 transition-colors data-[state=open]:border-primary/40"><AccordionTrigger className="font-sans text-base font-bold">{q}</AccordionTrigger><AccordionContent className="text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion>
       </div>
     </Section>
 
-    <section className="relative mt-20 overflow-hidden bg-primary sm:mt-24">
-      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(var(--gold)_1px,transparent_1px),linear-gradient(90deg,var(--gold)_1px,transparent_1px)] [background-size:64px_64px]" />
+    <SectionBlend from="white" to="navy" className="mt-12 sm:mt-16" />
+    <section className="relative overflow-hidden bg-primary">
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(var(--gold)_1px,transparent_1px),linear-gradient(90deg,var(--gold)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:linear-gradient(to_bottom,transparent,black_30%,black_70%,transparent)]" />
       <div className="relative mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-16 sm:flex-row sm:items-center sm:px-8">
          <div><h2 className="text-3xl font-bold italic text-primary-foreground sm:text-4xl">{t("home.finalTitle", undefined, "Your degree starts with one minute.")}</h2><p className="mt-2 text-primary-foreground/80">{t("home.finalText", undefined, "Answer a few questions and download your personalised offer today.")}</p></div>
-         <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "h-14 rounded-xl px-7 text-base font-bold active:scale-[.98]")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a>
+         <a href="#signup" className={cn(buttonVariants({ variant: "secondary" }), "h-14 rounded-xl px-7 text-base font-bold transition-[scale,background-color,box-shadow] duration-160 ease-out active:scale-[0.97]")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a>
       </div>
     </section>
+    <SectionBlend from="navy" to="soft" />
 
-    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">{t("footer.about", undefined, "Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.")}</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · {t("footer.company", undefined, "Company")} 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">{t("footer.privacy", undefined, "Privacy notice")}</a><a href="/cookies">{t("footer.cookies", undefined, "Cookie notice")}</a><a href="/terms">{t("footer.terms", undefined, "Website terms")}</a><a href="/disclaimer">{t("footer.disclaimer", undefined, "Application disclaimer")}</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">{t("footer.settings", undefined, "Cookie settings")}</button><a href="/auth">{t("footer.signin", undefined, "Account sign in")}</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">{t("footer.powered", undefined, "Powered by")}</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" className="h-8 w-auto object-contain" /></div></div></footer>
+    <footer className="bg-secondary/60 px-5 pb-28 pt-12 sm:px-8 md:pb-12"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_auto]"><div><img src={logo} alt="Momentum One" width={374} height={320} loading="lazy" decoding="async" className="h-16 w-auto" /><p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground">{t("footer.about", undefined, "Momentum One provides student recruitment and application guidance. Course availability, intake dates, timetables, funding and admission decisions are subject to confirmation by the relevant institution.")}</p><p className="mt-3 text-xs text-muted-foreground">MOMENTUM ONE LTD · {t("footer.company", undefined, "Company")} 16641977 · 6 Harewood Drive, Taverham, Norwich, NR8 6XH · info@momentumone.co.uk · 07383 207062</p></div><nav className="grid content-start gap-2 text-sm font-semibold text-primary"><a href="/privacy">{t("footer.privacy", undefined, "Privacy notice")}</a><a href="/cookies">{t("footer.cookies", undefined, "Cookie notice")}</a><a href="/terms">{t("footer.terms", undefined, "Website terms")}</a><a href="/disclaimer">{t("footer.disclaimer", undefined, "Application disclaimer")}</a><button type="button" onClick={openCookieSettings} className="text-left font-semibold">{t("footer.settings", undefined, "Cookie settings")}</button><a href="/auth">{t("footer.signin", undefined, "Account sign in")}</a></nav></div><div className="mx-auto mt-8 flex max-w-6xl flex-col gap-4 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Momentum One.</p><div className="flex items-center gap-3"><span className="font-semibold uppercase tracking-[.14em]">{t("footer.powered", undefined, "Powered by")}</span><img src={vortexHubAsset.url} alt="Vortex Hub" width={1920} height={720} loading="lazy" decoding="async" className="h-8 w-auto object-contain" /></div></div></footer>
     <StickyCta />
   </main>;
 }
 
-function AnnouncementBar() {
-  const { t } = useI18n();
-  const text = t("home.announcement", undefined, "January 2027 applications open · Personalised course options in one minute · Advisor support available · ");
-  return <div className="overflow-hidden bg-gold py-2 text-primary"><div className="animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]"><span>{text}</span><span aria-hidden>{text}</span></div></div>;
+/** True while the element is on screen and the tab is visible, so endless motion can stop when nobody can see it. Starts true: server and first client markup match and CSS animation runs before hydration. */
+function useOnScreen<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    let inView = true;
+    const sync = () => setOn(inView && !document.hidden);
+    const observer = new IntersectionObserver((entries) => { inView = Boolean(entries[entries.length - 1]?.isIntersecting); sync(); });
+    observer.observe(el);
+    document.addEventListener("visibilitychange", sync);
+    return () => { observer.disconnect(); document.removeEventListener("visibilitychange", sync); };
+  }, []);
+  return [ref, on] as const;
 }
 
+/** One-off section entrance. The offset travels in the full transform string so it runs on the compositor; under reduced motion it is dropped in a single frame while the block is still invisible, so only the fade plays. */
+function Reveal({ axis = "Y", by = 16, duration = 0.5, className, children }: { axis?: "X" | "Y"; by?: number; duration?: number; className?: string; children: React.ReactNode }) {
+  const reduce = useReducedMotion();
+  return <motion.div initial={{ opacity: 0, transform: `translate${axis}(${by}px)` }} whileInView={{ opacity: 1, transform: `translate${axis}(0px)` }} viewport={IN_VIEW} transition={reduce ? { duration: 0.2, transform: { duration: 0 } } : { duration, ease: easeOut }} className={className}>{children}</motion.div>;
+}
+
+function AnnouncementBar() {
+  const { t } = useI18n();
+  const [ref, onScreen] = useOnScreen<HTMLDivElement>();
+  const text = t("home.announcement", undefined, "January 2027 applications open · Personalised course options in one minute · Advisor support available · ");
+  return <div ref={ref} className="overflow-hidden bg-gold py-2 text-primary"><div className={cn("animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]", !onScreen && "paused")}><span>{text}</span><span aria-hidden>{text}</span></div></div>;
+}
+
+const PHRASES = 3;
 function RotatingHeadline() {
   const { t } = useI18n();
   const phrases = [t("home.phrase1", undefined, "close to home."), t("home.phrase2", undefined, "built around life."), t("home.phrase3", undefined, "with a clear next step.")];
   const [index, setIndex] = useState(0);
-  const reduce = useReducedMotion();
-  useEffect(() => { const timer = window.setInterval(() => setIndex((value) => (value + 1) % phrases.length), 3200); return () => window.clearInterval(timer); }, []);
-  return <h1 className="max-w-2xl text-[2.125rem] font-bold leading-[1.05] text-primary-foreground sm:text-6xl sm:leading-[1.02] lg:text-[4.3rem]">{t("home.headline", undefined, "A UK degree,")}<span className="mt-1 grid overflow-hidden text-[clamp(1.5rem,7vw,2.125rem)] text-gold sm:text-[1em]">{phrases.map((phrase, i) => <motion.span key={i} aria-hidden={i !== index} initial={false} animate={{ opacity: i === index ? 1 : 0, y: i === index || reduce ? 0 : 20 }} transition={{ duration: .5, ease }} className="[grid-area:1/1]">{phrase}</motion.span>)}</span></h1>;
-}
-
-function HeroStats({ className }: { className?: string }) {
-  const { t } = useI18n();
-  return <div className={cn("grid grid-cols-2 gap-px overflow-hidden border border-primary-foreground/15 bg-primary-foreground/15", className)}>
-    <div className="flex items-center gap-3 bg-primary/80 p-4"><IconAgents className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.team", undefined, "10+ team")}</strong>{t("home.teamSub", undefined, "supporting applicants")}</p></div>
-    <div className="flex items-center gap-3 bg-primary/80 p-4"><IconUniversity className="shrink-0 text-gold" /><p className="text-sm text-primary-foreground/70"><strong className="block text-xl text-primary-foreground">{t("home.students", undefined, "100+ students")}</strong>{t("home.studentsSub", undefined, "helped")}</p></div>
-  </div>;
+  const [ref, onScreen] = useOnScreen<HTMLHeadingElement>();
+  useEffect(() => {
+    if (!onScreen) return;
+    const timer = window.setInterval(() => setIndex((value) => (value + 1) % PHRASES), 3200);
+    return () => window.clearInterval(timer);
+  }, [onScreen]);
+  // CSS transitions, not JS: the swap is fixed motion, so it stays on the compositor. The outgoing phrase leaves in 200ms and the new one waits 120ms before it arrives,
+  // so the two are never readable on top of each other. motion-safe: under reduced motion the phrases only cross-fade.
+  return <h1 ref={ref} className="max-w-2xl text-[2.125rem] font-bold leading-[1.05] text-primary-foreground sm:text-6xl sm:leading-[1.02] lg:text-[4.3rem]">{t("home.headline", undefined, "A UK degree,")}<span className="mt-1 grid overflow-hidden text-[clamp(1.5rem,7vw,2.125rem)] text-gold sm:text-[1em]">{phrases.map((phrase, i) => <span key={i} aria-hidden={i !== index} className={cn("transition-[opacity,translate] ease-out-strong [grid-area:1/1]", i === index ? "opacity-100 delay-[120ms] duration-500" : "opacity-0 duration-200 motion-safe:translate-y-5")}>{phrase}</span>)}</span></h1>;
 }
 
 /** Phone-only shortcut back to the funnel; stays out of the way while the funnel itself is on screen. */
@@ -179,32 +211,44 @@ function StickyCta() {
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
-  return <div inert={!visible} className={cn("fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur transition-transform duration-300 md:hidden", visible ? "translate-y-0" : "translate-y-full")}><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a></div>;
+  return <div inert={!visible} className={cn("fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] transition-transform duration-250 ease-out-strong md:hidden", visible ? "translate-y-0" : "translate-y-full")}><a href="#signup" className={cn(buttonVariants(), "h-12 w-full rounded-xl font-bold")}>{t("home.cta", undefined, "Check my options")} <IconArrowRight /></a></div>;
 }
 
 function UniversityRail() {
   const { t } = useI18n();
+  const [ref, onScreen] = useOnScreen<HTMLElement>();
   const names = ["University of Wolverhampton", "Arts University Bournemouth", "Health Sciences University"];
-  return <section className="overflow-hidden border-y border-border bg-card py-6" aria-labelledby="awarded-by"><p id="awarded-by" className="mb-4 text-center text-[10px] font-bold uppercase tracking-[.2em] text-muted-foreground">{t("home.awarded", undefined, "Courses awarded by")}</p><div className="animate-ticker flex w-max items-center whitespace-nowrap">{[...names, ...names].map((name, index) => <span key={`${name}-${index}`} aria-hidden={index >= names.length || undefined} className="flex items-center px-8 text-sm font-extrabold uppercase text-primary sm:px-14"><IconUniversity size={23} className="mr-3 text-teal" />{name}</span>)}</div></section>;
+  return <section ref={ref} className="overflow-hidden bg-card pb-6 pt-2" aria-labelledby="awarded-by"><p id="awarded-by" className="mb-4 text-center text-[10px] font-bold uppercase tracking-[.2em] text-muted-foreground">{t("home.awarded", undefined, "Courses awarded by")}</p><div className={cn("animate-ticker flex w-max items-center whitespace-nowrap", !onScreen && "paused")}>{[...names, ...names].map((name, index) => <span key={`${name}-${index}`} aria-hidden={index >= names.length || undefined} className="flex items-center px-8 text-sm font-extrabold uppercase text-primary sm:px-14"><IconUniversity size={23} className="mr-3 text-teal" />{name}</span>)}</div></section>;
 }
 
 function Header() {
   const { t } = useI18n();
+  const mark = useRef<HTMLSpanElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  useEffect(() => { const on = () => setScrolled(window.scrollY > 24); on(); window.addEventListener("scroll", on, { passive: true }); return () => window.removeEventListener("scroll", on); }, []);
-  return <header className={cn("sticky top-0 z-40 border-b bg-card/90 backdrop-blur-xl transition-all duration-300", scrolled ? "border-border shadow-sm" : "border-transparent")}>
-    <div className={cn("mx-auto flex max-w-6xl items-center justify-between px-5 transition-all duration-300 sm:px-8", scrolled ? "py-2" : "py-3")}>
-      <a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className={cn("w-auto transition-all duration-300", scrolled ? "h-8" : "h-10")} /></a>
+  // The marker sits just above the bar and leaves the screen exactly when the bar sticks: no scroll listener, nothing to do per scroll frame.
+  useEffect(() => {
+    const el = mark.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setScrolled(entry ? !entry.isIntersecting : false));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  // The compact state is drawn with transforms only (bar slides up 16px, row 8px, logo scales): the header keeps its layout height, so nothing below it is laid out again.
+  // Solid fill, no backdrop blur: a blurred sticky bar is re-blurred on every scroll frame on phones.
+  return <><span ref={mark} aria-hidden className="-mb-px block h-px" /><header className="pointer-events-none sticky top-0 z-40">
+    <div aria-hidden className={cn("pointer-events-auto absolute inset-0 bg-card transition-transform duration-200 ease-out-strong", scrolled && "-translate-y-4")}><div className={cn("absolute inset-0 border-b border-border shadow-sm transition-opacity duration-200", scrolled ? "opacity-100" : "opacity-0")} /></div>
+    <div className={cn("relative mx-auto flex max-w-6xl items-center justify-between px-5 py-3 transition-transform duration-200 ease-out-strong *:pointer-events-auto sm:px-8", scrolled && "-translate-y-2")}>
+      <a href="#top"><img src={logo} alt="Momentum One" width={374} height={320} className={cn("h-10 w-auto origin-left transition-transform duration-200 ease-out-strong", scrolled && "scale-80")} /></a>
       <nav className="hidden items-center gap-6 text-sm font-semibold text-primary md:flex"><a href="#courses">{t("nav.courses", undefined, "Courses")}</a><a href="#campuses">{t("nav.campuses", undefined, "Campuses")}</a><a href="#journey">{t("nav.journey", undefined, "How it works")}</a><a href="#finance">{t("nav.funding", undefined, "Funding")}</a></nav>
-      <div className="flex items-center gap-2"><LanguageSwitcher compact /><a href="/auth" className="hidden text-sm font-semibold text-primary hover:text-teal sm:block">{t("nav.account", undefined, "My account")}</a><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "hidden rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground sm:inline-flex")}>{t("nav.start", undefined, "Start here")}</a></div>
+      <div className="flex items-center gap-2"><LanguageSwitcher compact className="hidden md:flex" /><LanguageMenu className="md:hidden" /><MobileMenu className="md:hidden" /><a href="/auth" className="hidden text-sm font-semibold text-primary hover:text-teal sm:block">{t("nav.account", undefined, "My account")}</a><a href="#signup" className={cn(buttonVariants({ variant: "outline" }), "hidden rounded-full border-primary px-5 text-primary shadow-none hover:bg-primary hover:text-primary-foreground sm:inline-flex")}>{t("nav.start", undefined, "Start here")}</a></div>
     </div>
-  </header>;
+  </header></>;
 }
 function Section({ id, children }: { id: string; children: React.ReactNode }) { return <section id={id} className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-20 sm:px-8 sm:pt-24">{children}</section>; }
-function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) { return <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, ease }}><p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{title}</h2>{intro && <p className="mt-3 max-w-2xl text-muted-foreground">{intro}</p>}</motion.div>; }
+function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) { return <Reveal><p className="text-xs font-semibold uppercase tracking-[.16em] text-teal">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold italic text-primary sm:text-4xl">{title}</h2>{intro && <p className="mt-3 max-w-2xl text-muted-foreground">{intro}</p>}</Reveal>; }
 function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: { kind: "courses" | "campuses" | "journey"; eyebrow: string; title: string; intro?: string; align?: "left" | "right" }) {
   const right = align === "right";
-  return <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7, ease }} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
+  return <Reveal by={18} duration={0.6} className="relative -mx-5 min-h-80 overflow-hidden bg-primary sm:-mx-8 sm:min-h-96 lg:mx-0">
     <SectionVideo kind={kind} immersive className="absolute inset-0" />
     <div className={cn("absolute inset-0", right ? "bg-gradient-to-l from-primary/90 via-primary/40 to-transparent" : "bg-gradient-to-r from-primary/90 via-primary/40 to-transparent")} />
     <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-primary/70 to-transparent" />
@@ -213,6 +257,8 @@ function ImmersiveSectionIntro({ kind, eyebrow, title, intro, align = "left" }: 
       <h2 className="mt-3 text-3xl font-bold italic sm:text-5xl">{title}</h2>
       {intro && <p className="mt-4 max-w-xl leading-relaxed text-primary-foreground/75">{intro}</p>}
     </div>
+    {/* full-bleed on phones, so both edges melt into the page; from lg the banner is an inset panel and keeps a crisp top */}
+    <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-background to-transparent lg:hidden" />
     <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent" />
-  </motion.div>;
+  </Reveal>;
 }

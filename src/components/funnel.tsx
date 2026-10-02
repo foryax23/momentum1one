@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { loadOfferPdf } from "@/lib/load-offer-pdf";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { UK_CITIES, nearestCampus, type LeadResult } from "@/lib/funnel";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { IconArrowLeft, IconArrowRight, IconDownload, IconPin, IconTick, Spinner } from "./icons";
 import { RocketAssembly, RocketStageLabel } from "./funnel-scenes";
 import { useI18n } from "@/lib/i18n";
+import { easeOut } from "@/lib/motion";
 
 type Data = { full_name: string; city: string; selected_course: string; study_route: "Foundation Year" | "Year 1" | ""; email: string; phone: string; whatsapp: boolean; consent: boolean; email_marketing: boolean; phone_marketing: boolean; whatsapp_marketing: boolean; website: string };
 type CoursePick = { title: string; route?: "Foundation Year" | "Year 1"; campus?: string };
@@ -18,9 +19,16 @@ const STEPS = 5;
 const COUNTRY_CODES: [string, string][] = [["44","UK"],["353","Ireland"],["40","Romania"],["48","Poland"],["359","Bulgaria"],["370","Lithuania"],["371","Latvia"],["372","Estonia"],["36","Hungary"],["420","Czechia"],["421","Slovakia"],["39","Italy"],["34","Spain"],["351","Portugal"],["33","France"],["49","Germany"],["31","Netherlands"],["32","Belgium"],["30","Greece"],["385","Croatia"],["90","Turkey"],["380","Ukraine"],["373","Moldova"],["91","India"],["92","Pakistan"],["880","Bangladesh"],["234","Nigeria"],["233","Ghana"],["254","Kenya"],["27","South Africa"],["20","Egypt"],["971","UAE"],["966","Saudi Arabia"],["86","China"],["63","Philippines"],["1","USA/Canada"],["55","Brazil"]];
 const WA_NUMBER = "447593855452";
 const DRAFT_KEY = "momentum-one-application";
-const ease = [0.22, 1, 0.36, 1] as const;
-// AnimatePresence hands the latest `custom` to the step that is leaving, so Back slides the right way.
-const slide = { enter: (dir: number) => ({ opacity: 0, x: dir * 28 }), center: { opacity: 1, x: 0 }, exit: (dir: number) => ({ opacity: 0, x: dir * -28 }) };
+// AnimatePresence hands the latest `custom` to the step that is leaving, so Back slides the right way. `shift` is the direction, or 0 for reduced motion (a plain fade).
+// The old step is gone in 120ms so the next field is on screen and focusable almost at once; its own entrance never blocks typing.
+// Every state carries a translateX so the resting markup is the same on the server, on the client and with reduced motion.
+const slide = {
+  enter: (shift: number) => ({ opacity: 0, transform: `translateX(${shift * 16}px)` }),
+  center: { opacity: 1, transform: "translateX(0px)", transition: { duration: 0.22, ease: easeOut } },
+  exit: (shift: number) => ({ opacity: 0, transform: `translateX(${shift * -8}px)`, transition: { duration: 0.12, ease: easeOut } }),
+};
+// Press feedback for everything tappable in the funnel: named properties only, so nothing else animates by accident. Opacity is listed so a button fades between disabled and ready instead of snapping.
+const press = "transition-[transform,translate,scale,opacity,background-color,border-color,color,box-shadow] duration-160 ease-out active:scale-[0.97]";
 // Same pattern as zod's .email() on the server, so an address the button accepts is not rejected after submit.
 const EMAIL = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i;
 // Storage throws in private mode or when site data is blocked; the funnel has to keep working without it.
@@ -50,6 +58,8 @@ export function Funnel() {
   const uid = useId();
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
+  const reduce = useReducedMotion();
+  const shift = reduce ? 0 : dir;
   const [d, setD] = useState<Data>({ full_name: "", city: "", selected_course: "", study_route: "", email: "", phone: "", whatsapp: true, consent: false, email_marketing: false, phone_marketing: false, whatsapp_marketing: false, website: "" });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LeadResult | null>(null);
@@ -201,18 +211,17 @@ export function Funnel() {
         {step < STEPS && (
           <div className="mb-4 flex items-center gap-4 sm:flex-col sm:items-stretch sm:gap-3">
             <RocketAssembly step={step} className="mx-0 shrink-0 sm:mx-auto" sizeClassName="h-28 sm:h-44" labelClassName="hidden sm:block" />
-            <AnimatePresence mode="wait" custom={dir} initial={false}>
-              <motion.div key={step} initial={{ opacity: 0, x: dir * 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease }} className="min-w-0 flex-1">
+            <AnimatePresence mode="wait" custom={shift} initial={false}>
+              <motion.div key={step} custom={shift} variants={slide} initial="enter" animate="center" exit="exit" className="min-w-0 flex-1">
                 <RocketStageLabel step={step} className="mb-1 sm:hidden" />
                 {questions[step] && <Question {...questions[step]} id={`${uid}-question`} focus={navigated && (step === 1 || step === 2)} />}
               </motion.div>
             </AnimatePresence>
           </div>
         )}
-        <AnimatePresence mode="wait" custom={dir} initial={false}>
-          <motion.div key={step} custom={dir}
-            variants={slide} initial="enter" animate="center" exit="exit"
-            transition={{ duration: 0.42, ease }}>
+        <AnimatePresence mode="wait" custom={shift} initial={false}>
+          <motion.div key={step} custom={shift}
+            variants={slide} initial="enter" animate="center" exit="exit">
             {step === 0 && (
               <form onSubmit={(event) => { event.preventDefault(); if (d.full_name.trim().length >= 2) go(1); }} className="space-y-4">
                  <FieldLabel htmlFor={`${uid}-name`}>{t("funnel.fullName", undefined, "Full name")}</FieldLabel>
@@ -227,15 +236,18 @@ export function Funnel() {
                 <div role="group" aria-labelledby={`${uid}-question`} className="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto pr-1">
                   {UK_CITIES.map((city) => (
                     <Button key={city} type="button" variant="outline" aria-pressed={d.city === city} onClick={() => set("city", city)}
-                      className={cn("h-10 justify-start rounded-full px-3 shadow-none", d.city === city && "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}>{city}</Button>
+                      className={cn("h-10 justify-start rounded-full px-3 shadow-none", press, d.city === city && "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}>{city}</Button>
                   ))}
                 </div>
+                {/* initial={false}: a campus already chosen arrives with the step; only a first pick gets its own entrance. */}
+                <AnimatePresence initial={false}>
                 {campus && (
-                  <motion.div role="status" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
+                  <motion.div role="status" initial={{ opacity: 0, transform: `translateY(${reduce ? 0 : 8}px)` }} animate={{ opacity: 1, transform: "translateY(0px)" }} transition={{ duration: 0.2, ease: easeOut }} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><IconPin size={18} /></span>
                      <p className="text-sm"><strong className="block text-primary">{t("funnel.nearest", { campus: campus.name }, `Nearest campus: ${campus.name}`)}</strong><span className="text-muted-foreground">{t("funnel.distance", { miles: campus.miles, city: d.city }, `About ${campus.miles} miles from ${d.city}`)}</span></p>
                   </motion.div>
                 )}
+                </AnimatePresence>
                  <Primary type="button" disabled={!d.city} onClick={() => go(2)}>{t("funnel.chooseCourse", undefined, "Choose my course")} <IconArrowRight size={20} /></Primary>
               </div>
             )}
@@ -246,7 +258,7 @@ export function Funnel() {
                   {courses.map((course) => {
                     const selected = d.selected_course === course.title && d.study_route === course.route;
                     return <Button key={course.id} type="button" variant="outline" aria-pressed={selected} onClick={() => { setPreferred(null); setD((current) => ({ ...current, selected_course: course.title, study_route: course.route })); }}
-                      className={cn("h-auto min-h-16 w-full justify-start whitespace-normal rounded-xl px-4 py-3 text-left shadow-none", selected && "border-primary bg-secondary ring-2 ring-primary/20")}>
+                      className={cn("h-auto min-h-16 w-full justify-start whitespace-normal rounded-xl px-4 py-3 text-left shadow-none", press, selected && "border-primary bg-secondary ring-2 ring-primary/20")}>
                       <span><strong className="block text-sm text-primary">{course.title}</strong><span className="mt-1 block text-xs text-muted-foreground">{course.route} · {course.university}</span></span>
                     </Button>;
                   })}
@@ -259,9 +271,9 @@ export function Funnel() {
               <form onSubmit={(event) => { event.preventDefault(); if (phoneOk) go(4); }} className="space-y-4">
                  <FieldLabel htmlFor={`${uid}-phone`}>{t("funnel.mobile", undefined, "Mobile number")}</FieldLabel>
                 <div className="flex gap-2"><select aria-label={t("funnel.country", undefined, "Country code")} value={cc} onChange={(event) => setCc(event.target.value)} className="h-14 w-28 shrink-0 rounded-xl border border-border bg-secondary px-2 font-bold text-primary outline-none focus:border-teal">{COUNTRY_CODES.map(([code, name]) => <option key={name} value={code}>{name} +{code}</option>)}</select><input id={`${uid}-phone`} type="tel" autoFocus autoComplete="tel" required aria-invalid={phoneError || undefined} aria-describedby={phoneError ? `${uid}-phone-error` : undefined} value={d.phone} maxLength={24} onChange={(event) => setPhone(event.target.value)} placeholder={cc === "44" ? "7700 900123" : t("funnel.phonePlaceholder", undefined, "Mobile number without the country code")} className={cn(inputClass, "min-w-0 flex-1")} /></div>
-                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
+                <label className="group/wa flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border p-3">
                    <span><strong id={`${uid}-whatsapp`} className="block text-sm">{t("funnel.whatsappOk", undefined, "WhatsApp is okay")}</strong><span id={`${uid}-whatsapp-hint`} className="text-xs text-muted-foreground">{t("funnel.whatsappFast", undefined, "Usually the quickest way to reach you")}</span></span>
-                  <span className={cn("relative h-7 w-12 rounded-full transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-teal/30", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" role="switch" aria-labelledby={`${uid}-whatsapp`} aria-describedby={`${uid}-whatsapp-hint`} checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span aria-hidden className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
+                  <span className={cn("relative h-7 w-12 rounded-full transition-[scale,background-color] duration-160 ease-out group-active/wa:scale-[0.97] has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-teal/30", d.whatsapp ? "bg-chart-4" : "bg-border")}><input type="checkbox" role="switch" aria-labelledby={`${uid}-whatsapp`} aria-describedby={`${uid}-whatsapp-hint`} checked={d.whatsapp} onChange={(event) => set("whatsapp", event.target.checked)} className="absolute inset-0 z-10 cursor-pointer opacity-0" /><span aria-hidden className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-[translate] duration-160 ease-out-strong", d.whatsapp ? "translate-x-5" : "translate-x-0.5")} /></span>
                 </label>
                   <Primary disabled={!phoneOk}>{t("funnel.next", undefined, "Next question")} <IconArrowRight size={20} /></Primary>
                  {phoneError && <p id={`${uid}-phone-error`} role="alert" className="text-sm font-medium text-destructive">{cc === "44" ? t("funnel.invalidUk", undefined, "Enter a valid UK mobile number.") : t("funnel.invalid", undefined, "Enter a valid mobile number.")}</p>}
@@ -271,7 +283,7 @@ export function Funnel() {
             {step === 4 && (
               <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="space-y-4">
                  <FieldLabel htmlFor={`${uid}-email`}>{t("funnel.emailAddress", undefined, "Email address")}</FieldLabel>
-                <div className="relative"><input id={`${uid}-email`} type="email" autoFocus autoComplete="email" required aria-invalid={emailError || undefined} aria-describedby={emailError ? `${uid}-email-error` : undefined} value={d.email} maxLength={255} onChange={(event) => set("email", event.target.value)} onBlur={() => setEmailTouched(true)} placeholder={t("funnel.emailPlaceholder", undefined, "you@example.com")} className={inputClass} />{emailOk && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-chart-4" />}</div>
+                <div className="relative"><input id={`${uid}-email`} type="email" autoFocus autoComplete="email" required aria-invalid={emailError || undefined} aria-describedby={emailError ? `${uid}-email-error` : undefined} value={d.email} maxLength={255} onChange={(event) => set("email", event.target.value)} onBlur={() => setEmailTouched(true)} placeholder={t("funnel.emailPlaceholder", undefined, "you@example.com")} className={inputClass} />{emailOk && <IconTick size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-chart-4 animate-in fade-in zoom-in-90 duration-150 ease-out-strong" />}</div>
                 {emailError && <p id={`${uid}-email-error`} role="alert" className="text-sm font-medium text-destructive">{t("funnel.invalidEmail", undefined, "Enter a valid email address.")}</p>}
                 <input tabIndex={-1} autoComplete="off" value={d.website} onChange={(event) => set("website", event.target.value)} className="absolute left-[-9999px]" aria-hidden="true" />
                  <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground"><input type="checkbox" required checked={d.consent} onChange={(event) => set("consent", event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--primary)]" /><span>{privacyAt < 0 ? `${privacyText} ` : privacyText.slice(0, privacyAt)}<a href="/privacy" target="_blank" className="font-bold text-primary underline">{privacyLink}</a>{privacyAt < 0 ? "" : privacyText.slice(privacyAt + privacyLink.length)}</span></label>
@@ -292,7 +304,7 @@ export function Funnel() {
                   <Primary type="button" onClick={download} disabled={downloading}>{downloading ? <Spinner /> : <IconDownload size={20} />}{t("funnel.download", undefined, "Download your personalised offer")}</Primary>
                   <a href={result.offer_url} className="text-sm font-semibold text-primary underline underline-offset-4">{t("funnel.open", undefined, "Open your secure offer link")}</a>
                  <WhatsAppRedirect name={first ?? ""} reference={result.ref_code} auto={d.whatsapp} />
-                 <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-secondary">{t("funnel.create", undefined, "Create my student account")}</a>
+                 <a href={`/auth?mode=up&email=${encodeURIComponent(d.email.trim())}`} className={cn("inline-flex h-12 w-full items-center justify-center rounded-xl border border-primary px-5 text-sm font-bold text-primary hover:bg-secondary", press)}>{t("funnel.create", undefined, "Create my student account")}</a>
                  <p className="text-xs text-muted-foreground">{t("funnel.reference", undefined, "Reference")}: {result.ref_code}</p>
               </div>
             )}
@@ -306,10 +318,11 @@ export function Funnel() {
 function Progress({ step, onBack }: { step: number; onBack: () => void }) {
   const { t } = useI18n();
   const labels = [t("funnel.name", undefined, "Name"), t("funnel.location", undefined, "Location"), t("funnel.course", undefined, "Course"), t("funnel.phone", undefined, "Phone"), t("funnel.email", undefined, "Email")];
-  const track = <><div className="absolute left-[10%] right-[10%] top-2 h-0.5 bg-secondary" /><motion.div className="absolute left-[10%] top-2 h-0.5 bg-teal" animate={{ width: `${step * 20}%` }} transition={{ duration: .55, ease }} />
-    {labels.map((label, index) => <span key={label} className={cn("absolute top-[3px] h-3 w-3 -translate-x-1/2 rounded-full border-2", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${10 + index * 20}%` }} />)}</>;
+  // The fill spans the whole track and is scaled from the left: same look as growing its width, without a layout pass per frame.
+  const track = <><div className="absolute left-[10%] right-[10%] top-2 h-0.5 bg-secondary" /><div className="absolute left-[10%] right-[10%] top-2 h-0.5 origin-left bg-teal transition-transform duration-250 ease-out-strong" style={{ transform: `scaleX(${step / (STEPS - 1)})` }} />
+    {labels.map((label, index) => <span key={label} className={cn("absolute top-[3px] h-3 w-3 -translate-x-1/2 rounded-full border-2 transition-colors duration-200", index <= step ? "border-teal bg-teal" : "border-border bg-card")} style={{ left: `${10 + index * 20}%` }} />)}</>;
   return <div className="px-4 pt-3 sm:pt-4">
-    <div className="flex min-h-8 items-center justify-between gap-2"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", step === 0 && "invisible")}><IconArrowLeft size={16} />{t("funnel.back", undefined, "Back")}</Button><div className="relative h-5 flex-1 sm:hidden" aria-hidden>{track}</div>
+    <div className="flex min-h-8 items-center justify-between gap-2"><Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={step === 0} className={cn("px-1 text-muted-foreground", press, step === 0 && "invisible")}><IconArrowLeft size={16} />{t("funnel.back", undefined, "Back")}</Button><div className="relative h-5 flex-1 sm:hidden" aria-hidden>{track}</div>
       {/* The dots and labels are decorative; this polite status is what tells assistive tech which step is showing. */}
       <span role="status" className="text-xs font-semibold tabular-nums text-muted-foreground"><span aria-hidden>{step + 1} {t("funnel.of", undefined, "of")} {STEPS}</span><span className="sr-only">{t("funnel.stepAria", { step: step + 1, total: STEPS, label: labels[step] ?? "" }, `Step ${step + 1} of ${STEPS}: ${labels[step]}`)}</span></span></div>
     <div className="hidden sm:block" aria-hidden>
@@ -319,7 +332,7 @@ function Progress({ step, onBack }: { step: number; onBack: () => void }) {
   </div>;
 }
 
-const inputClass = "h-14 w-full rounded-xl border border-input bg-card px-4 text-base outline-none transition focus:border-teal focus:ring-4 focus:ring-teal/15";
+const inputClass = "h-14 w-full rounded-xl border border-input bg-card px-4 text-base outline-none transition-[border-color,box-shadow] duration-150 ease-out focus:border-teal focus:ring-4 focus:ring-teal/15";
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) { return <label htmlFor={htmlFor} className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</label>; }
 function Question({ title, hint, centered = false, id, focus = false }: { title: string; hint: string; centered?: boolean; id?: string; focus?: boolean }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -327,7 +340,7 @@ function Question({ title, hint, centered = false, id, focus = false }: { title:
   useEffect(() => { if (focus) heading.current?.focus({ preventScroll: true }); }, [focus]);
   return <div className={centered ? "text-center" : ""}><h2 id={id} ref={heading} tabIndex={focus ? -1 : undefined} className="text-[1.3rem] font-semibold leading-tight text-primary outline-none sm:text-[1.45rem]">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{hint}</p></div>;
 }
-function Primary({ children, className, ...props }: React.ComponentProps<typeof Button>) { return <Button {...props} className={cn("h-14 w-full rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-none transition-transform hover:bg-primary/95 active:scale-[.985]", className)}>{children}</Button>; }
+function Primary({ children, className, ...props }: React.ComponentProps<typeof Button>) { return <Button {...props} className={cn("h-14 w-full rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-none hover:bg-primary/95", press, className)}>{children}</Button>; }
 function ConsentChoice({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) { return <label className="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-[var(--primary)]" /><span>{children}</span></label>; }
 
 /** WhatsApp button for the success screen; `auto` (the applicant left "WhatsApp is okay" on) adds the countdown that tries to open it for them. */
@@ -351,7 +364,7 @@ function WhatsAppRedirect({ name, reference, auto }: { name: string; reference: 
     return () => window.clearTimeout(timer);
   }, [left, status, url]);
   return <div className="grid w-full gap-1">
-    <a href={url} target="_blank" rel="noopener noreferrer" className="grid h-14 w-full place-items-center rounded-xl bg-chart-4 px-5 text-base font-bold text-primary-foreground transition-transform active:scale-[.985]">{t("funnel.whatsapp", undefined, "Connect with us on WhatsApp")}</a>
+    <a href={url} target="_blank" rel="noopener noreferrer" className={cn("grid h-14 w-full place-items-center rounded-xl bg-chart-4 px-5 text-base font-bold text-primary-foreground", press)}>{t("funnel.whatsapp", undefined, "Connect with us on WhatsApp")}</a>
     {status === "counting" && <p className="text-xs text-muted-foreground">{t("funnel.opening", { seconds: left }, `Opening WhatsApp in ${left}s.`)} <button type="button" onClick={() => setStatus("idle")} className="font-semibold underline">{t("funnel.stay", undefined, "Stay here")}</button></p>}
     {status === "blocked" && <p role="status" className="text-xs text-muted-foreground">{t("funnel.whatsappBlocked", undefined, "Your browser didn't open WhatsApp automatically. Use the button above.")}</p>}
   </div>;

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { getOffer } from "@/lib/leads.functions";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconSeal, Spinner } from "@/components/icons";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useI18n } from "@/lib/i18n";
 

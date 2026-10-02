@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { CAMPUS_COURSES, type CourseOption } from "@/lib/offer-catalog";
 import { CAMPUSES } from "@/lib/funnel";
 import { pickCourse, type CoursePick } from "@/components/home-sections";
@@ -8,18 +8,19 @@ import { IconArrowRight, IconClock, IconClose, IconPin, IconUniversity } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
-import business from "@/assets/courses/business.jpg";
-import marketing from "@/assets/courses/marketing.jpg";
-import care from "@/assets/courses/care.jpg";
-import fashion from "@/assets/courses/fashion.jpg";
-import events from "@/assets/courses/events.jpg";
-import psychology from "@/assets/courses/psychology.jpg";
-import publicHealth from "@/assets/courses/public-health.jpg";
-import manchester from "@/assets/campuses/manchester.jpg";
-import sunderland from "@/assets/campuses/sunderland.jpg";
-import derby from "@/assets/campuses/derby.jpg";
-import newcastle from "@/assets/campuses/newcastle.jpg";
-import luton from "@/assets/campuses/luton.jpg";
+import { easeOut, spring } from "@/lib/motion";
+import business from "@/assets/courses/business.webp";
+import marketing from "@/assets/courses/marketing.webp";
+import care from "@/assets/courses/care.webp";
+import fashion from "@/assets/courses/fashion.webp";
+import events from "@/assets/courses/events.webp";
+import psychology from "@/assets/courses/psychology.webp";
+import publicHealth from "@/assets/courses/public-health.webp";
+import manchester from "@/assets/campuses/manchester-thumb.webp";
+import sunderland from "@/assets/campuses/sunderland-thumb.webp";
+import derby from "@/assets/campuses/derby-thumb.webp";
+import newcastle from "@/assets/campuses/newcastle-thumb.webp";
+import luton from "@/assets/campuses/luton-thumb.webp";
 
 const CAMPUS_IMAGES: Record<string, string> = { Manchester: manchester, Sunderland: sunderland, Derby: derby, Newcastle: newcastle, Luton: luton };
 // Each course gets its own photo, accent and one-line subject summary (English fallback; translated through `course.blurb.*`).
@@ -33,7 +34,10 @@ const COURSE_LOOK: Record<string, { photo: string; accent: string; blurb: string
   "public-health": { photo: publicHealth, accent: "#6EE7A8", blurb: "The health of communities: prevention and policy." },
 };
 const DEFAULT_LOOK = { photo: business, accent: "#E8B04A", blurb: "" };
-const spring = { type: "spring", duration: 0.5, bounce: 0.14 } as const;
+const SHEET_REST = "translate(0px, 0px) scale(1)";
+// The card's own photo laid over the sheet for the first frames (and the last ones on the way back), so the picture never jumps while the sheet takes over.
+const FACE: Variants = { hidden: { opacity: 1 }, open: { opacity: 0, transition: { duration: 0.25, delay: 0.05, ease: easeOut } }, closed: { opacity: 1, transition: { duration: 0.2, ease: easeOut } } };
+const SHADOW: Variants = { hidden: { opacity: 0 }, open: { opacity: 1, transition: { duration: 0.25, delay: 0.2, ease: easeOut } }, closed: { opacity: 0, transition: { duration: 0.1, ease: easeOut } } };
 
 type Course = { key: string; award: string; name: string; title: string; university: string; routes: CourseOption["route"][]; campuses: { name: string; full: string; options: CourseOption[] }[] };
 
@@ -62,31 +66,24 @@ export function CourseShowcase() {
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  // Width / height of the pressed card; 0 means "just fade" (reduced motion).
+  const [ratio, setRatio] = useState(0);
   // A choice made inside the sheet is applied once the sheet has closed, so the page only starts moving after the card is back in place.
   const pending = useRef<CoursePick | null>(null);
   const opener = useRef<HTMLElement | null>(null);
-  const openCourse = (key: string, from: HTMLElement) => { opener.current = from; setOpenKey(key); };
+  const openCourse = (key: string, from: HTMLElement) => { opener.current = from; const { width, height } = from.getBoundingClientRect(); setRatio(reduce || !height ? 0 : width / height); setOpenKey(key); };
   const open = courses.find((course) => course.key === openKey) ?? null;
 
+  // The current slide is whichever one crosses a zero-width line down the middle of the row. No scroll listener: swiping stays native, and React only hears about it when the slide really changes.
   useEffect(() => {
     const el = track.current;
     if (!el) return;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const middle = el.scrollLeft + el.clientWidth / 2;
-      let nearest = 0;
-      let distance = Infinity;
-      Array.from(el.children).forEach((child, i) => {
-        const slide = child as HTMLElement;
-        const d = Math.abs(slide.offsetLeft - el.offsetLeft + slide.offsetWidth / 2 - middle);
-        if (d < distance) { distance = d; nearest = i; }
-      });
-      setIndex(nearest);
-    };
-    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => { el.removeEventListener("scroll", onScroll); cancelAnimationFrame(frame); };
+    const slides = Array.from(el.children);
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) setIndex(slides.indexOf(entry.target));
+    }, { root: el, rootMargin: "0px -50% 0px -50%" });
+    slides.forEach((slide) => observer.observe(slide));
+    return () => observer.disconnect();
   }, []);
 
   const go = (i: number) => {
@@ -101,7 +98,6 @@ export function CourseShowcase() {
     pending.current = null;
     if (detail) window.setTimeout(() => pickCourse(detail), 80);
   };
-  const shared = (name: string, key: string) => (reduce ? {} : { layoutId: `course-${name}-${key}` });
 
   return (
     <div onKeyDown={(e) => { if (openKey) return; if (e.key === "ArrowRight") go(index + 1); if (e.key === "ArrowLeft") go(index - 1); }}>
@@ -113,20 +109,19 @@ export function CourseShowcase() {
         </div>
       </div>
 
-      {/* layoutScroll lets the shared card → sheet transition account for how far the row has been swiped */}
-      <motion.div ref={track} layoutScroll tabIndex={0} aria-label={t("nav.courses", undefined, "Courses")} className="no-scrollbar -mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[11vw] pb-4 pt-2 outline-none sm:-mx-8 sm:gap-5 sm:px-8 sm:scroll-px-8">
+      <div ref={track} tabIndex={0} aria-label={t("nav.courses", undefined, "Courses")} className="no-scrollbar -mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[11vw] pb-4 pt-2 outline-none sm:-mx-8 sm:gap-5 sm:px-8 sm:scroll-px-8">
         {courses.map((course, i) => {
           const look = COURSE_LOOK[course.key] ?? DEFAULT_LOOK;
           return (
-            <div key={course.key} className={cn("w-[78vw] shrink-0 snap-center transition-opacity duration-300 sm:w-[44%] sm:snap-start lg:w-[31%]", i !== index && "max-sm:opacity-55")}>
-              <motion.article {...shared("card", course.key)} transition={spring} style={{ borderRadius: 24 }} role="button" tabIndex={0} aria-haspopup="dialog"
+            <div key={course.key} className={cn("w-[78vw] shrink-0 snap-center transition-opacity duration-200 ease-out sm:w-[44%] sm:snap-start lg:w-[31%]", i !== index && "max-sm:opacity-55")}>
+              <article role="button" tabIndex={0} aria-haspopup="dialog"
                 aria-label={`${course.title}. ${t("course.open", undefined, "See campuses and timetables")}`}
                 onClick={(e) => openCourse(course.key, e.currentTarget)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCourse(course.key, e.currentTarget); } }}
-                className="group relative h-[27rem] cursor-pointer overflow-hidden sm:aspect-[4/5] sm:h-auto bg-primary text-primary-foreground shadow-lg outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-teal/40 active:scale-[.985] hover-fine:hover:shadow-2xl">
-                <motion.img {...shared("photo", course.key)} transition={spring} src={look.photo} alt="" width={960} height={1200} loading={i < 2 ? "eager" : "lazy"} className="absolute inset-0 h-full w-full object-cover" />
+                className="group relative h-[27rem] cursor-pointer overflow-hidden rounded-[24px] sm:aspect-[4/5] sm:h-auto bg-primary text-primary-foreground shadow-lg outline-none transition-[scale,box-shadow] duration-150 ease-out focus-visible:ring-4 focus-visible:ring-teal/40 active:scale-[.98] hover-fine:hover:shadow-2xl">
+                <img src={look.photo} alt="" width={720} height={900} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-primary/10" />
                 <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-                  <span className="rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-bold text-primary backdrop-blur">{course.award}</span>
+                  <span className="rounded-full bg-card px-2.5 py-1 text-[11px] font-bold text-primary">{course.award}</span>
                   <span className="font-display text-sm font-bold italic" style={{ color: look.accent }}>{String(i + 1).padStart(2, "0")}</span>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-5">
@@ -139,43 +134,72 @@ export function CourseShowcase() {
                   </div>
                   <p className="mt-4 flex items-center justify-between gap-3 border-t border-primary-foreground/20 pt-3 text-sm font-bold">
                     {t("course.open", undefined, "See campuses and timetables")}
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-transform duration-200 hover-fine:group-hover:translate-x-0.5" style={{ background: look.accent }}><IconArrowRight size={18} /></span>
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-transform duration-200 ease-out hover-fine:group-hover:translate-x-0.5" style={{ background: look.accent }}><IconArrowRight size={18} /></span>
                   </p>
                 </div>
-              </motion.article>
+              </article>
             </div>
           );
         })}
-      </motion.div>
+      </div>
 
       <div className="mt-2 flex justify-center gap-1.5">
-        {courses.map((course, i) => <button key={course.key} type="button" aria-label={t("deck.show", { name: course.name }, `Show ${course.name}`)} aria-current={i === index} onClick={() => go(i)} className={cn("h-2 rounded-full transition-all duration-300", i === index ? "w-6 bg-primary" : "w-2 bg-border")} />)}
+        {courses.map((course, i) => <button key={course.key} type="button" aria-label={t("deck.show", { name: course.name }, `Show ${course.name}`)} aria-current={i === index} onClick={() => go(i)} className={cn("h-2 rounded-full transition-colors duration-200", i === index ? "w-6 bg-primary" : "w-2 bg-border")} />)}
       </div>
 
       <Dialog.Root open={openKey !== null} onOpenChange={(next) => { if (!next) setOpenKey(null); }}>
         <AnimatePresence onExitComplete={applyPending}>
-          {open && <CourseSheet key={open.key} course={open} shared={shared} onChoose={choose} onClosed={() => { if (!pending.current) opener.current?.focus({ preventScroll: true }); }} />}
+          {open && <CourseSheet key={open.key} course={open} origin={opener} ratio={ratio} onChoose={choose} onClosed={() => { if (!pending.current) opener.current?.focus({ preventScroll: true }); }} />}
         </AnimatePresence>
       </Dialog.Root>
     </div>
   );
 }
 
-function CourseSheet({ course, shared, onChoose, onClosed }: { course: Course; shared: (name: string, key: string) => { layoutId?: string }; onChoose: (detail: CoursePick) => void; onClosed: () => void }) {
+/** The sheet starts as the card it was opened from and goes back to it. Only transforms and opacity move, so the browser can run all of it off the main thread: one uniform scale (nothing inside is stretched), and a bottom edge that is revealed by sliding a clipping box one way and its content the other by the same amount. */
+function CourseSheet({ course, origin, ratio, onChoose, onClosed }: { course: Course; origin: RefObject<HTMLElement | null>; ratio: number; onChoose: (detail: CoursePick) => void; onClosed: () => void }) {
   const { t } = useI18n();
   const look = COURSE_LOOK[course.key] ?? DEFAULT_LOOK;
+  const box = useRef<HTMLDivElement>(null);
+  const entered = useRef<{ transform: string; tuck: number } | null | undefined>(undefined);
+  // Where the card sits, in the sheet's own terms. Read when an animation starts (never while rendering), so closing lands on the card wherever it is by then.
+  const dock = () => {
+    const el = box.current;
+    const card = origin.current?.getBoundingClientRect();
+    if (!ratio || !el || !card?.width) return null;
+    const scale = card.width / el.offsetWidth;
+    return { transform: `translate(${card.left - el.offsetLeft}px, ${card.top - el.offsetTop}px) scale(${scale})`, tuck: Math.max(0, el.offsetHeight - card.height / scale) };
+  };
+  // Measured once on the way in, so a re-render while the sheet is open cannot replay the entrance.
+  const enter = () => { if (entered.current === undefined) entered.current = dock(); return entered.current; };
+  const sheet: Variants = {
+    hidden: { opacity: 0 },
+    open: () => { const from = enter(); return from ? { opacity: 1, transform: [from.transform, SHEET_REST], transition: { default: spring, opacity: { duration: 0.12, ease: easeOut } } } : { opacity: 1, transition: { duration: 0.2, ease: easeOut } }; },
+    closed: () => { const to = dock(); return to ? { opacity: 0, transform: to.transform, transition: { default: spring, opacity: { duration: 0.15, delay: 0.3, ease: easeOut } } } : { opacity: 0, transition: { duration: 0.15, ease: easeOut } }; },
+  };
+  // dir -1 is the clipping box, +1 its content: equal and opposite, so the content stays put while the box's bottom edge travels.
+  const slide = (dir: number): Variants => ({
+    hidden: {},
+    open: () => { const from = enter(); return from ? { transform: [`translateY(${dir * from.tuck}px)`, "translateY(0px)"], transition: spring } : {}; },
+    closed: () => { const to = dock(); return to ? { transform: `translateY(${dir * to.tuck}px)`, transition: spring } : {}; },
+  });
   return (
     <Dialog.Portal forceMount>
       <Dialog.Overlay forceMount asChild>
-        <motion.div className="fixed inset-0 z-[60] bg-primary/75 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} />
+        {/* A plain dim. Blurring the whole page behind a moving sheet is the most expensive thing a phone can be asked to draw. */}
+        <motion.div className="fixed inset-0 z-[60] bg-primary/75" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25, ease: easeOut }} />
       </Dialog.Overlay>
       <Dialog.Content forceMount asChild aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); onClosed(); }}>
-        <motion.div {...shared("card", course.key)} transition={spring} style={{ borderRadius: 28 }} initial={{ opacity: shared("card", course.key).layoutId ? 1 : 0 }} animate={{ opacity: 1 }} exit={{ opacity: shared("card", course.key).layoutId ? 1 : 0 }}
-          className="fixed inset-x-3 bottom-3 top-3 z-[60] mx-auto flex max-w-2xl flex-col overflow-hidden bg-card shadow-2xl outline-none sm:bottom-8 sm:top-8">
+        <motion.div ref={box} variants={sheet} initial="hidden" animate="open" exit="closed" className="fixed inset-x-3 bottom-3 top-3 z-[60] mx-auto max-w-2xl origin-top-left outline-none sm:bottom-8 sm:top-8">
+          {/* The shadow is its own layer: the clipping box would cut it off, and this way it is drawn once and only faded. */}
+          <motion.div aria-hidden variants={SHADOW} className="pointer-events-none absolute inset-0 rounded-[28px] shadow-2xl" />
+          {/* The clipping box starts above the sheet (and the sheet that far down inside it) so the spring's small overshoot never shaves the top edge. It ignores the pointer so that strip still closes the sheet like the rest of the backdrop. */}
+          <motion.div variants={slide(-1)} className="pointer-events-none absolute inset-x-0 -top-4 bottom-0 overflow-hidden rounded-b-[28px]">
+          <motion.div variants={slide(1)} className="pointer-events-auto absolute inset-x-0 bottom-0 top-4 flex flex-col overflow-hidden rounded-[28px] bg-card">
           <div className="relative h-48 shrink-0 overflow-hidden bg-primary text-primary-foreground sm:h-60">
-            <motion.img {...shared("photo", course.key)} transition={spring} src={look.photo} alt="" width={960} height={1200} className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
+            <img src={look.photo} alt="" width={720} height={900} decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/50 to-primary/10" />
-            <Dialog.Close aria-label={t("course.close", undefined, "Close")} className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-card/90 text-primary backdrop-blur transition active:scale-95"><IconClose size={18} /></Dialog.Close>
+            <Dialog.Close aria-label={t("course.close", undefined, "Close")} className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-card text-primary transition-[scale] duration-150 ease-out active:scale-95"><IconClose size={18} /></Dialog.Close>
             <div className="absolute inset-x-0 bottom-0 p-5">
               <span className="block h-1 w-10 rounded-full" style={{ background: look.accent }} />
               <p className="mt-3 text-xs font-bold uppercase tracking-[.16em] text-primary-foreground/75">{course.award}</p>
@@ -183,7 +207,7 @@ function CourseSheet({ course, shared, onChoose, onClosed }: { course: Course; s
             </div>
           </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.16, duration: 0.25 } }} exit={{ opacity: 0, transition: { duration: 0.1 } }} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
             <p className="flex items-center gap-2 text-sm font-semibold text-primary"><IconUniversity size={18} className="shrink-0 text-teal" />{t("compare.awardedBy", { university: course.university }, `Awarded by ${course.university}`)}</p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(`course.blurb.${course.key}`, undefined, look.blurb)}</p>
 
@@ -192,7 +216,7 @@ function CourseSheet({ course, shared, onChoose, onClosed }: { course: Course; s
               {course.campuses.map((campus) => (
                 <li key={campus.name} className="overflow-hidden rounded-2xl border border-border">
                   <div className="flex items-center gap-3 bg-secondary/60 p-3">
-                    <img src={CAMPUS_IMAGES[campus.name]} alt="" width={96} height={96} loading="lazy" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+                    <img src={CAMPUS_IMAGES[campus.name]} alt="" width={132} height={132} loading="lazy" decoding="async" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
                     <p className="min-w-0"><strong className="block text-primary">{campus.name}</strong><span className="block truncate text-xs text-muted-foreground">{campus.full}</span></p>
                   </div>
                   <ul className="divide-y divide-border">
@@ -209,10 +233,19 @@ function CourseSheet({ course, shared, onChoose, onClosed }: { course: Course; s
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.16, duration: 0.25 } }} exit={{ opacity: 0, transition: { duration: 0.1 } }} className="shrink-0 border-t border-border bg-card p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-border bg-card p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
             <Button type="button" onClick={() => onChoose(course.title)} className="h-12 w-full rounded-xl font-bold">{t("home.cta", undefined, "Check my options")} <IconArrowRight size={18} /></Button>
+          </div>
+
+          {ratio > 0 && (
+            <motion.div aria-hidden variants={FACE} style={{ aspectRatio: ratio }} className="pointer-events-none absolute left-0 top-0 max-h-full w-full bg-primary">
+              <img src={look.photo} alt="" width={720} height={900} decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-primary/10" />
+            </motion.div>
+          )}
+          </motion.div>
           </motion.div>
         </motion.div>
       </Dialog.Content>
@@ -221,5 +254,5 @@ function CourseSheet({ course, shared, onChoose, onClosed }: { course: Course; s
 }
 
 function SlideButton({ label, onClick, flip, disabled }: { label: string; onClick: () => void; flip?: boolean; disabled?: boolean }) {
-  return <button type="button" aria-label={label} onClick={onClick} disabled={disabled} className="grid h-11 w-11 place-items-center rounded-full border border-border bg-card text-primary transition hover:bg-primary hover:text-primary-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40"><IconArrowRight size={18} className={flip ? "rotate-180" : ""} /></button>;
+  return <button type="button" aria-label={label} onClick={onClick} disabled={disabled} className="grid h-11 w-11 place-items-center rounded-full border border-border bg-card text-primary transition-[scale,background-color,color,opacity] duration-150 ease-out hover-fine:hover:bg-primary hover-fine:hover:text-primary-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40"><IconArrowRight size={18} className={flip ? "rotate-180" : ""} /></button>;
 }

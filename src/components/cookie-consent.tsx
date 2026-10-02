@@ -32,7 +32,7 @@ export function CookieConsent() {
 
   if (!ready || (choice && !open)) return null;
   return (
-    <div className="fixed inset-x-2 bottom-2 z-[100] mx-auto max-w-2xl border border-border bg-card p-3 shadow-paper sm:inset-x-3 sm:bottom-6 sm:p-6" role="dialog" aria-labelledby="cookie-title">
+    <div className="fixed inset-x-2 bottom-2 z-[100] mx-auto max-w-2xl border border-border bg-card p-3 shadow-paper duration-200 ease-out-strong animate-in fade-in slide-in-from-bottom-2 sm:inset-x-3 sm:bottom-6 sm:p-6" role="dialog" aria-labelledby="cookie-title">
       <p className="hidden text-xs font-bold uppercase tracking-[.16em] text-teal sm:block">{t("cookie.eyebrow", undefined, "Your privacy")}</p>
       <h2 id="cookie-title" className="sr-only text-xl font-bold text-primary sm:not-sr-only sm:mt-2">{t("cookie.title", undefined, "Choose your cookie settings")}</h2>
       {/* phones get one line plus a details link, so the banner never hides the form behind it */}

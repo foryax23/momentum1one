@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UK_CITIES } from "@/lib/funnel";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 import { WhatsAppHealth, WhatsAppQueue, WhatsAppThread } from "@/components/whatsapp-admin";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
