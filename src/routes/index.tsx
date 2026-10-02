@@ -180,7 +180,7 @@ function Reveal({ axis = "Y", by = 16, duration = 0.5, className, children }: { 
 function AnnouncementBar() {
   const { t } = useI18n();
   const [ref, onScreen] = useOnScreen<HTMLDivElement>();
-  const text = t("home.announcement", undefined, "January 2027 applications open · Personalised course options in one minute · Advisor support available · ");
+  const text = t("home.announcement", undefined, "Applications open for the next intake · Personalised course options in one minute · Advisor support available · ");
   return <div ref={ref} className="overflow-hidden bg-gold py-2 text-primary"><div className={cn("animate-ticker flex w-max whitespace-nowrap text-[11px] font-bold uppercase tracking-[.16em]", !onScreen && "paused")}><span>{text}</span><span aria-hidden>{text}</span></div></div>;
 }
 

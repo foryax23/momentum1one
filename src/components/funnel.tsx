@@ -175,7 +175,7 @@ export function Funnel() {
       const params = new URLSearchParams(window.location.search);
       const row = await send({ data: {
         full_name: d.full_name.trim(), email: d.email.trim(), phone: fullPhone,
-        city: d.city as (typeof UK_CITIES)[number], interest: null, intake: "January 2027", consent: true,
+        city: d.city as (typeof UK_CITIES)[number], interest: null, intake: null, consent: true,
          whatsapp: d.whatsapp, email_marketing: d.email_marketing, phone_marketing: d.phone_marketing, whatsapp_marketing: d.whatsapp_marketing, nearest_campus: campus.full, distance_miles: campus.miles,
         source: (params.get("src") ?? params.get("utm_source"))?.slice(0, 100) ?? null, campaign: params.get("utm_campaign")?.slice(0, 100) ?? null,
         page: window.location.href.slice(0, 500), website: d.website,
