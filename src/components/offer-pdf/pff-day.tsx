@@ -1,6 +1,6 @@
 import { Image, Text, View } from "@react-pdf/renderer";
 import type { OfferData, Rich } from "./data";
-import { Abs, C, CurvedBand, Eyebrow, Icon, NumberCircle, PAGE, PageShell, PageTitle, RichText, Ring, Sparkle, T, caps, type IconName, type Sx } from "./theme";
+import { Abs, C, CurvedBand, Eyebrow, Icon, NumberCircle, PAGE, PageShell, PageTitle, Para, Ring, Sparkle, T, caps, textEm, type IconName, type Sx } from "./theme";
 
 // Page 5: the PFF Day. The four campus templates are identical here apart from the header and the legal paragraph, so the wording lives in this file.
 // Positions are the templates' (pt from the page's top-left). The template prints no footer note or page number on this page.
@@ -14,22 +14,18 @@ const SCHEDULE: [time: string, title: string, detail?: string][] = [
   ["12:30–14:00", "Session 3", "Research and communication"],
   ["14:00–16:00", "Session 4", "Final reflection and close of the day"],
 ];
-// Line breaks as in the template: "Knowledge of your" misses fitting on one line by under a point, so they are not left to the wrapping.
-const ASSESSED: { icon: IconName; lines: string[] }[] = [
-  { icon: "clock", lines: ["Punctuality"] }, { icon: "message", lines: ["Communication", "skills"] },
-  { icon: "book", lines: ["Knowledge of", "your course"] }, { icon: "people", lines: ["Engagement and", "participation"] },
+const ASSESSED: { icon: IconName; label: string }[] = [{ icon: "clock", label: "Punctuality" }, { icon: "message", label: "Communication skills" }, { icon: "book", label: "Knowledge of your course" }, { icon: "people", label: "Engagement and participation" }];
+const RULES: Rich[] = [
+  [{ b: "Be on time." }, " Sessions start at 10:00 and late arrivals can't join — you'd have to reschedule."],
+  [{ b: "Pre-task done before you arrive" }, ", or you can't take part."],
+  [{ b: "Bring your ID" }, " for the check-in."],
+  [{ b: "One PFF Day per intake" }, " — come prepared."],
 ];
-// One entry per printed line: react-pdf balances a paragraph's line lengths instead of filling each line, which moves "late" down to the second line.
-const RULES: Rich[][] = [
-  [[{ b: "Be on time." }, " Sessions start at 10:00 and late"], ["arrivals can't join — you'd have to"], ["reschedule."]],
-  [[{ b: "Pre-task done before you arrive" }, ", or you"], ["can't take part."]],
-  [[{ b: "Bring your ID" }, " for the check-in."]],
-  [[{ b: "One PFF Day per intake" }, " — come prepared."]],
-];
-const CLOSING = ["Get in touch and we'll check your documents,", "submit your application and support you all the way", "to enrolment."];
 
-const COL = 340.2, TILE = { w: 98.6, h: 54.7, dx: 105.4, dy: 61.5 }, CARD = { x: 300.5, y: 674.6, w: 243.76, pad: 14.1, label: 93.6 };
+const COL = 340.2, TILE = { w: 98.6, h: 54.7, dx: 105.4, dy: 61.5, pad: 9.6 }, RULE = { circle: 13, gap: 7.9 }, CARD = { x: 300.5, y: 674.6, w: 243.76, pad: 14.1, label: 93.6 };
 const VALUE_W = CARD.w - 2 * CARD.pad - CARD.label;
+/** The closing paragraph's column in the templates: 80mm. */
+const CLOSING_WIDTH = 226.77;
 const inner = PAGE.radius - 0.6;
 
 const s = {
@@ -42,7 +38,7 @@ const s = {
   slotTitle: { fontSize: 9, fontWeight: 500, color: C.ink, lineHeight: 1.49 },
   slotBreak: { fontSize: 9, fontWeight: 500, fontStyle: "italic", color: C.body, lineHeight: 1.4 },
   slotDetail: { fontSize: 7.9, color: C.body, lineHeight: 1.4 },
-  tile: { width: TILE.w, height: TILE.h, borderRadius: 7.1, backgroundColor: C.pale, paddingLeft: 9.6, paddingTop: 10.2 },
+  tile: { width: TILE.w, height: TILE.h, borderRadius: 7.1, backgroundColor: C.pale, paddingLeft: TILE.pad, paddingTop: 10.2 },
   tileText: { fontSize: 8.4, fontWeight: 700, color: C.navy, lineHeight: 1.25 },
   rule: { flexDirection: "row", minHeight: 13.9, marginBottom: 8.5 },
   ruleText: { fontSize: 8.6, color: C.ink, lineHeight: 1.5 }, ruleLead: { fontWeight: 700, color: C.navy },
@@ -57,8 +53,8 @@ const s = {
 } satisfies Record<string, Sx>;
 
 // The value column starts where the template's placeholder chip does and is 122pt wide: the email just fits at the template's 8.6pt. A longer host, such as a
-// preview deployment's, is set smaller, and below 7pt it is split after the dot or hyphen nearest its middle. Widths are Poppins Medium advances in em, rounded.
-const ems = (text: string) => [...text].reduce((w, ch) => w + (/[m@]/i.test(ch) ? 1.04 : /w/i.test(ch) ? 0.83 : /[ijl.:]/.test(ch) ? 0.27 : /[frt1 ]/.test(ch) ? 0.39 : 0.64), 0);
+// preview deployment's, is set smaller, and below 7pt it is split after the dot or hyphen nearest its middle.
+const ems = (text: string) => textEm(text, { fontWeight: 500 }) ?? text.length * 0.62;
 function fitValue(text: string) {
   const size = (lines: string[]) => Math.min(8.6, VALUE_W / Math.max(...lines.map(ems)));
   if (size([text]) >= 7) return { lines: [text], fontSize: size([text]) };
@@ -79,7 +75,7 @@ export function PffDayPage({ data }: { data: OfferData }) {
   const { contact, signature } = data, last = SCHEDULE.length - 1;
   return <PageShell data={data}>
     <Eyebrow>04 · The PFF Day</Eyebrow><PageTitle>Your PFF Day: what to expect</PageTitle>
-    <Abs x={PAGE.x} y={124.5} w={472}><Text style={s.intro}>The Prepare for Foundation (PFF) Day is a one-day assessment on campus. It's your chance to show your skills, motivation and readiness for university — beyond your qualifications.</Text></Abs>
+    <Abs x={PAGE.x} y={124.5}><Para width={472} style={s.intro} parts="The Prepare for Foundation (PFF) Day is a one-day assessment on campus. It's your chance to show your skills, motivation and readiness for university — beyond your qualifications." /></Abs>
 
     <Abs x={PAGE.x} y={173.2} w={269.3} style={s.table}>
       {SCHEDULE.map(([time, title, detail], i) => <View key={time} style={[s.row, i ? s.rowLine : { height: 46.4 }, detail ? {} : { height: 35 }]}>
@@ -89,15 +85,15 @@ export function PffDayPage({ data }: { data: OfferData }) {
     </Abs>
 
     <Abs x={COL} y={173.8}><Text style={T.h3}>What you're assessed on</Text></Abs>
-    {ASSESSED.map(({ icon, lines }, i) => <Abs key={icon} x={COL + (i % 2) * TILE.dx} y={197.5 + Math.floor(i / 2) * TILE.dy} style={s.tile}>
-      <Icon name={icon} size={10.5} stroke={2} style={{ marginBottom: 2.2 }} />{lines.map((line) => <Text key={line} style={s.tileText}>{line}</Text>)}
+    {ASSESSED.map(({ icon, label }, i) => <Abs key={icon} x={COL + (i % 2) * TILE.dx} y={197.5 + Math.floor(i / 2) * TILE.dy} style={s.tile}>
+      <Icon name={icon} size={10.5} stroke={2} style={{ marginBottom: 2.2 }} /><Para parts={label} width={TILE.w - 2 * TILE.pad} style={s.tileText} />
     </Abs>)}
 
     <Abs x={COL} y={334.1}><Text style={T.h3}>Golden rules</Text></Abs>
     <Abs x={COL} y={358.3}>
-      {RULES.map((lines, i) => <View key={i} style={s.rule}>
-        <NumberCircle n={i + 1} size={13} fontSize={7} style={{ marginTop: 0.4, marginRight: 7.9 }} />
-        <View>{lines.map((line, j) => <RichText key={j} parts={line} style={s.ruleText} bold={s.ruleLead} />)}</View>
+      {RULES.map((rule, i) => <View key={i} style={s.rule}>
+        <NumberCircle n={i + 1} size={RULE.circle} fontSize={7} style={{ marginTop: 0.4, marginRight: RULE.gap }} />
+        <Para parts={rule} width={PAGE.right - COL - RULE.circle - RULE.gap} style={s.ruleText} bold={s.ruleLead} />
       </View>)}
     </Abs>
 
@@ -112,10 +108,10 @@ export function PffDayPage({ data }: { data: OfferData }) {
     <Abs x={68.2} y={657.8}><Ring size={6} /></Abs><Abs x={425.2} y={654.8}><Sparkle size={13} /></Abs>
     <Abs x={PAGE.x} y={675}><Text style={[T.eyebrow, { color: C.sky }]}>Ready to start?</Text></Abs>
     <Abs x={PAGE.x} y={686.5}><Text style={s.bandTitle}>Launch your future</Text><Text style={s.bandTitle}>with Momentum One</Text></Abs>
-    <Abs x={PAGE.x} y={739.8}>{CLOSING.map((line) => <Text key={line} style={s.closing}>{line}</Text>)}</Abs>
+    <Abs x={PAGE.x} y={739.8}><Para width={CLOSING_WIDTH} style={s.closing} parts="Get in touch and we'll check your documents, submit your application and support you all the way to enrolment." /></Abs>
     <Abs x={CARD.x} y={CARD.y} w={CARD.w} style={s.card}>
       <Contact first label="Phone / WhatsApp" value={contact.phone} /><Contact label="Email" value={contact.email} /><Contact label="Web" value={contact.web} />
     </Abs>
-    <Abs x={PAGE.x} y={796.2} w={PAGE.inner}><Text style={s.legal}>{data.legal}</Text></Abs>
+    <Abs x={PAGE.x} y={796.2}><Para parts={data.legal} width={PAGE.inner} style={s.legal} /></Abs>
   </PageShell>;
 }

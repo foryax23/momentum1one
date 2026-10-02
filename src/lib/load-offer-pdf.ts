@@ -2,5 +2,5 @@
 // server build drop the import entirely, so it never initialises on the server.
 export async function loadOfferPdf() {
   if (import.meta.env.SSR) throw new Error("PDF generation is browser-only");
-  return import("@/components/offer-pdf");
+  return import("@/components/offer-pdf/index");
 }
