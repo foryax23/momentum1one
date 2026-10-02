@@ -5,22 +5,39 @@ import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getAdmissionDocumentUrl, getAdmissionPack, getWhatsAppTemplateHealth, queueAdmissionsReview, resendWelcome, updateAdmissionDocument } from "@/lib/whatsapp-admin.functions";
+import { getAdmissionDocumentUrl, getAdmissionPack, getReplyHealth, retryFailedReply, sendAllWaitingWelcomes, getWhatsAppTemplateHealth, queueAdmissionsReview, resendWelcome, updateAdmissionDocument } from "@/lib/whatsapp-admin.functions";
 
 const WELCOME: Record<string, string> = { pending: "Not sent yet", sending: "Sending", sent: "Sent", failed: "Failed", awaiting_template: "Waiting for Meta approval" };
 
 export function WhatsAppHealth() {
   const templateHealth = useServerFn(getWhatsAppTemplateHealth);
+  const loadReplies = useServerFn(getReplyHealth);
+  const retry = useServerFn(retryFailedReply);
+  const sendAll = useServerFn(sendAllWaitingWelcomes);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
   const q = useQuery({ queryKey: ["wa", "health"], refetchInterval: 30000, queryFn: async () => {
     const { data, count } = await supabase.from("whatsapp_webhook_events").select("received_at", { count: "exact" }).order("received_at", { ascending: false }).limit(1);
-    const template = await templateHealth();
-    return { count: count ?? 0, last: data?.[0]?.received_at ?? null, template };
+    const [template, replies] = await Promise.all([templateHealth(), loadReplies()]);
+    return { count: count ?? 0, last: data?.[0]?.received_at ?? null, template, replies };
   }});
+  async function catchUp() {
+    setBusy(true);
+    try { const r = await sendAll(); toast.success(r.status === "APPROVED" ? `Welcome sent to ${r.sent} of ${r.total} students` : "Meta has not approved the welcome message yet"); qc.invalidateQueries(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Could not send"); } finally { setBusy(false); }
+  }
+  async function doRetry(id: string) {
+    try { await retry({ data: { messageId: id } }); toast.success("Retried"); qc.invalidateQueries({ queryKey: ["wa"] }); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Could not retry"); }
+  }
   const ok = (q.data?.count ?? 0) > 0;
   const template = q.data?.template.status;
   return <div className={cn("mt-3 grid gap-1 rounded-xl border px-3 py-2 text-xs", ok ? "border-border text-muted-foreground" : "border-destructive/40 text-destructive")}>
     <p>{q.isLoading ? "Checking WhatsApp connection" : ok ? `WhatsApp is reaching this site. Last update ${new Date(q.data?.last ?? 0).toLocaleString("en-GB")}.` : "No WhatsApp updates have reached this site yet. Send a message to your business number to test. If nothing appears, choose this project under Connectors, WhatsApp, Incoming messages."}</p>
-    {!q.isLoading && <p>Welcome message: <strong>{template === "APPROVED" ? "Approved" : template === "PENDING" ? "Waiting for Meta review" : template === "REJECTED" ? "Rejected by Meta" : "Not found"}</strong>.</p>}
+    {!q.isLoading && <p>Welcome message: <strong>{template === "APPROVED" ? "Approved" : template === "PENDING" ? "Waiting for Meta review" : template === "REJECTED" ? "Rejected by Meta" : "Not found"}</strong>{q.data?.template.language ? ` (${q.data.template.language})` : ""}.</p>}
+    {template === "APPROVED" && <button onClick={catchUp} disabled={busy} className="justify-self-start rounded-lg border border-border px-3 py-1.5 font-semibold text-foreground disabled:opacity-60">{busy ? "Sending" : "Send welcome to all waiting"}</button>}
+    {q.data?.replies && <p>Bot replies, last 24 h: {q.data.replies.sent} sent · {q.data.replies.waiting} waiting · {q.data.replies.failed} failed</p>}
+    {q.data?.replies.failedList.map((f) => <p key={f.id} className="flex flex-wrap items-center gap-2 text-destructive">{new Date(f.at).toLocaleString("en-GB")}: {f.error || "Failed"} <button onClick={() => doRetry(f.id)} className="rounded border border-border px-2 py-0.5 text-foreground">Retry</button></p>)}
   </div>;
 }
 

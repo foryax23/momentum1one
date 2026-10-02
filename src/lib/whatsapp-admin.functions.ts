@@ -91,3 +91,29 @@ export const queueAdmissionsReview = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not queue this application.");
     return { ok: true };
   });
+
+export const sendAllWaitingWelcomes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await adminOnly(context);
+    const { sendWaitingWelcomes } = await import("./whatsapp.server");
+    return sendWaitingWelcomes();
+  });
+
+export const getReplyHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await adminOnly(context);
+    const { replyHealth } = await import("./whatsapp.server");
+    return replyHealth();
+  });
+
+export const retryFailedReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { messageId: string }) => ({ messageId: String(data.messageId).slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    await adminOnly(context);
+    const { retryReply } = await import("./whatsapp.server");
+    await retryReply(data.messageId);
+    return { ok: true };
+  });
